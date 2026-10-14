@@ -1,0 +1,19 @@
+{
+    "name": "DNPDemo.Editor",
+    "rootNamespace": "DNPDemo.Editor",
+    "references": [
+        "DNPDemo.Runtime",
+        "BasisSDK"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

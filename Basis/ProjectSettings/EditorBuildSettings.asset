@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/DNPDemo/Scenes/DNPDemo_Main.unity
+    guid: a343568466d398a48a6326ff54bd6012
+  - enabled: 0
     path: Packages/com.basis.framework/Scenes/initialization.unity
     guid: 7213eeeda8352794e8b5a65dd273cff3
   m_configObjects:

@@ -37,3 +37,6 @@ CLAUDE.md
 .claude
 .wolf
 /Basis Server/benchmark-results
+
+# DNP demo: local Unity batch logs
+/Logs/
