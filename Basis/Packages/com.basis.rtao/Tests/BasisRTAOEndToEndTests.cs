@@ -16,6 +16,9 @@ namespace Basis.Rendering.RTAO.Tests
         private readonly List<Object> created = new List<Object>();
         private RenderPipelineAsset previousPipeline;
         private RenderPipelineAsset previousQualityPipeline;
+        // SetUp can bail out (Assert.Ignore / Assert.IsTrue) before the swap, and NUnit still runs TearDown.
+        // Restoring the never-captured fields would write null into the project's pipeline settings.
+        private bool pipelineSwapped;
         private UniversalRendererData rendererData;
         private UniversalRenderPipelineAsset pipeline;
         private BasisRTAOFeature feature;
@@ -54,6 +57,7 @@ namespace Basis.Rendering.RTAO.Tests
 
             previousPipeline = GraphicsSettings.defaultRenderPipeline;
             previousQualityPipeline = QualitySettings.renderPipeline;
+            pipelineSwapped = true;
             GraphicsSettings.defaultRenderPipeline = pipeline;
             QualitySettings.renderPipeline = pipeline;
 
@@ -82,8 +86,12 @@ namespace Basis.Rendering.RTAO.Tests
             BasisRTAOFeature.AllowSecondaryCameras = true;
             BasisRTAOFeature.ViewerPosition = null;
 
-            QualitySettings.renderPipeline = previousQualityPipeline;
-            GraphicsSettings.defaultRenderPipeline = previousPipeline;
+            if (pipelineSwapped)
+            {
+                QualitySettings.renderPipeline = previousQualityPipeline;
+                GraphicsSettings.defaultRenderPipeline = previousPipeline;
+                pipelineSwapped = false;
+            }
 
             if (rendererData != null)
                 rendererData.rendererFeatures.Clear();
