@@ -14,7 +14,7 @@ namespace DNPDemo.Editor
     /// </summary>
     public static class LobbyPanelPrefabBuilder
     {
-        const string PrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/LobbyPanel.prefab";
+        public const string PrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/LobbyPanel.prefab";
         const float PixelsPerMeter = 1000f;
         static readonly Vector2 PanelSize = new(900, 820);
         static readonly Color BackgroundColor = new(0.08f, 0.08f, 0.1f, 0.92f);
@@ -137,6 +137,21 @@ namespace DNPDemo.Editor
             searchPage.gameObject.SetActive(false);
             manualPage.gameObject.SetActive(false);
             statusPage.gameObject.SetActive(false);
+
+            // Basis only draws the laser and dispatches pointer events when the hit collider is on a UI layer.
+            SetLayerRecursively(root.transform, LayerMask.NameToLayer(UILayerName));
+        }
+
+        /// <summary>Layer every world-space panel must live on to be laser-interactable in Basis.</summary>
+        public const string UILayerName = "UI";
+
+        static void SetLayerRecursively(Transform target, int layer)
+        {
+            target.gameObject.layer = layer;
+            foreach (Transform child in target)
+            {
+                SetLayerRecursively(child, layer);
+            }
         }
 
         static Transform CreatePage(string name, Transform parent)

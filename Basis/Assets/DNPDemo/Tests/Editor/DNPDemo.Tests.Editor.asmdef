@@ -3,6 +3,7 @@
     "rootNamespace": "DNPDemo.Tests",
     "references": [
         "DNPDemo.Runtime",
+        "DNPDemo.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
