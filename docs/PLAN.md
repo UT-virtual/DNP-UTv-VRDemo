@@ -1,6 +1,6 @@
 # DNP×UTv VRデモ 開発プラン
 
-対象シナリオ：『ミロのヴィーナス・復元ワークショップ』ver.10.06（[PDF](../DNP×UTvシナリオ案-ver1006.pdf)）
+対象シナリオ：『ミロのヴィーナス・復元ワークショップ』ver.10.06（[markdown](SCENARIO.md)）
 実装範囲：**Opening 〜 Phase 2（0:00〜2:00）**。Phase 3 と Ending は後続フェーズで扱う。
 
 ---

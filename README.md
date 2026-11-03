@@ -46,7 +46,7 @@ DNP_UTv_VRDemo/
 
 - [docs/PLAN.md](docs/PLAN.md): 開発プラン（技術方針、アーキテクチャ、ステップ定義、マイルストーン）
 - [docs/BASIS_PATCHES.md](docs/BASIS_PATCHES.md): Basis 本体への改造記録
-- [DNP×UTvシナリオ案-ver1006.pdf](DNP×UTvシナリオ案-ver1006.pdf): シナリオ
+- [docs/SCENARIO.md](docs/SCENARIO.md): シナリオ
 
 ## Basis との関係
 
