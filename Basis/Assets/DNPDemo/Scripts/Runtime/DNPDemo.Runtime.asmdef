@@ -6,7 +6,9 @@
         "BasisSDK",
         "BasisDebug",
         "BasisNetworkCore",
-        "LiteNetLib"
+        "LiteNetLib",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

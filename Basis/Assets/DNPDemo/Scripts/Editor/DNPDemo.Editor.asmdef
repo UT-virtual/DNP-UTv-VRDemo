@@ -3,7 +3,10 @@
     "rootNamespace": "DNPDemo.Editor",
     "references": [
         "DNPDemo.Runtime",
-        "BasisSDK"
+        "BasisSDK",
+        "Basis Framework",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"
