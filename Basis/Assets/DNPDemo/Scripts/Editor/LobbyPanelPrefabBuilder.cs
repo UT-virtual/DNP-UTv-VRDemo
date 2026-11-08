@@ -1,10 +1,10 @@
 using System.IO;
-using Basis.Scripts.UI;
 using DNPDemo.Lobby;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+using static DNPDemo.Editor.WorldUiBuilder;
 
 namespace DNPDemo.Editor
 {
@@ -15,7 +15,6 @@ namespace DNPDemo.Editor
     public static class LobbyPanelPrefabBuilder
     {
         public const string PrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/LobbyPanel.prefab";
-        const float PixelsPerMeter = 1000f;
         static readonly Vector2 PanelSize = new(900, 820);
         static readonly Color BackgroundColor = new(0.08f, 0.08f, 0.1f, 0.92f);
         static readonly Color ErrorColor = new(1f, 0.55f, 0.5f);
@@ -28,32 +27,13 @@ namespace DNPDemo.Editor
                 EditorUtility.DisplayDialog("DNP Demo", $"{PrefabPath} は既にあります。作り直す場合は先に削除してください。", "OK");
                 return;
             }
-
-            GameObject root = new GameObject("LobbyPanel", typeof(RectTransform));
-            try
-            {
-                Build(root);
-                Directory.CreateDirectory(Path.GetDirectoryName(PrefabPath));
-                GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
-                EditorGUIUtility.PingObject(prefab);
-                Debug.Log($"[DNPDemo] Created {PrefabPath}");
-            }
-            finally
-            {
-                Object.DestroyImmediate(root);
-            }
+            GameObject prefab = CreatePrefabIfMissing(PrefabPath, "LobbyPanel", Build);
+            EditorGUIUtility.PingObject(prefab);
         }
 
         static void Build(GameObject root)
         {
-            var rootRect = (RectTransform)root.transform;
-            rootRect.sizeDelta = PanelSize;
-            rootRect.localScale = Vector3.one / PixelsPerMeter;
-
-            var canvas = root.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            var raycaster = root.AddComponent<BasisGraphicUIRayCaster>();
-            raycaster.Canvas = canvas;
+            SetupWorldCanvas(root, PanelSize, interactive: true);
             root.AddComponent<Image>().color = BackgroundColor;
 
             TMP_Text title = CreateText("Title", root.transform, "DNP×UTv 復元ワークショップ", 48, TextAlignmentOptions.Center);
@@ -142,86 +122,7 @@ namespace DNPDemo.Editor
             SetLayerRecursively(root.transform, LayerMask.NameToLayer(UILayerName));
         }
 
-        /// <summary>Layer every world-space panel must live on to be laser-interactable in Basis.</summary>
-        public const string UILayerName = "UI";
-
-        static void SetLayerRecursively(Transform target, int layer)
-        {
-            target.gameObject.layer = layer;
-            foreach (Transform child in target)
-            {
-                SetLayerRecursively(child, layer);
-            }
-        }
-
-        static Transform CreatePage(string name, Transform parent)
-        {
-            GameObject page = CreateChild(name, parent);
-            Anchor((RectTransform)page.transform, Vector2.zero, Vector2.one, new Vector2(60, 120), new Vector2(-60, -120));
-            var layout = page.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 16;
-            layout.childAlignment = TextAnchor.UpperCenter;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-            return page.transform;
-        }
-
-        static GameObject CreateChild(string name, Transform parent)
-        {
-            var go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-            go.layer = parent.gameObject.layer;
-            return go;
-        }
-
-        static TMP_Text CreateText(string name, Transform parent, string text, float fontSize, TextAlignmentOptions alignment, float preferredHeight = -1)
-        {
-            GameObject go = TMP_DefaultControls.CreateText(new TMP_DefaultControls.Resources());
-            go.name = name;
-            go.transform.SetParent(parent, false);
-            var tmp = go.GetComponent<TextMeshProUGUI>();
-            tmp.text = text;
-            tmp.fontSize = fontSize;
-            tmp.alignment = alignment;
-            tmp.color = Color.white;
-            if (preferredHeight > 0)
-            {
-                go.AddComponent<LayoutElement>().preferredHeight = preferredHeight;
-            }
-            return tmp;
-        }
-
-        static Button CreateButton(string name, Transform parent, string label, float preferredHeight, float fontSize)
-        {
-            GameObject go = TMP_DefaultControls.CreateButton(new TMP_DefaultControls.Resources());
-            go.name = name;
-            go.transform.SetParent(parent, false);
-            var labelText = go.GetComponentInChildren<TextMeshProUGUI>();
-            labelText.text = label;
-            labelText.fontSize = fontSize;
-            labelText.color = new Color(0.1f, 0.1f, 0.12f);
-            if (preferredHeight > 0)
-            {
-                go.AddComponent<LayoutElement>().preferredHeight = preferredHeight;
-            }
-            return go.GetComponent<Button>();
-        }
-
-        static void Anchor(RectTransform rect, Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax)
-        {
-            rect.anchorMin = anchorMin;
-            rect.anchorMax = anchorMax;
-            rect.offsetMin = offsetMin;
-            rect.offsetMax = offsetMax;
-        }
-
-        static void Assign(Object target, string property, Object value)
-        {
-            var so = new SerializedObject(target);
-            so.FindProperty(property).objectReferenceValue = value;
-            so.ApplyModifiedPropertiesWithoutUndo();
-        }
+        static Transform CreatePage(string name, Transform parent) =>
+            CreateVerticalGroup(name, parent, new Vector2(60, 120), new Vector2(-60, -120), 16);
     }
 }

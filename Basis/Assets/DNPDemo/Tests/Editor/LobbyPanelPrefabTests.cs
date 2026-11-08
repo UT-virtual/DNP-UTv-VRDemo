@@ -13,11 +13,11 @@ namespace DNPDemo.Tests
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(LobbyPanelPrefabBuilder.PrefabPath);
             Assert.IsNotNull(prefab, LobbyPanelPrefabBuilder.PrefabPath);
 
-            int uiLayer = LayerMask.NameToLayer(LobbyPanelPrefabBuilder.UILayerName);
+            int uiLayer = LayerMask.NameToLayer(WorldUiBuilder.UILayerName);
             foreach (Transform t in prefab.GetComponentsInChildren<Transform>(true))
             {
                 Assert.AreEqual(uiLayer, t.gameObject.layer,
-                    $"'{t.name}' must be on the {LobbyPanelPrefabBuilder.UILayerName} layer so the Basis laser can hit it.");
+                    $"'{t.name}' must be on the {WorldUiBuilder.UILayerName} layer so the Basis laser can hit it.");
             }
         }
     }
