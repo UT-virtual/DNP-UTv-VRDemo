@@ -17,3 +17,4 @@
 - ユーザーに露出するメッセージには、開発時のメモをそのまま書かない。
 - markdownの強調（アスタリスク）を多用しない。本当に重要な部分にのみ使う。
 - コミットメッセージは、[Conventional Commits](https://www.conventionalcommits.org/ja/v1.0.0/)に従うこと。
+- 作業を行う際は、 [Github Project](https://github.com/orgs/UT-virtual/projects/21/views/1) を確認し、既に同じ issue が存在しないか確認すること。なければ、新規 issue を作成してから作業に取り掛かること。簡単なタスクの場合はその限りではない。
