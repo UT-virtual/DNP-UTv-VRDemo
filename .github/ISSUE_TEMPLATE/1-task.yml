@@ -1,0 +1,32 @@
+name: タスク
+description: 機能の実装、アセットの組み込み、環境の整備などの作業
+body:
+  - type: textarea
+    id: content
+    attributes:
+      label: 内容
+      description: 何をするかを箇条書きで書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: 完了条件
+      description: 何ができたら完了とするかを書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: depends
+    attributes:
+      label: 依存
+      description: 先に終わっている必要がある Issue を書いてください。
+      value: なし
+    validations:
+      required: false
+  - type: textarea
+    id: references
+    attributes:
+      label: 参照
+      description: 関連するドキュメントやファイル（docs/PLAN.md §2.2 など）を書いてください。
+    validations:
+      required: false

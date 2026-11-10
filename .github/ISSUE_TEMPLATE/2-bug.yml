@@ -1,0 +1,51 @@
+name: 不具合報告
+description: 期待どおりに動かないとき
+labels: [bug]
+body:
+  - type: textarea
+    id: symptom
+    attributes:
+      label: 症状
+      description: 実際に起きたことを書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 再現手順
+      description: 症状が起きるまでの操作を順に書いてください。シナリオのステップ番号が分かれば書いてください。
+      placeholder: |
+        1. プレイヤーA でホストを開始する
+        2. プレイヤーB で接続する
+        3. ステップ6 で林檎を範囲選択する
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する動作
+      description: 本来どうなるべきかを書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 発生環境
+      description: エディタか実機か、端末の機種とロール、ブランチやコミットを書いてください。
+      placeholder: Quest 3（プレイヤーA）+ Quest 2（プレイヤーB）、main 0028ffc
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: ログ
+      description: エディタのコンソール、または `adb logcat -s Unity` の該当部分を貼ってください。
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: media
+    attributes:
+      label: スクリーンショット・動画
+    validations:
+      required: false
