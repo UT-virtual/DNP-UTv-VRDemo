@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DNPDemo.Interaction;
 using UnityEngine;
 
 namespace DNPDemo.Scenario
@@ -75,9 +76,32 @@ namespace DNPDemo.Scenario
                 {
                     problems.Add($"{label} の Id「{step.Id}」が重複しています。");
                 }
-                if (step.Completion == StepCompletion.Interaction && step.Actor == DemoRole.None)
+                int partCount = step.Interaction?.Count ?? 0;
+                if (step.Completion == StepCompletion.Interaction)
                 {
-                    problems.Add($"{label}（{step.Id}）は操作待ちですが、担当ロールがありません。");
+                    if (step.Actor == DemoRole.None)
+                    {
+                        problems.Add($"{label}（{step.Id}）は操作待ちですが、担当ロールがありません。");
+                    }
+                    if (partCount == 0)
+                    {
+                        problems.Add($"{label}（{step.Id}）は操作待ちですが、操作の部品がありません。");
+                    }
+                    else if (partCount > InteractionMessage.MaxPartCount)
+                    {
+                        problems.Add($"{label}（{step.Id}）の操作の部品が上限（{InteractionMessage.MaxPartCount}）を超えています。");
+                    }
+                }
+                else if (partCount > 0)
+                {
+                    problems.Add($"{label}（{step.Id}）は操作待ちではないのに、操作の部品があります。");
+                }
+                for (int p = 0; p < partCount; p++)
+                {
+                    if (step.Interaction[p] == null)
+                    {
+                        problems.Add($"{label}（{step.Id}）の操作の部品 {p} の種類が未設定です。");
+                    }
                 }
                 if (step.Cues != null)
                 {

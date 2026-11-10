@@ -22,12 +22,14 @@ MonoBehaviour:
     Actor: 0
     Completion: 1
     TaskText: 
+    Interaction: []
     Cues: []
   - Id: opening
     Title: "Opening \u30CA\u30EC\u30FC\u30BF\u30FC\u5C0E\u5165"
     Actor: 0
     Completion: 0
     TaskText: 
+    Interaction: []
     Cues:
     - rid: 1662061592158404874
     - rid: 1662061592158404875
@@ -39,6 +41,7 @@ MonoBehaviour:
     Actor: 0
     Completion: 0
     TaskText: 
+    Interaction: []
     Cues:
     - rid: 1662061592158404879
     - rid: 1662061592158404880
@@ -48,12 +51,15 @@ MonoBehaviour:
     Actor: 1
     Completion: 2
     TaskText: "\u97F3\u58F0\u751F\u6210\u3092\u8D77\u52D5\u3057\u3001\u300C\u73FE\u5728\u306E\u30F4\u30A3\u30FC\u30CA\u30B9\u306B\u3064\u3044\u3066\u3001\u624B\u306E\u3072\u3089\u306B\u6797\u6A8E\u304C\u306E\u3063\u305F\u6C34\u5E73\u306B\u4F38\u3073\u308B\u5DE6\u624B\u3092\u8FFD\u52A0\u300D\u3068\u51FA\u529B\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404911
     Cues: []
   - Id: s1-concerns
     Title: "Scene 1 \u69CB\u9020\u306E\u61F8\u5FF5"
     Actor: 0
     Completion: 0
     TaskText: 
+    Interaction: []
     Cues:
     - rid: 1662061592158404882
     - rid: 1662061592158404883
@@ -64,6 +70,7 @@ MonoBehaviour:
     Actor: 0
     Completion: 0
     TaskText: 
+    Interaction: []
     Cues:
     - rid: 1662061592158404886
     - rid: 1662061592158404887
@@ -72,18 +79,25 @@ MonoBehaviour:
     Actor: 2
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u6797\u6A8E\u306E\u9818\u57DF\u3092\u9078\u629E\u3057\u3001\u6797\u6A8E\u306E\u4F4D\u7F6E\u3092\u8ABF\u6574\u305B\u3088\u3002\uFF08\u624B\u306E\u4E0B\u306B\u6301\u3063\u3066\u304F\u308B\uFF09"
+    Interaction:
+    - rid: 1662061592158404912
+    - rid: 1662061592158404913
     Cues: []
   - Id: s2-regrip-apple
     Title: "Scene 2 [B] \u6797\u6A8E\u306E\u6301\u3061\u65B9\u3092\u4FEE\u6B63"
     Actor: 2
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u8155\u3092\u9078\u629E\u3057\u3001\u300C\u9078\u629E\u3057\u305F\u7BC4\u56F2\u306B\u3064\u3044\u3066\u3001\u4E0A\u304B\u3089\u30DC\u30FC\u30EB\u3092\u5305\u307F\u8FBC\u3080\u3088\u3046\u306B\u6797\u6A8E\u3092\u6301\u3061\u76F4\u3059\u5F62\u306B\u4FEE\u6B63\u300D\u3068\u5165\u529B\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404914
+    - rid: 1662061592158404915
     Cues: []
   - Id: s2-natural-curve
     Title: "Scene 2 \u81EA\u7136\u306A\u30AB\u30FC\u30D6"
     Actor: 0
     Completion: 0
     TaskText: 
+    Interaction: []
     Cues:
     - rid: 1662061592158404888
     - rid: 1662061592158404889
@@ -93,12 +107,16 @@ MonoBehaviour:
     Actor: 2
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u5DE6\u80A9\u304B\u3089\u8098\u306E\u9818\u57DF\u3092\u9078\u629E\u3057\u3001\u8155\u306E\u89D2\u5EA6\u3092\u5185\u5074\u3078\u30B9\u30E9\u30A4\u30C9\u4FEE\u6B63\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404916
+    - rid: 1662061592158404917
     Cues: []
   - Id: s2-mismatch
     Title: "Scene 2 \u30A4\u30E1\u30FC\u30B8\u306E\u30BA\u30EC"
     Actor: 0
     Completion: 0
     TaskText: 
+    Interaction: []
     Cues:
     - rid: 1662061592158404891
   - Id: s2-guide-curve
@@ -106,12 +124,15 @@ MonoBehaviour:
     Actor: 1
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\uFF08\u30AC\u30A4\u30C9\u30E2\u30FC\u30C9\uFF09\u3092\u4F7F\u7528\u3057\u3001\u5DE6\u80A9\u304B\u3089\u80F8\u306E\u524D\u3078\u300C\u7DE9\u3084\u304B\u306A\u30AB\u30FC\u30D6\u3092\u63CF\u304F\u8ECC\u8DE1\u300D\u3092\u306A\u305E\u308B\u3088\u3046\u306B\u63CF\u3051\u3002"
+    Interaction:
+    - rid: 1662061592158404918
     Cues: []
   - Id: s3-hand-mirror
     Title: "Scene 3 \u53F3\u8155\u3068\u624B\u93E1"
     Actor: 0
     Completion: 0
     TaskText: 
+    Interaction: []
     Cues:
     - rid: 1662061592158404892
     - rid: 1662061592158404893
@@ -120,24 +141,33 @@ MonoBehaviour:
     Actor: 1
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u7A7A\u4E2D\u306B\u624B\u93E1\u306E\u7DDA\u753B\u3092\u63CF\u3051\u3002\u300C\u7DDA\u753B\u3092\u897F\u6D0B\u306E\u30A2\u30F3\u30C6\u30A3\u30FC\u30AF\u306A\u624B\u93E1\u306B\u5909\u63DB\u300D\u3068\u97F3\u58F0\u6307\u793A\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404919
+    - rid: 1662061592158404920
     Cues: []
   - Id: s3-place-mirror
     Title: "Scene 3 [A] \u624B\u93E1\u3092\u79FB\u52D5"
     Actor: 1
     Completion: 2
     TaskText: "\u751F\u6210\u3055\u308C\u305F\u624B\u93E1\u3092\u6240\u5B9A\u306E\u4F4D\u7F6E\u306B\u79FB\u52D5\u3055\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404921
     Cues: []
   - Id: s3-grip-mirror
     Title: "Scene 3 [A] \u93E1\u3092\u63E1\u3089\u305B\u308B"
     Actor: 1
     Completion: 2
     TaskText: "\u7D9A\u3051\u3066\u53F3\u80A9\u304B\u3089\u624B\u93E1\u307E\u3067\u9818\u57DF\u9078\u629E\u3057\u3001\u300C\u93E1\u3092\u63E1\u3089\u305B\u308B\u300D\u3068\u767A\u8A71\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404922
+    - rid: 1662061592158404923
     Cues: []
   - Id: s3-mirror-angle
     Title: "Scene 3 \u93E1\u306E\u89D2\u5EA6\u306E\u6307\u6458"
     Actor: 0
     Completion: 0
     TaskText: 
+    Interaction: []
     Cues:
     - rid: 1662061592158404894
     - rid: 1662061592158404895
@@ -147,12 +177,16 @@ MonoBehaviour:
     Actor: 2
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u53F3\u624B\u9996\u3068\u624B\u93E1\u3092\u9818\u57DF\u9078\u629E\u3057\u3001\u7A7A\u9593\u30DA\u30F3\u3092\u7528\u3044\u306A\u304C\u3089\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u76EE\u7DDA\u306B\u5408\u308F\u305B\u3066\u93E1\u306E\u89D2\u5EA6\u3092\u4FEE\u6B63\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404924
+    - rid: 1662061592158404925
     Cues: []
   - Id: p2-review
     Title: "Phase 2 \u632F\u308A\u8FD4\u308A\u306E\u63D0\u6848"
     Actor: 0
     Completion: 0
     TaskText: 
+    Interaction: []
     Cues:
     - rid: 1662061592158404897
     - rid: 1662061592158404898
@@ -161,12 +195,15 @@ MonoBehaviour:
     Actor: 2
     Completion: 2
     TaskText: "\u5C65\u6B74\u4E00\u89A7\u304B\u3089Ver 1.0\u3092\u547C\u3073\u51FA\u3057\u3001\u5B8C\u6210\u6848\u306E\u96A3\u306B\u4E26\u3079\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404926
     Cues: []
   - Id: p3-temple-proposal
     Title: "Phase 3 \u795E\u6BBF\u3067\u306E\u78BA\u8A8D"
     Actor: 0
     Completion: 0
     TaskText: 
+    Interaction: []
     Cues:
     - rid: 1662061592158404899
     - rid: 1662061592158404900
@@ -176,12 +213,16 @@ MonoBehaviour:
     Actor: 1
     Completion: 2
     TaskText: "\u5FA9\u5143\u6848\u306E\u30F4\u30A3\u30FC\u30CA\u30B9\u50CF\u3092\u9818\u57DF\u9078\u629E\u3002\u300C\u9078\u629E\u3057\u305F\u50CF\u306E\u80CC\u666F\u3092\u795E\u6BBF\u306B\u5909\u66F4\u300D\u3068\u97F3\u58F0\u6307\u793A\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404927
+    - rid: 1662061592158404928
     Cues: []
   - Id: closing
     Title: "\u7D50\u3073"
     Actor: 0
     Completion: 3
     TaskText: 
+    Interaction: []
     Cues:
     - rid: 1662061592158404902
     - rid: 1662061592158404903
@@ -411,3 +452,111 @@ MonoBehaviour:
         Visible: 0
         Text: WORKSHOP COMPLETE
         FadeSeconds: 2
+    - rid: 1662061592158404911
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u300C\u624B\u306E\u3072\u3089\u306B\u6797\u6A8E\u304C\u306E\u3063\u305F\u6C34\u5E73\u306B\u4F38\u3073\u308B\u5DE6\u624B\u3092\u8FFD\u52A0\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
+        SimulatedMode: 4
+        RequiredPresses: 3
+    - rid: 1662061592158404912
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u6797\u6A8E\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
+        SimulatedMode: 1
+        RequiredPresses: 3
+    - rid: 1662061592158404913
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u6797\u6A8E\u3092\u624B\u306E\u4E0B\u3078\u79FB\u52D5\u3059\u308B"
+        SimulatedMode: 3
+        RequiredPresses: 3
+    - rid: 1662061592158404914
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u5DE6\u624B\u304B\u3089\u524D\u8155\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
+        SimulatedMode: 1
+        RequiredPresses: 3
+    - rid: 1662061592158404915
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u300C\u4E0A\u304B\u3089\u30DC\u30FC\u30EB\u3092\u5305\u307F\u8FBC\u3080\u3088\u3046\u306B\u6797\u6A8E\u3092\u6301\u3061\u76F4\u3059\u5F62\u306B\u4FEE\u6B63\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
+        SimulatedMode: 4
+        RequiredPresses: 3
+    - rid: 1662061592158404916
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u5DE6\u80A9\u304B\u3089\u8098\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
+        SimulatedMode: 1
+        RequiredPresses: 3
+    - rid: 1662061592158404917
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u8155\u3092\u5185\u5074\u3078\u30B9\u30E9\u30A4\u30C9\u3059\u308B"
+        SimulatedMode: 3
+        RequiredPresses: 3
+    - rid: 1662061592158404918
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u5DE6\u80A9\u304B\u3089\u80F8\u306E\u524D\u3078\u7DE9\u3084\u304B\u306A\u30AB\u30FC\u30D6\u3092\u63CF\u304F"
+        SimulatedMode: 2
+        RequiredPresses: 3
+    - rid: 1662061592158404919
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u7A7A\u4E2D\u306B\u624B\u93E1\u306E\u7DDA\u753B\u3092\u63CF\u304F"
+        SimulatedMode: 2
+        RequiredPresses: 3
+    - rid: 1662061592158404920
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u300C\u7DDA\u753B\u3092\u897F\u6D0B\u306E\u30A2\u30F3\u30C6\u30A3\u30FC\u30AF\u306A\u624B\u93E1\u306B\u5909\u63DB\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
+        SimulatedMode: 4
+        RequiredPresses: 3
+    - rid: 1662061592158404921
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u624B\u93E1\u3092\u6240\u5B9A\u306E\u4F4D\u7F6E\u3078\u79FB\u52D5\u3059\u308B"
+        SimulatedMode: 3
+        RequiredPresses: 3
+    - rid: 1662061592158404922
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u53F3\u80A9\u304B\u3089\u624B\u93E1\u307E\u3067\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
+        SimulatedMode: 1
+        RequiredPresses: 3
+    - rid: 1662061592158404923
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u300C\u93E1\u3092\u63E1\u3089\u305B\u308B\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
+        SimulatedMode: 4
+        RequiredPresses: 3
+    - rid: 1662061592158404924
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u53F3\u624B\u9996\u3068\u624B\u93E1\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
+        SimulatedMode: 1
+        RequiredPresses: 3
+    - rid: 1662061592158404925
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u76EE\u7DDA\u306B\u5408\u308F\u305B\u3066\u93E1\u306E\u89D2\u5EA6\u3092\u4FEE\u6B63\u3059\u308B"
+        SimulatedMode: 3
+        RequiredPresses: 3
+    - rid: 1662061592158404926
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u5C65\u6B74\u4E00\u89A7\u304B\u3089 Ver 1.0 \u3092\u547C\u3073\u51FA\u3059"
+        SimulatedMode: 5
+        RequiredPresses: 3
+    - rid: 1662061592158404927
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u50CF\u5168\u4F53\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
+        SimulatedMode: 1
+        RequiredPresses: 3
+    - rid: 1662061592158404928
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u300C\u9078\u629E\u3057\u305F\u50CF\u306E\u80CC\u666F\u3092\u795E\u6BBF\u306B\u5909\u66F4\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
+        SimulatedMode: 4
+        RequiredPresses: 3

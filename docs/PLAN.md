@@ -75,7 +75,7 @@ Basis の通信層（LiteNetLib / UDP）は、もともとインターネット�
 
 ```
 ScenarioData (ScriptableObject)   … ステップ定義の配列。シナリオの改訂はこのデータの編集で対応する
-   └ ScenarioStep: Id / 運営表示名 / 担当ロール / 完了条件 / タスク文 / キュー列（M2 で操作定義を足す）
+   └ ScenarioStep: Id / 運営表示名 / 担当ロール / 完了条件 / タスク文 / 操作定義（InteractionPart の列）/ キュー列
 ScenarioProgress（純 C#）        … 正となる状態 {seq, ステップ番号}。遷移のたびに seq が変わる
 ScenarioDirector (BasisNetworkBehaviour)
    ├ 進行権限を持つ端末（DemoRoleService.HasScenarioAuthority）が状態を持ち、変わるたびに ReliableOrdered で配信する
@@ -84,7 +84,7 @@ ScenarioDirector (BasisNetworkBehaviour)
 StepCompletion（完了条件）
    ├ CuesFinished … 権限側でキューの再生が終わったら進む
    ├ PlayersReady … ロビー。2人目が参加した時点で進む（リセット後に2人ともいる場合は運営が開始する）
-   ├ Interaction  … 担当ロールの端末が ScenarioDirector.ReportInteractionComplete() を呼んだら進む（M2 の部品が呼ぶ）
+   ├ Interaction  … 担当ロールの端末で操作定義の部品がすべて完了すると、InteractionRunner が ScenarioDirector.ReportInteractionComplete() を呼んで進む
    └ Manual       … 運営の操作でのみ進む（結び）
    運営スキップはどの条件でも常に使える
 ScenarioCue（キュー）… LineCue（話者＋字幕＋音声）/ WaitCue / SoundCue / SetObjectActiveCue / BannerCue
@@ -126,6 +126,27 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
 
 - 部品の内部表現：選択範囲はスフィアのサンプル列（位置＋半径）で記録し、サンプル間隔は半径に比例させる。表示は GPU インスタンシングした半透明スフィア（または生成したチューブメッシュ）。ストロークは点列と LineRenderer（またはチューブメッシュ）。
 - 1つのステップで複数の部品を順に使う場合（例：範囲選択 → 音声指示）は、操作定義に部品を順番に並べる。HUD は今どの手順にいるかを示す。
+
+#### 部品の共通インターフェース（`Scripts/Runtime/Interaction/`）
+
+```
+InteractionPart（データ）   … 部品の種類ごとのサブクラス。ペンのモード（PenMode）と HUD の手順文を持つ。シーンのオブジェクトはキーで指す
+InteractionTool（MonoBehaviour）… 部品を実行するツール。CanRun(part) で担当する部品を判定する
+   Begin(session)  … 部品が現在の手順になった。担当の端末では入力を受け付け、それ以外の端末では相手の途中経過を表示する
+   End()           … 部品が現在の手順でなくなった。入力を止め、表示は残す（範囲選択を音声指示の間も見せる）
+   Discard()       … ステップが進んだ。表示と途中経過をすべて破棄する（結果はステップのキューが表示する）
+   OnRemoteProgress … 担当の端末から途中経過を受け取る
+InteractionSession          … ツールが持つ、1つの部品の窓口。Complete()（完了の通知）と SendProgress()（途中経過の送信）。
+                              部品が現在でなくなると無効になり、遅れた呼び出しは無視される
+InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
+   ├ ステップが変わるたびに部品を順に実行し、担当ロールかどうかとペンのモード（LocalPenMode）を決める
+   ├ 担当の端末で部品が完了したら次の部品へ進め、最後の部品で ScenarioDirector.ReportInteractionComplete() を呼ぶ
+   └ ツールの通信を1つのネットワーク ID でまとめて運ぶ。メッセージは {seq, ステップ, 部品番号} 付きで、古いものは捨てる。
+     部品の切り替わりは担当の端末から送り、ステップに入った端末は担当の端末に現在の部品番号を問い合わせる
+```
+
+- 各ツールは `InteractionPart` のサブクラスと `InteractionTool` のサブクラスを1組で実装し、`InteractionRunner` のツール一覧に登録する。
+- 本番のツールができるまでは、`DummyInteractionPart`（予定の部品のペンモードと手順文を持つ）と `DummyInteractionTool`（担当者が「完了」ボタンを規定回数押すと完了。エディタとデスクトップでは F8）で代用する。
 
 ### 2.5 像と版の管理
 
