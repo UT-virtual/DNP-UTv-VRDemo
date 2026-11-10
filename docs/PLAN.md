@@ -32,7 +32,7 @@ DNP_UTv_VRDemo/            ← Basis フォークのルート
 │     ├─ Scenes/           DNPDemo_Main.unity
 │     ├─ Scripts/Runtime/  シナリオ・インタラクション・同期
 │     ├─ Scripts/Editor/   セットアップ・ビルド補助（メニュー「DNP Demo」）
-│     ├─ Art/              Models/Venus, Materials, Textures
+│     ├─ Art/              機能ごと（ExhibitionRoom, Venus, Scholars など）に Models, Materials, Textures
 │     ├─ Audio/            Voice（台詞）, SE, BGM
 │     ├─ Prefabs/ UI/ Data/（シナリオ定義・版定義の ScriptableObject）
 ├─ Basis Server/           ← Basis 標準の専用サーバー（Docker 構成つき。リモート接続に対応するときに使う）
