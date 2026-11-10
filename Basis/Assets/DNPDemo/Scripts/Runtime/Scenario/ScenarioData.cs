@@ -24,6 +24,24 @@ namespace DNPDemo.Scenario
             _steps = new List<ScenarioStep>(steps);
         }
 
+        /// <summary>The speakers and object keys the cues of every step address.</summary>
+        public ScenarioRequirements CollectRequirements()
+        {
+            var requirements = new ScenarioRequirements();
+            foreach (ScenarioStep step in _steps)
+            {
+                if (step?.Cues == null)
+                {
+                    continue;
+                }
+                foreach (Cues.ScenarioCue cue in step.Cues)
+                {
+                    cue?.CollectRequirements(requirements);
+                }
+            }
+            return requirements;
+        }
+
         /// <summary>Problems that would break a run. Empty when the data is usable.</summary>
         public List<string> Validate() => Validate(_steps);
 

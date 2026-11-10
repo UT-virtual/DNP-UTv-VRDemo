@@ -75,9 +75,28 @@
 
 結果は `Logs/editmode-results.xml` に出力されます（`Logs/` は git の追跡対象外です）。
 
+## シーンとプレハブの構成
+
+`DNPDemo_Main.unity` は、機能ごとのプレハブを並べただけの構成です。普段の作業では、シーンではなく該当するプレハブを編集してください（プレハブをダブルクリックして開くか、シーン上のインスタンスで編集して Overrides から Apply する）。
+
+| シーンのルート | プレハブ（`Basis/Assets/DNPDemo/Prefabs/`） | 内容 |
+|---|---|---|
+| BasisScene | （シーンに直接置く） | Basis のシーン定義、初期スポーン位置、カメラ |
+| Env_ExhibitionRoom | `Env_ExhibitionRoom.prefab` | 展示室 |
+| Env_Temple | `Env_Temple.prefab` | 神殿（最初は非表示） |
+| Lighting | `Lighting.prefab` | ライト。像のスポットライトはロビー中は消えている |
+| Statue_Original | `Statue_Original.prefab` | 台座と像 |
+| ComparisonTable | `ComparisonTable.prefab` | 比較台（最初は非表示） |
+| Scholars | `Scholars.prefab` | 学者 A・B。どちらも `Scholars/Scholar.prefab` のバリアント |
+| DemoSystems | `DemoSystems.prefab` | 接続、ロール、スポーン、ロビーパネル、シナリオ（`Scenario`） |
+
+- シナリオのデータ（`Data/ScenarioData.asset`）はシーンのオブジェクトを直接参照できません。キューから操作したいオブジェクトには `ScenarioObjectBinding`（キー）を、台詞を話すオブジェクトには `ScenarioSpeakerBinding`（話者、音声、字幕）を、そのオブジェクトのプレハブに付けてください。ScenarioStage が起動時にシーンから集めます。
+- データが使う話者とキーがシーンにそろっているか、重複がないかは、Editor テスト `ScenarioSceneBindingTests` で確認できます。
+- プレハブを新しく足すときだけ、シーンの編集が必要です。
+
 ## シーンの編集
 
-シーンファイル（`DNPDemo_Main.unity`）は複数人で同時に編集すると、マージで衝突しやすいファイルです。
+シーンファイル（`DNPDemo_Main.unity`）は複数人で同時に編集すると、マージで衝突しやすいファイルです。上の表のとおり、ほとんどの作業はプレハブの編集で済みます。
 
 - 編集を始める前に、チームのチャットで「DNPDemo_Main を編集します」と伝えてください。同時に編集するのは1人だけにします。
 - 編集が終わったら、push してチャットで伝えてください。
