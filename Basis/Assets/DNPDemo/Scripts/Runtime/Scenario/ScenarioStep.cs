@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DNPDemo.Interaction;
 using DNPDemo.Scenario.Cues;
 using UnityEngine;
 
@@ -27,6 +28,10 @@ namespace DNPDemo.Scenario
         [Tooltip("Instruction shown to the actor while the step waits for their operation.")]
         [TextArea(2, 5)]
         public string TaskText;
+
+        [Tooltip("Operations the actor performs, in order. Only for steps that complete on Interaction.")]
+        [SerializeReference, SubclassSelector]
+        public List<InteractionPart> Interaction = new();
 
         [SerializeReference, SubclassSelector]
         public List<ScenarioCue> Cues = new();

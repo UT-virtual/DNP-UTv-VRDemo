@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DNPDemo.Editor;
+using DNPDemo.Interaction;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
 using NUnit.Framework;
@@ -48,7 +49,66 @@ namespace DNPDemo.Tests
                 null,
             };
             List<string> problems = ScenarioData.Validate(steps);
-            Assert.AreEqual(5, problems.Count, string.Join("\n", problems));
+            // duplicate id, empty id, interaction without actor, interaction without parts, unset cue, null step
+            Assert.AreEqual(6, problems.Count, string.Join("\n", problems));
+        }
+
+        [Test]
+        public void ValidateChecksInteractionParts()
+        {
+            var steps = new List<ScenarioStep>
+            {
+                new()
+                {
+                    Id = "unset-part", Completion = StepCompletion.Interaction, Actor = DemoRole.PlayerA,
+                    Interaction = new List<InteractionPart> { null },
+                },
+                new()
+                {
+                    Id = "parts-on-auto-step", Completion = StepCompletion.CuesFinished,
+                    Interaction = new List<InteractionPart> { new DummyInteractionPart(PenMode.Voice, "x") },
+                },
+                new()
+                {
+                    Id = "ok", Completion = StepCompletion.Interaction, Actor = DemoRole.PlayerB,
+                    Interaction = new List<InteractionPart> { new DummyInteractionPart(PenMode.Select, "x") },
+                },
+            };
+            List<string> problems = ScenarioData.Validate(steps);
+            Assert.AreEqual(2, problems.Count, string.Join("\n", problems));
+        }
+
+        [Test]
+        public void DefaultInteractionPartsFollowThePlan()
+        {
+            var expected = new Dictionary<string, PenMode[]>
+            {
+                ["s1-voice-left-arm"] = new[] { PenMode.Voice },
+                ["s2-move-apple"] = new[] { PenMode.Select, PenMode.Manipulate },
+                ["s2-regrip-apple"] = new[] { PenMode.Select, PenMode.Voice },
+                ["s2-slide-arm"] = new[] { PenMode.Select, PenMode.Manipulate },
+                ["s2-guide-curve"] = new[] { PenMode.Guide },
+                ["s3-draw-mirror"] = new[] { PenMode.Guide, PenMode.Voice },
+                ["s3-place-mirror"] = new[] { PenMode.Manipulate },
+                ["s3-grip-mirror"] = new[] { PenMode.Select, PenMode.Voice },
+                ["s3-adjust-wrist"] = new[] { PenMode.Select, PenMode.Manipulate },
+                ["p2-compare"] = new[] { PenMode.Panel },
+                ["p3-temple"] = new[] { PenMode.Select, PenMode.Voice },
+            };
+            foreach (ScenarioStep step in DefaultSteps)
+            {
+                if (step.Completion != StepCompletion.Interaction)
+                {
+                    continue;
+                }
+                Assert.IsTrue(expected.TryGetValue(step.Id, out PenMode[] modes), $"{step.Id} is not an operation of docs/PLAN.md §3.");
+                Assert.AreEqual(modes.Length, step.Interaction.Count, step.Id);
+                for (int i = 0; i < modes.Length; i++)
+                {
+                    Assert.AreEqual(modes[i], step.Interaction[i].Mode, $"{step.Id} part {i}");
+                    Assert.IsFalse(string.IsNullOrEmpty(step.Interaction[i].Instruction), $"{step.Id} part {i} needs an instruction.");
+                }
+            }
         }
 
         [Test]

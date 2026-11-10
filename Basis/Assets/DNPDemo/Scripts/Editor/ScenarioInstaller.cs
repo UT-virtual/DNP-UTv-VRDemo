@@ -1,3 +1,4 @@
+using DNPDemo.Interaction;
 using DNPDemo.Operator;
 using DNPDemo.Presentation;
 using DNPDemo.Roles;
@@ -9,15 +10,17 @@ namespace DNPDemo.Editor
 {
     /// <summary>
     /// Builds the scenario engine into the DemoSystems prefab and wires every reference inside it: director, stage,
-    /// player, operator input and panel, narrator voice and subtitle, effects and banner.
+    /// player, operator input and panel, narrator voice and subtitle, effects and banner, and the interaction runner
+    /// with its tools. Only what is missing is added, so running it again after an update installs the new parts and
+    /// leaves hand edits alone. Afterwards the prefab is the source of truth and is edited by hand.
     /// Scholars and keyed objects are not wired here; they declare themselves with
     /// <see cref="ScenarioSpeakerBinding"/> / <see cref="ScenarioObjectBinding"/> in their own prefabs.
-    /// It runs once; afterwards the prefab is the source of truth and is edited by hand.
     /// </summary>
     public static class ScenarioInstaller
     {
         public const string DemoSystemsPrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/DemoSystems.prefab";
         public const string ScenarioObjectName = "Scenario";
+        public const string InteractionObjectName = "Interaction";
 
         [MenuItem("DNP Demo/Setup/Install Scenario Into DemoSystems Prefab")]
         public static void Install()
@@ -30,20 +33,33 @@ namespace DNPDemo.Editor
             GameObject root = PrefabUtility.LoadPrefabContents(DemoSystemsPrefabPath);
             try
             {
-                if (root.transform.Find(ScenarioObjectName) != null)
-                {
-                    Fail($"{DemoSystemsPrefabPath} には {ScenarioObjectName} が既にあります。作り直す場合は先に削除してください。");
-                    return;
-                }
                 var roles = root.GetComponentInChildren<DemoRoleService>(true);
                 if (roles == null)
                 {
                     Fail($"{DemoSystemsPrefabPath} に DemoRoleService がありません。");
                     return;
                 }
-                Build(root.transform, roles);
-                PrefabUtility.SaveAsPrefabAsset(root, DemoSystemsPrefabPath);
-                Debug.Log($"[DNPDemo] Installed {ScenarioObjectName} into {DemoSystemsPrefabPath}.");
+                bool changed = false;
+                Transform scenario = root.transform.Find(ScenarioObjectName);
+                if (scenario == null)
+                {
+                    scenario = BuildScenario(root.transform, roles);
+                    changed = true;
+                }
+                if (scenario.Find(InteractionObjectName) == null)
+                {
+                    BuildInteraction(scenario, roles);
+                    changed = true;
+                }
+                if (changed)
+                {
+                    PrefabUtility.SaveAsPrefabAsset(root, DemoSystemsPrefabPath);
+                    Debug.Log($"[DNPDemo] Installed the scenario into {DemoSystemsPrefabPath}.");
+                }
+                else
+                {
+                    Debug.Log($"[DNPDemo] {DemoSystemsPrefabPath} already has everything installed.");
+                }
             }
             finally
             {
@@ -51,7 +67,7 @@ namespace DNPDemo.Editor
             }
         }
 
-        static void Build(Transform parent, DemoRoleService roles)
+        static Transform BuildScenario(Transform parent, DemoRoleService roles)
         {
             ScenarioData data = ScenarioDataBuilder.CreateIfMissing();
             ScenarioPrefabBuilder.CreateAllIfMissing();
@@ -83,6 +99,26 @@ namespace DNPDemo.Editor
 
             var narrator = narratorVoice.gameObject.AddComponent<ScenarioSpeakerBinding>();
             SetSpeakerBinding(narrator, ScenarioSpeaker.Narrator, narratorVoice, narratorSubtitle);
+            return scenario.transform;
+        }
+
+        /// <summary>Adds the interaction runner and the tools it can hand parts to.</summary>
+        static void BuildInteraction(Transform scenario, DemoRoleService roles)
+        {
+            InteractionPrefabBuilder.CreateAllIfMissing();
+
+            var interaction = new GameObject(InteractionObjectName);
+            interaction.transform.SetParent(scenario, false);
+            var runner = interaction.AddComponent<InteractionRunner>();
+            var dummy = InstantiatePrefab<DummyInteractionTool>(InteractionPrefabBuilder.DummyToolPath, interaction.transform);
+
+            WorldUiBuilder.Assign(runner, "_director", scenario.GetComponent<ScenarioDirector>());
+            WorldUiBuilder.Assign(runner, "_roles", roles);
+            var so = new SerializedObject(runner);
+            SerializedProperty tools = so.FindProperty("_tools");
+            tools.arraySize = 1;
+            tools.GetArrayElementAtIndex(0).objectReferenceValue = dummy;
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         /// <summary>Fills a <see cref="ScenarioSpeakerBinding"/>. Also used when building the scholar prefabs.</summary>

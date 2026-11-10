@@ -135,15 +135,5 @@ namespace DNPDemo.Editor
             Assign(view, "_speakerText", speaker);
             Assign(view, "_bodyText", body);
         }
-
-        static void AddHeadFollower(GameObject root, float distance, float heightOffset, float sharpness)
-        {
-            var follower = root.AddComponent<HeadFollower>();
-            var so = new SerializedObject(follower);
-            so.FindProperty("_distance").floatValue = distance;
-            so.FindProperty("_heightOffset").floatValue = heightOffset;
-            so.FindProperty("_followSharpness").floatValue = sharpness;
-            so.ApplyModifiedPropertiesWithoutUndo();
-        }
     }
 }

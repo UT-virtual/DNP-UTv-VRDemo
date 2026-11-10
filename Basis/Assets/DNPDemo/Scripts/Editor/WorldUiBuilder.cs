@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Basis.Scripts.UI;
+using DNPDemo.Presentation;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -135,6 +136,17 @@ namespace DNPDemo.Editor
             rect.anchorMax = anchorMax;
             rect.offsetMin = offsetMin;
             rect.offsetMax = offsetMax;
+        }
+
+        /// <summary>Makes <paramref name="root"/> follow the viewer's head at the given distance and height offset.</summary>
+        public static void AddHeadFollower(GameObject root, float distance, float heightOffset, float sharpness)
+        {
+            var follower = root.AddComponent<HeadFollower>();
+            var so = new SerializedObject(follower);
+            so.FindProperty("_distance").floatValue = distance;
+            so.FindProperty("_heightOffset").floatValue = heightOffset;
+            so.FindProperty("_followSharpness").floatValue = sharpness;
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         /// <summary>Assigns a serialized object reference by field name (works for private [SerializeField] fields).</summary>
