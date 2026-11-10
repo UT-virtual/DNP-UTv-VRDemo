@@ -43,6 +43,8 @@ namespace DNPDemo.Scenario.Cues
             }
         }
 
+        public override void CollectRequirements(ScenarioRequirements requirements) => requirements.Speakers.Add(Speaker);
+
         public override string ToString()
         {
             string speaker = Speaker == ScenarioSpeaker.Narrator ? "ナレーター" : Speaker.ToDisplayName();

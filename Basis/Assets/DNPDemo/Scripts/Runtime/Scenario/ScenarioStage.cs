@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using DNPDemo.Presentation;
 using UnityEngine;
@@ -7,33 +6,17 @@ namespace DNPDemo.Scenario
 {
     /// <summary>
     /// The scene side of the scenario. <see cref="ScenarioData"/> is an asset and cannot reference scene objects,
-    /// so cues address speakers and objects through the bindings registered here.
+    /// so cues address speakers and objects through the bindings declared on those objects
+    /// (<see cref="ScenarioSpeakerBinding"/>, <see cref="ScenarioObjectBinding"/>). The stage collects them from its
+    /// scene once, on Awake, inactive objects included; each binding lives in the prefab of the object it describes.
     /// <para>
     /// It also owns everything a cue can leave behind: <see cref="StopTransient"/> silences lines and effects when
-    /// playback is cut, and <see cref="ResetToBaseline"/> returns every persistent target to its state at scene load
+    /// playback is cut, and <see cref="ResetToBaseline"/> returns every bound object to its state at scene load
     /// before the lasting effects of earlier steps are re-applied.
     /// </para>
     /// </summary>
     public sealed class ScenarioStage : MonoBehaviour
     {
-        [Serializable]
-        public sealed class SpeakerBinding
-        {
-            public ScenarioSpeaker Speaker;
-            public AudioSource Voice;
-            public SubtitleView Subtitle;
-        }
-
-        [Serializable]
-        public sealed class ObjectBinding
-        {
-            public string Key;
-            public GameObject Target;
-        }
-
-        [SerializeField] List<SpeakerBinding> _speakers = new();
-        [SerializeField] List<ObjectBinding> _objects = new();
-
         [Tooltip("Non-positional source for sound effects.")]
         [SerializeField] AudioSource _effects;
 
@@ -41,19 +24,17 @@ namespace DNPDemo.Scenario
 
         readonly Dictionary<GameObject, bool> _baselineActive = new();
         readonly HashSet<string> _reportedMissing = new();
-        bool _baselineCaptured;
+        ScenarioBindingSet _bindings;
 
         void Awake()
         {
-            CaptureBaseline();
+            EnsureBindings();
         }
 
         public void ShowLine(ScenarioSpeaker speaker, string text, AudioClip voice)
         {
-            SpeakerBinding binding = FindSpeaker(speaker);
-            if (binding == null)
+            if (!TryGetSpeaker(speaker, out ScenarioSpeakerBinding binding))
             {
-                ReportMissing("speaker:" + speaker, $"話者 {speaker} の割り当てがありません。");
                 return;
             }
             if (binding.Subtitle != null)
@@ -70,8 +51,7 @@ namespace DNPDemo.Scenario
 
         public void EndLine(ScenarioSpeaker speaker)
         {
-            SpeakerBinding binding = FindSpeaker(speaker);
-            if (binding != null && binding.Subtitle != null)
+            if (TryGetSpeaker(speaker, out ScenarioSpeakerBinding binding) && binding.Subtitle != null)
             {
                 binding.Subtitle.Hide();
             }
@@ -87,10 +67,10 @@ namespace DNPDemo.Scenario
 
         public void SetObjectActive(string key, bool active)
         {
-            GameObject target = FindObject(key);
-            if (target == null)
+            EnsureBindings();
+            if (!_bindings.TryGetObject(key, out GameObject target) || target == null)
             {
-                ReportMissing("object:" + key, $"キー「{key}」のオブジェクトが登録されていません。");
+                ReportMissing("object:" + key, $"キー「{key}」のオブジェクト（ScenarioObjectBinding）がシーンにありません。");
                 return;
             }
             target.SetActive(active);
@@ -116,7 +96,8 @@ namespace DNPDemo.Scenario
         /// <summary>Stops voices and effects and hides subtitles. Called when playback of a step is cut.</summary>
         public void StopTransient()
         {
-            foreach (SpeakerBinding binding in _speakers)
+            EnsureBindings();
+            foreach (ScenarioSpeakerBinding binding in _bindings.Speakers.Values)
             {
                 if (binding == null) continue;
                 if (binding.Voice != null) binding.Voice.Stop();
@@ -128,10 +109,10 @@ namespace DNPDemo.Scenario
             }
         }
 
-        /// <summary>Returns every persistent target to its state at scene load.</summary>
+        /// <summary>Returns every bound object to its state at scene load.</summary>
         public void ResetToBaseline()
         {
-            CaptureBaseline();
+            EnsureBindings();
             foreach (KeyValuePair<GameObject, bool> pair in _baselineActive)
             {
                 if (pair.Key != null)
@@ -145,44 +126,36 @@ namespace DNPDemo.Scenario
             }
         }
 
-        void CaptureBaseline()
+        /// <summary>Collects the bindings and records the baseline the first time anything needs them.</summary>
+        void EnsureBindings()
         {
-            if (_baselineCaptured)
+            if (_bindings != null)
             {
                 return;
             }
-            _baselineCaptured = true;
-            foreach (ObjectBinding binding in _objects)
+            _bindings = ScenarioBindingSet.Collect(gameObject.scene);
+            foreach (string problem in _bindings.Problems)
             {
-                if (binding != null && binding.Target != null && !_baselineActive.ContainsKey(binding.Target))
+                Debug.LogError("[DNPDemo] " + problem, this);
+            }
+            foreach (GameObject target in _bindings.Objects.Values)
+            {
+                if (target != null && !_baselineActive.ContainsKey(target))
                 {
-                    _baselineActive.Add(binding.Target, binding.Target.activeSelf);
+                    _baselineActive.Add(target, target.activeSelf);
                 }
             }
         }
 
-        SpeakerBinding FindSpeaker(ScenarioSpeaker speaker)
+        bool TryGetSpeaker(ScenarioSpeaker speaker, out ScenarioSpeakerBinding binding)
         {
-            foreach (SpeakerBinding binding in _speakers)
+            EnsureBindings();
+            if (_bindings.TryGetSpeaker(speaker, out binding) && binding != null)
             {
-                if (binding != null && binding.Speaker == speaker)
-                {
-                    return binding;
-                }
+                return true;
             }
-            return null;
-        }
-
-        GameObject FindObject(string key)
-        {
-            foreach (ObjectBinding binding in _objects)
-            {
-                if (binding != null && binding.Key == key)
-                {
-                    return binding.Target;
-                }
-            }
-            return null;
+            ReportMissing("speaker:" + speaker, $"話者 {speaker} の割り当て（ScenarioSpeakerBinding）がシーンにありません。");
+            return false;
         }
 
         void ReportMissing(string id, string message)
