@@ -27,6 +27,11 @@ namespace DNPDemo.Scenario.Cues
         {
         }
 
+        /// <summary>Adds the scene bindings (speakers, object keys) this cue addresses through <see cref="ScenarioStage"/>.</summary>
+        public virtual void CollectRequirements(ScenarioRequirements requirements)
+        {
+        }
+
         /// <summary>One-line summary used as the inspector label.</summary>
         public abstract override string ToString();
     }

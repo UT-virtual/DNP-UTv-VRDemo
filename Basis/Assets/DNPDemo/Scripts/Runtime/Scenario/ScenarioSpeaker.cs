@@ -1,6 +1,6 @@
 namespace DNPDemo.Scenario
 {
-    /// <summary>Who delivers a line. Each speaker is bound to a voice source and a subtitle view in <see cref="ScenarioStage"/>.</summary>
+    /// <summary>Who delivers a line. Each speaker is bound to a voice source and a subtitle view by a <see cref="ScenarioSpeakerBinding"/> in the scene.</summary>
     public enum ScenarioSpeaker : byte
     {
         Narrator = 0,

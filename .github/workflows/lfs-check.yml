@@ -1,0 +1,35 @@
+name: LFS Check
+
+# Fails when a file that .gitattributes routes to Git LFS was committed as a plain git blob
+# (for example by a clone where Git LFS is not installed).
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  pointers:
+    name: LFS files are committed as pointers
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: false
+
+      - name: Verify LFS pointers in the new commits
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          BASE="${PR_BASE:-$PUSH_BEFORE}"
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "比較元のコミットがないため、HEAD だけを検査します。"
+            git lfs fsck --pointers HEAD
+          else
+            git lfs fsck --pointers "$BASE..HEAD"
+          fi
