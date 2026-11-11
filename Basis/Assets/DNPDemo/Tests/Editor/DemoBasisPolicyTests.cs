@@ -48,5 +48,11 @@ namespace DNPDemo.Tests
                 Assert.IsTrue(orders.Add(provider.Order), $"Duplicate order {provider.Order}");
             }
         }
+
+        [Test]
+        public void KeepsMenuButtonBound()
+        {
+            CollectionAssert.DoesNotContain(DemoInputPolicy.RemovedActions, BasisActionDriver.ActionId.ToggleHamburgerOnSecondaryRelease);
+        }
     }
 }

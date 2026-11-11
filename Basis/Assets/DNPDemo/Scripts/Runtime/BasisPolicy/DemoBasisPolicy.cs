@@ -7,6 +7,7 @@ namespace DNPDemo.BasisPolicy
     /// This project only ships the demo, so the policy applies to every scene in play mode and in builds.
     /// <list type="bullet">
     /// <item><see cref="DemoMenuPolicy"/>: the main menu (Y) keeps only the demo's own entries.</item>
+    /// <item><see cref="DemoInputPolicy"/>: X (mute), A (jump) and grip (descend) do nothing.</item>
     /// </list>
     /// </summary>
     static class DemoBasisPolicy
@@ -15,6 +16,7 @@ namespace DNPDemo.BasisPolicy
         static void Install()
         {
             DemoMenuPolicy.Install();
+            DemoInputPolicy.Install();
         }
     }
 }
