@@ -6,12 +6,16 @@ using Basis.Scripts.Device_Management;
 namespace DNPDemo.BasisPolicy
 {
     /// <summary>
-    /// Pins Basis settings that would let a visitor grab or move things the demo does not expect.
+    /// Pins Basis settings that would let a visitor grab or move things the demo does not expect, and hides the
+    /// microphone icon.
     /// Settings persist on the device, so values changed during development are overwritten here once Basis has
     /// loaded them. The settings page is not on the demo menu, so they cannot be changed back during the demo.
     /// </summary>
     static class DemoSettingsPolicy
     {
+        // The value SMModuleIcons maps to MicrophoneDisplayMode.Off.
+        internal const string MicrophoneIconHidden = "hidden";
+
         internal static void Install()
         {
             BasisDeviceManagement.OnInitializationCompleted -= Apply;
@@ -20,10 +24,8 @@ namespace DNPDemo.BasisPolicy
 
         static void Apply()
         {
-#if !BASIS_DISABLE_MICROPHONE
-            // MicrophoneMuteLock keeps the microphone muted; starting muted avoids unmuting for a frame at launch.
-            Pin(BasisSettingsDefaults.MicStartBehavior, BasisLocalMicrophoneDriver.SettingStartOff);
-#endif
+            // The microphone icon. MicrophoneMuteLock keeps the microphone muted, so it would only ever show muted.
+            Pin(BasisSettingsDefaults.MicrophoneIcon, MicrophoneIconHidden);
             // Grabbing another player's hair or clothes (trigger or grip).
             Pin(BasisSettingsDefaults.JiggleGrabInteractions, false);
             // Picking up props (trigger or grip).

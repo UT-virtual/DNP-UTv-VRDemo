@@ -8,7 +8,8 @@ namespace DNPDemo.BasisPolicy
     /// <list type="bullet">
     /// <item><see cref="DemoMenuPolicy"/>: the main menu (Y) keeps only the demo's own entries.</item>
     /// <item><see cref="DemoInputPolicy"/>: X (mute), A (jump) and grip (descend) do nothing.</item>
-    /// <item><see cref="DemoSettingsPolicy"/>: grabbing avatars and props and the playspace mover stay off.</item>
+    /// <item><see cref="DemoSettingsPolicy"/>: grabbing avatars and props and the playspace mover stay off, and the
+    /// microphone icon is hidden.</item>
     /// <item><see cref="MicrophoneMuteLock"/>: the microphone stays muted; capture for voice commands still works.</item>
     /// </list>
     /// </summary>

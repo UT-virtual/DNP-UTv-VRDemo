@@ -54,5 +54,33 @@ namespace DNPDemo.Tests
         {
             CollectionAssert.DoesNotContain(DemoInputPolicy.RemovedActions, BasisActionDriver.ActionId.ToggleHamburgerOnSecondaryRelease);
         }
+
+#if !BASIS_DISABLE_MICROPHONE
+        [Test]
+        public void UnmuteIsIgnoredWhileLocked()
+        {
+            bool previousPaused = BasisLocalMicrophoneDriver.isPaused;
+            bool previousLocked = BasisLocalMicrophoneDriver.IsUnmuteLocked;
+            int pausedEvents = 0;
+            void CountPausedEvents(bool paused) => pausedEvents++;
+            BasisLocalMicrophoneDriver.OnPausedAction += CountPausedEvents;
+            try
+            {
+                BasisLocalMicrophoneDriver.isPaused = true;
+                BasisLocalMicrophoneDriver.SetUnmuteLocked(true);
+
+                BasisLocalMicrophoneDriver.ToggleIsPaused();
+
+                Assert.IsTrue(BasisLocalMicrophoneDriver.isPaused);
+                Assert.AreEqual(0, pausedEvents, "Subscribers must not hear about an unmute that did not happen.");
+            }
+            finally
+            {
+                BasisLocalMicrophoneDriver.OnPausedAction -= CountPausedEvents;
+                BasisLocalMicrophoneDriver.SetUnmuteLocked(previousLocked);
+                BasisLocalMicrophoneDriver.isPaused = previousPaused;
+            }
+        }
+#endif
     }
 }

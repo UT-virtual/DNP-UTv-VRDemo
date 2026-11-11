@@ -95,6 +95,22 @@ public static class BasisLocalMicrophoneDriver
 
     public static bool isPaused = false;
 
+    /// <summary>
+    /// While true the microphone cannot be unmuted. Unmute requests are ignored before any state changes, so
+    /// <see cref="OnPausedAction"/> never reports an unmute. Capture holds still record while muted.
+    /// </summary>
+    public static bool IsUnmuteLocked { get; private set; }
+
+    /// <summary>Locks or unlocks unmuting. Locking while unmuted mutes at once.</summary>
+    public static void SetUnmuteLocked(bool locked)
+    {
+        IsUnmuteLocked = locked;
+        if (locked && IsInitialize && !isPaused)
+        {
+            IsPaused = true;
+        }
+    }
+
     private static CancellationTokenSource processingTokenSource;
 
     private static int warmupSamples = 0;
@@ -168,6 +184,11 @@ public static class BasisLocalMicrophoneDriver
         get => isPaused;
         set
         {
+            if (!value && IsUnmuteLocked)
+            {
+                return;
+            }
+
             isPaused = value;
             PlayerPrefs.SetInt(MicrophoneState, isPaused ? 1 : 0);
 
@@ -218,7 +239,7 @@ public static class BasisLocalMicrophoneDriver
         if (IsInitialize) return true;
         try
         {
-            isPaused = ResolvePausedFromSettings();
+            isPaused = IsUnmuteLocked || ResolvePausedFromSettings();
             RegisterEvents();
 
             // Load emits one change event; ApplyMicSettings reacts.
