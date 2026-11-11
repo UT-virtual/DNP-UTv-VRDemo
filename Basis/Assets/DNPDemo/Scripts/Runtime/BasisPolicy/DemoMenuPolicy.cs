@@ -10,7 +10,7 @@ namespace DNPDemo.BasisPolicy
     /// Leaves only the demo's entries on the Basis main menu. Every other <see cref="BasisMenuActionProvider{TMenu}"/>
     /// type found in the loaded assemblies is suppressed through <see cref="BasisMenuBase{TMenu}.SuppressProvider(Type)"/>,
     /// so entries added by future Basis updates are blocked as well. Basis registers its entries after the scene loads,
-    /// so suppressing before the scene loads blocks them up front; Basis logs a warning per type when it does that.
+    /// so suppressing before the scene loads blocks them up front.
     /// </summary>
     static class DemoMenuPolicy
     {
@@ -22,16 +22,37 @@ namespace DNPDemo.BasisPolicy
 
         internal static void Install()
         {
-            foreach (Type type in FindSuppressedTypes(AppDomain.CurrentDomain.GetAssemblies()))
-            {
-                BasisMenuBase<BasisMainMenu>.SuppressProvider(type);
-            }
+            SuppressBasisProviders(FindSuppressedTypes(AppDomain.CurrentDomain.GetAssemblies()));
 
             // Remove first so the entries are not doubled when play mode starts without a domain reload.
             BasisMenuBase<BasisMainMenu>.Providers.RemoveAll(provider => provider is DemoMenuProvider);
             foreach (DemoMenuProvider provider in CreateDemoProviders())
             {
                 BasisMenuBase<BasisMainMenu>.AddProvider(provider);
+            }
+        }
+
+        /// <summary>
+        /// Suppresses the given provider types. Basis warns for every type that is not registered yet, which is all of
+        /// them at this point, so Basis logging is limited to errors while this runs and restored afterwards.
+        /// </summary>
+        static void SuppressBasisProviders(List<Type> types)
+        {
+            BasisDebug.MessageType previousLevel = BasisDebug.MinimumLevel;
+            if (previousLevel < BasisDebug.MessageType.Error)
+            {
+                BasisDebug.MinimumLevel = BasisDebug.MessageType.Error;
+            }
+            try
+            {
+                foreach (Type type in types)
+                {
+                    BasisMenuBase<BasisMainMenu>.SuppressProvider(type);
+                }
+            }
+            finally
+            {
+                BasisDebug.MinimumLevel = previousLevel;
             }
         }
 
