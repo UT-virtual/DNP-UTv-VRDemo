@@ -8,6 +8,7 @@ namespace DNPDemo.BasisPolicy
     /// <list type="bullet">
     /// <item><see cref="DemoMenuPolicy"/>: the main menu (Y) keeps only the demo's own entries.</item>
     /// <item><see cref="DemoInputPolicy"/>: X (mute), A (jump) and grip (descend) do nothing.</item>
+    /// <item><see cref="MicrophoneMuteLock"/>: the microphone stays muted; capture for voice commands still works.</item>
     /// </list>
     /// </summary>
     static class DemoBasisPolicy
@@ -17,6 +18,7 @@ namespace DNPDemo.BasisPolicy
         {
             DemoMenuPolicy.Install();
             DemoInputPolicy.Install();
+            MicrophoneMuteLock.Install();
         }
     }
 }
