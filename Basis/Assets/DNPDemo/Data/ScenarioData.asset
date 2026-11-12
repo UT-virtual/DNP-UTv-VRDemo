@@ -1,0 +1,562 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85eb7dfc6aa3b7e498d8b4a29884239e, type: 3}
+  m_Name: ScenarioData
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Scenario.ScenarioData
+  _lineTiming:
+    SecondsPerCharacter: 0.13
+    MinimumSeconds: 1.5
+    GapSeconds: 0.4
+  _steps:
+  - Id: lobby
+    Title: "\u30ED\u30D3\u30FC\uFF08\u63A5\u7D9A\u5F85\u3061\uFF09"
+    Actor: 0
+    Completion: 1
+    TaskText: 
+    Interaction: []
+    Cues: []
+  - Id: opening
+    Title: "Opening \u30CA\u30EC\u30FC\u30BF\u30FC\u5C0E\u5165"
+    Actor: 0
+    Completion: 0
+    TaskText: 
+    Interaction: []
+    Cues:
+    - rid: 1662061592158404874
+    - rid: 1662061592158404875
+    - rid: 1662061592158404876
+    - rid: 1662061592158404877
+    - rid: 1662061592158404878
+  - Id: s1-apple-theory
+    Title: "Scene 1 \u6797\u6A8E\u8AAC"
+    Actor: 0
+    Completion: 0
+    TaskText: 
+    Interaction: []
+    Cues:
+    - rid: 1662061592158404879
+    - rid: 1662061592158404880
+    - rid: 1662061592158404881
+  - Id: s1-voice-left-arm
+    Title: "Scene 1 [A] \u5DE6\u8155\u3092\u97F3\u58F0\u751F\u6210"
+    Actor: 1
+    Completion: 2
+    TaskText: "\u97F3\u58F0\u751F\u6210\u3092\u8D77\u52D5\u3057\u3001\u300C\u73FE\u5728\u306E\u30F4\u30A3\u30FC\u30CA\u30B9\u306B\u3064\u3044\u3066\u3001\u624B\u306E\u3072\u3089\u306B\u6797\u6A8E\u304C\u306E\u3063\u305F\u6C34\u5E73\u306B\u4F38\u3073\u308B\u5DE6\u624B\u3092\u8FFD\u52A0\u300D\u3068\u51FA\u529B\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404911
+    Cues: []
+  - Id: s1-concerns
+    Title: "Scene 1 \u69CB\u9020\u306E\u61F8\u5FF5"
+    Actor: 0
+    Completion: 0
+    TaskText: 
+    Interaction: []
+    Cues:
+    - rid: 1662061592158404882
+    - rid: 1662061592158404883
+    - rid: 1662061592158404884
+    - rid: 1662061592158404885
+  - Id: s2-request-b
+    Title: "Scene 2 \u5B66\u8005B\u3078\u306E\u4F9D\u983C"
+    Actor: 0
+    Completion: 0
+    TaskText: 
+    Interaction: []
+    Cues:
+    - rid: 1662061592158404886
+    - rid: 1662061592158404887
+  - Id: s2-move-apple
+    Title: "Scene 2 [B] \u6797\u6A8E\u3092\u624B\u306E\u4E0B\u3078"
+    Actor: 2
+    Completion: 2
+    TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u6797\u6A8E\u306E\u9818\u57DF\u3092\u9078\u629E\u3057\u3001\u6797\u6A8E\u306E\u4F4D\u7F6E\u3092\u8ABF\u6574\u305B\u3088\u3002\uFF08\u624B\u306E\u4E0B\u306B\u6301\u3063\u3066\u304F\u308B\uFF09"
+    Interaction:
+    - rid: 1662061592158404912
+    - rid: 1662061592158404913
+    Cues: []
+  - Id: s2-regrip-apple
+    Title: "Scene 2 [B] \u6797\u6A8E\u306E\u6301\u3061\u65B9\u3092\u4FEE\u6B63"
+    Actor: 2
+    Completion: 2
+    TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u8155\u3092\u9078\u629E\u3057\u3001\u300C\u9078\u629E\u3057\u305F\u7BC4\u56F2\u306B\u3064\u3044\u3066\u3001\u4E0A\u304B\u3089\u30DC\u30FC\u30EB\u3092\u5305\u307F\u8FBC\u3080\u3088\u3046\u306B\u6797\u6A8E\u3092\u6301\u3061\u76F4\u3059\u5F62\u306B\u4FEE\u6B63\u300D\u3068\u5165\u529B\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404914
+    - rid: 1662061592158404915
+    Cues: []
+  - Id: s2-natural-curve
+    Title: "Scene 2 \u81EA\u7136\u306A\u30AB\u30FC\u30D6"
+    Actor: 0
+    Completion: 0
+    TaskText: 
+    Interaction: []
+    Cues:
+    - rid: 1662061592158404888
+    - rid: 1662061592158404889
+    - rid: 1662061592158404890
+  - Id: s2-slide-arm
+    Title: "Scene 2 [B] \u8155\u3092\u5185\u5074\u3078"
+    Actor: 2
+    Completion: 2
+    TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u5DE6\u80A9\u304B\u3089\u8098\u306E\u9818\u57DF\u3092\u9078\u629E\u3057\u3001\u8155\u306E\u89D2\u5EA6\u3092\u5185\u5074\u3078\u30B9\u30E9\u30A4\u30C9\u4FEE\u6B63\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404916
+    - rid: 1662061592158404917
+    Cues: []
+  - Id: s2-mismatch
+    Title: "Scene 2 \u30A4\u30E1\u30FC\u30B8\u306E\u30BA\u30EC"
+    Actor: 0
+    Completion: 0
+    TaskText: 
+    Interaction: []
+    Cues:
+    - rid: 1662061592158404891
+  - Id: s2-guide-curve
+    Title: "Scene 2 [A] \u30AC\u30A4\u30C9\u3067\u30AB\u30FC\u30D6\u3092\u63CF\u304F"
+    Actor: 1
+    Completion: 2
+    TaskText: "\u7A7A\u9593\u30DA\u30F3\uFF08\u30AC\u30A4\u30C9\u30E2\u30FC\u30C9\uFF09\u3092\u4F7F\u7528\u3057\u3001\u5DE6\u80A9\u304B\u3089\u80F8\u306E\u524D\u3078\u300C\u7DE9\u3084\u304B\u306A\u30AB\u30FC\u30D6\u3092\u63CF\u304F\u8ECC\u8DE1\u300D\u3092\u306A\u305E\u308B\u3088\u3046\u306B\u63CF\u3051\u3002"
+    Interaction:
+    - rid: 1662061592158404918
+    Cues: []
+  - Id: s3-hand-mirror
+    Title: "Scene 3 \u53F3\u8155\u3068\u624B\u93E1"
+    Actor: 0
+    Completion: 0
+    TaskText: 
+    Interaction: []
+    Cues:
+    - rid: 1662061592158404892
+    - rid: 1662061592158404893
+  - Id: s3-draw-mirror
+    Title: "Scene 3 [A] \u624B\u93E1\u306E\u7DDA\u753B\u3092\u5909\u63DB"
+    Actor: 1
+    Completion: 2
+    TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u7A7A\u4E2D\u306B\u624B\u93E1\u306E\u7DDA\u753B\u3092\u63CF\u3051\u3002\u300C\u7DDA\u753B\u3092\u897F\u6D0B\u306E\u30A2\u30F3\u30C6\u30A3\u30FC\u30AF\u306A\u624B\u93E1\u306B\u5909\u63DB\u300D\u3068\u97F3\u58F0\u6307\u793A\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404919
+    - rid: 1662061592158404920
+    Cues: []
+  - Id: s3-place-mirror
+    Title: "Scene 3 [A] \u624B\u93E1\u3092\u79FB\u52D5"
+    Actor: 1
+    Completion: 2
+    TaskText: "\u751F\u6210\u3055\u308C\u305F\u624B\u93E1\u3092\u6240\u5B9A\u306E\u4F4D\u7F6E\u306B\u79FB\u52D5\u3055\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404921
+    Cues: []
+  - Id: s3-grip-mirror
+    Title: "Scene 3 [A] \u93E1\u3092\u63E1\u3089\u305B\u308B"
+    Actor: 1
+    Completion: 2
+    TaskText: "\u7D9A\u3051\u3066\u53F3\u80A9\u304B\u3089\u624B\u93E1\u307E\u3067\u9818\u57DF\u9078\u629E\u3057\u3001\u300C\u93E1\u3092\u63E1\u3089\u305B\u308B\u300D\u3068\u767A\u8A71\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404922
+    - rid: 1662061592158404923
+    Cues: []
+  - Id: s3-mirror-angle
+    Title: "Scene 3 \u93E1\u306E\u89D2\u5EA6\u306E\u6307\u6458"
+    Actor: 0
+    Completion: 0
+    TaskText: 
+    Interaction: []
+    Cues:
+    - rid: 1662061592158404894
+    - rid: 1662061592158404895
+    - rid: 1662061592158404896
+  - Id: s3-adjust-wrist
+    Title: "Scene 3 [B] \u624B\u9996\u306E\u89D2\u5EA6\u3092\u4FEE\u6B63"
+    Actor: 2
+    Completion: 2
+    TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u53F3\u624B\u9996\u3068\u624B\u93E1\u3092\u9818\u57DF\u9078\u629E\u3057\u3001\u7A7A\u9593\u30DA\u30F3\u3092\u7528\u3044\u306A\u304C\u3089\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u76EE\u7DDA\u306B\u5408\u308F\u305B\u3066\u93E1\u306E\u89D2\u5EA6\u3092\u4FEE\u6B63\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404924
+    - rid: 1662061592158404925
+    Cues: []
+  - Id: p2-review
+    Title: "Phase 2 \u632F\u308A\u8FD4\u308A\u306E\u63D0\u6848"
+    Actor: 0
+    Completion: 0
+    TaskText: 
+    Interaction: []
+    Cues:
+    - rid: 1662061592158404897
+    - rid: 1662061592158404898
+  - Id: p2-compare
+    Title: "Phase 2 [B] Ver 1.0 \u3068\u6BD4\u8F03"
+    Actor: 2
+    Completion: 2
+    TaskText: "\u5C65\u6B74\u4E00\u89A7\u304B\u3089Ver 1.0\u3092\u547C\u3073\u51FA\u3057\u3001\u5B8C\u6210\u6848\u306E\u96A3\u306B\u4E26\u3079\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404926
+    Cues: []
+  - Id: p3-temple-proposal
+    Title: "Phase 3 \u795E\u6BBF\u3067\u306E\u78BA\u8A8D"
+    Actor: 0
+    Completion: 0
+    TaskText: 
+    Interaction: []
+    Cues:
+    - rid: 1662061592158404899
+    - rid: 1662061592158404900
+    - rid: 1662061592158404901
+  - Id: p3-temple
+    Title: "Phase 3 [A] \u80CC\u666F\u3092\u795E\u6BBF\u306B"
+    Actor: 1
+    Completion: 2
+    TaskText: "\u5FA9\u5143\u6848\u306E\u30F4\u30A3\u30FC\u30CA\u30B9\u50CF\u3092\u9818\u57DF\u9078\u629E\u3002\u300C\u9078\u629E\u3057\u305F\u50CF\u306E\u80CC\u666F\u3092\u795E\u6BBF\u306B\u5909\u66F4\u300D\u3068\u97F3\u58F0\u6307\u793A\u305B\u3088\u3002"
+    Interaction:
+    - rid: 1662061592158404927
+    - rid: 1662061592158404928
+    Cues: []
+  - Id: closing
+    Title: "\u7D50\u3073"
+    Actor: 0
+    Completion: 3
+    TaskText: 
+    Interaction: []
+    Cues:
+    - rid: 1662061592158404902
+    - rid: 1662061592158404903
+    - rid: 1662061592158404904
+    - rid: 1662061592158404905
+    - rid: 1662061592158404906
+    - rid: 1662061592158404907
+    - rid: 1662061592158404908
+    - rid: 1662061592158404909
+    - rid: 1662061592158404910
+  references:
+    version: 2
+    RefIds:
+    - rid: 1662061592158404874
+      type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Key: Spotlight
+        Active: 1
+    - rid: 1662061592158404875
+      type: {class: WaitCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Seconds: 1
+    - rid: 1662061592158404876
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 0
+        Text: "\u3088\u3046\u3053\u305D\u3001\u6587\u5316\u8CA1\u306E\u5FA9\u5143\u30EF\u30FC\u30AF\u30B7\u30E7\u30C3\u30D7\u3078\u3002\n\u4ECA\u56DE\u306E\u30C6\u30FC\u30DE\u306F\u3001\u8A00\u8449\u3060\u3051\u3067\u306F\u3059\u308C\u9055\u3063\u3066\u3057\u307E\u3046\u300C\u8A8D\u8B58\u306E\u5DEE\u300D\u3092\u30013D\u7A7A\u9593\u306E\u64CD\u4F5C\u306B\u3088\u3063\u3066\u57CB\u3081\u308B\u3053\u3068\u3067\u3059\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404877
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 0
+        Text: "\u821E\u53F0\u306F\u3001\u5931\u308F\u308C\u305F\u30DF\u30ED\u306E\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u8155\u3092\u3081\u3050\u308B\u5FA9\u5143\u4F1A\u8B70\u3002\u795E\u8A71\u3084\u767A\u6398\u8A18\u9332\u304B\u3089\u59FF\u3092\u63A2\u308B\u8003\u53E4\u5B66\u8005\u3068\u3001\u77F3\u306E\u5F62\u72B6\u3084\u63A5\u5408\u90E8\u306B\u304B\u304B\u308B\u8CA0\u8377\u3092\u691C\u8A0E\u3059\u308B\u69CB\u9020\u529B\u5B66\u306E\u5C02\u9580\u5BB6\u304C\u8B70\u8AD6\u3057\u3066\u3044\u307E\u3059\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404878
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 0
+        Text: "\u4F53\u9A13\u8005\u306E\u304A\u4E8C\u4EBA\u306F\u3001\u305D\u308C\u305E\u308C\u306E\u5C02\u9580\u5BB6\u306E\u52A9\u624B\u3067\u3059\u3002\u304A\u624B\u5143\u306B\u306F\u30013D\u30E2\u30C7\u30EB\u306E\u751F\u6210\u3084\u4FEE\u6B63\u304C\u7C21\u5358\u306B\u3067\u304D\u308B\u7A7A\u9593\u30DA\u30F3\u304C\u3054\u3056\u3044\u307E\u3059\u3002\u753B\u9762\u306E\u6848\u5185\u306B\u5F93\u3063\u3066\u3001\u4E8C\u4EBA\u306E\u30A4\u30E1\u30FC\u30B8\u3092\u7A7A\u9593\u30DA\u30F3\u3092\u4F7F\u3063\u3066\u5177\u4F53\u7684\u306A\u5F62\u306B\u3057\u3066\u3044\u304D\u307E\u3057\u3087\u3046\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404879
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "\u30DF\u30ED\u306E\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u8FD1\u304F\u3067\u306F\u3001\u6797\u6A8E\u3092\u6301\u3063\u305F\u624B\u306E\u65AD\u7247\u304C\u898B\u3064\u304B\u3063\u3066\u3044\u307E\u3059\u3002\u3053\u306E\u3053\u3068\u304B\u3089\u8155\u304C\u6B20\u640D\u3059\u308B\u524D\u306F\u3001\u6797\u6A8E\u3092\u6301\u3063\u3066\u3044\u305F\u3068\u3044\u3046\u8AAC\u304C\u6709\u529B\u3060\u3068\u3055\u308C\u3066\u3044\u307E\u3059\u3002\u79C1\u306F\u3082\u3057\u3053\u306E\u8AAC\u304C\u672C\u5F53\u3067\u3042\u308C\u3070\u3001\u30F4\u30A3\u30FC\u30CA\u30B9\u306F\u524D\u65B9\u306B\u8155\u3092\u4F38\u3070\u3057\u3066\u6797\u6A8E\u3092\u63B2\u3052\u3066\u3044\u305F\u3068\u8003\u3048\u3066\u3044\u307E\u3059\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404880
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 2
+        Text: "\u306A\u308B\u307B\u3069...\u300E\u524D\u65B9\u306B\u8155\u3092\u4F38\u3070\u3057\u3066\u6797\u6A8E\u3092\u63B2\u3052\u308B\u300F\u59FF\u3067\u3059\u306D\u3002\u307E\u305A\u306F\u5148\u751F\u306E\u30A4\u30E1\u30FC\u30B8\u30923D\u30E2\u30C7\u30EB\u3067\u304A\u898B\u305B\u3057\u3066\u3044\u305F\u3060\u3044\u305F\u3051\u306A\u3044\u3067\u3057\u3087\u3046\u304B\uFF1F"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404881
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "\u5206\u304B\u308A\u307E\u3057\u305F\u3002\u4E00\u5EA6\u30013D\u30E2\u30C7\u30EB\u306B\u304A\u3053\u3057\u3066\u307F\u307E\u3057\u3087\u3046\uFF01"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404882
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "\u79C1\u304C\u8003\u3048\u308B\u3001\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u5DE6\u624B\u306E\u30A4\u30E1\u30FC\u30B8\u306F\u307E\u3055\u306B\u3053\u3093\u306A\u611F\u3058\u3067\u3059\u306D\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404883
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 2
+        Text: "\u3042\u308A\u304C\u3068\u3046\u3054\u3056\u3044\u307E\u3059\u3002\u3046\u30FC\u3080...\u79C1\u306E\u5C02\u9580\u306E\u69CB\u9020\u529B\u5B66\u7684\u306A\u89B3\u70B9\u304B\u3089\u3059\u308B\u3068\u3001\u8155\u3092\u3053\u3053\u307E\u3067\u6C34\u5E73\u306B\u4F38\u3070\u3059\u3053\u3068\u306F\u4ED8\u3051\u6839\u3078\u306E\u5927\u304D\u306A\u8CA0\u62C5\u306B\u7E4B\u304C\u308A\u305D\u3046\u3067\u3059\u3002\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u3088\u3046\u306A\u5927\u4E8B\u306A\u50CF\u3092\u6614\u306E\u8077\u4EBA\u304C\u3001\u4E0D\u5B89\u5B9A\u306A\u69CB\u9020\u3067\u4F5C\u308B\u3068\u306F\u3068\u3066\u3082\u601D\u3048\u306A\u3044\u3093\u3067\u3059\u3088\u306D..."
+        Voice: {fileID: 0}
+    - rid: 1662061592158404884
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "\u306A\u308B\u307B\u3069\u3002\u4ED6\u306B\u61F8\u5FF5\u70B9\u306A\u3069\u306F\u3054\u3056\u3044\u307E\u305B\u3093\u304B\uFF1F"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404885
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 2
+        Text: "\u305D\u3046\u3067\u3059\u306D...\u79C1\u7684\u306B\u306F\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u6797\u6A8E\u306E\u6301\u3061\u65B9\u3082\u6C17\u306B\u306A\u3063\u3066\u3044\u307E\u3059\u3002\u6B8B\u5B58\u3057\u3066\u3044\u308B\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u8107\u306E\u90E8\u5206\u3068\u3001\u73FE\u5728\u306E\u6797\u6A8E\u306E\u6301\u3061\u65B9\u304C\u3042\u307E\u308A\u4E00\u81F4\u3057\u3066\u3044\u308B\u3088\u3046\u306B\u601D\u3048\u306A\u3044\u3093\u3067\u3059\u3088\u306D\u3002\uFF21\u5148\u751F\u306E\u30A4\u30E1\u30FC\u30B8\u3067\u3059\u3068\u6797\u6A8E\u3092\u624B\u306E\u3072\u3089\u306E\u4E0A\u306B\u306E\u305B\u3066\u3044\u307E\u3059\u304C\u3001\u30DC\u30FC\u30EB\u3092\u6295\u3052\u308B\u6642\u306E\u3088\u3046\u306B\u3001\u4E0A\u304B\u3089\u6797\u6A8E\u3092\u5305\u307F\u8FBC\u3080\u3088\u3046\u306A\u6301\u3061\u65B9\u306E\u65B9\u304C\u8107\u306E\u3042\u305F\u308A\u306E\u7B4B\u8089\u306E\u52D5\u304D\u3068\u81EA\u7136\u306B\u3064\u306A\u304C\u308B\u3068\u8003\u3048\u3084\u3059\u3044\u3093\u3067\u3059\u3088\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404886
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "\u306A\u308B\u307B\u3069..\u69CB\u9020\u306E\u9762\u304B\u3089\u898B\u308B\u3068\u69D8\u3005\u306A\u554F\u984C\u304C\u3042\u308A\u305D\u3046\u3067\u3059\u306D\u3002\u3088\u308D\u3057\u3051\u308C\u3070\u3001B\u5148\u751F\u304C\u8003\u3048\u308B\u529B\u5B66\u7684\u306B\u5B89\u5B9A\u7684\u3067\u3001\u7B4B\u8089\u306E\u52D5\u304D\u306B\u3082\u77DB\u76FE\u304C\u306A\u3044\u30A2\u30A4\u30C7\u30A2\u30923D\u30E2\u30C7\u30EB\u3067\u51FA\u3057\u3066\u3044\u305F\u3060\u3051\u306A\u3044\u3067\u3057\u3087\u3046\u304B\uFF1F"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404887
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 2
+        Text: "\u305D\u3046\u3067\u3059\u306D\u3001\u4E00\u5EA6\u79C1\u306E\u8003\u3048\u3082\u30E2\u30C7\u30EB\u5316\u3057\u3066\u307F\u307E\u3057\u3087\u3046\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404888
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 2
+        Text: "\u6050\u3089\u304F\u3053\u3093\u306A\u611F\u3058\u306B\u306A\u308B\u304B\u3068\u601D\u308F\u308C\u307E\u3059\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404889
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "\u3042\u308A\u304C\u3068\u3046\u3054\u3056\u3044\u307E\u3059\u3002\u305D\u3046\u3067\u3059\u306D\u3001\u3001\u3001\u79C1\u306E\u6700\u521D\u306E\u6848\u3068\u6BD4\u3079\u308B\u3068\u3001\u3088\u308A\u624B\u306E\u5F62\u306F\u81EA\u7136\u306B\u306A\u308A\u307E\u3057\u305F\u306D\n\u305F\u3060\u4E00\u70B9\u6C17\u306B\u306A\u308B\u70B9\u304C\u3042\u308A\u307E\u3057\u3066\u3002\u3002\u3002\u8155\u306F\u3082\u3063\u3068\u8EAB\u4F53\u306E\u8F2A\u90ED\u306B\u6CBF\u3063\u3066\u3001\u8098\u3092\u66F2\u3052\u3066\u5F15\u304D\u5BC4\u305B\u308B\u3088\u3046\u306A\u81EA\u7136\u306A\u30AB\u30FC\u30D6\u306B\u306A\u3063\u3066\u3044\u305F\u65B9\u304C\u7F8E\u3057\u304F\u898B\u3048\u308B\u3068\u601D\u3046\u3093\u3067\u3059\u3088\u306D\u3002\u307B\u304B\u306E\u53E4\u5178\u5F6B\u523B\u3067\u3082\u3001\u8155\u306E\u81EA\u7136\u306A\u66F2\u7DDA\u304C\u7F8E\u3057\u3055\u3092\u751F\u3093\u3067\u3044\u307E\u3059\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404890
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 2
+        Text: "\u306A\u308B\u307B\u3069\u3002\u81EA\u7136\u306A\u30AB\u30FC\u30D6\u3067\u3059\u304B...\u3046\u30FC\u3093\u5C11\u3057\u30A4\u30E1\u30FC\u30B8\u304C\u96E3\u3057\u3044\u3067\u3059\u306D\u3002\u30E2\u30C7\u30EB\u3067\u8868\u73FE\u3059\u308B\u3068\u3053\u3093\u306A\u611F\u3058\u3067\u3057\u3087\u3046\u304B\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404891
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "\u3046\u30FC\u3093\u79C1\u306E\u30A4\u30E1\u30FC\u30B8\u3068\u30BA\u30EC\u3066\u3044\u307E\u3059\u306D\u3002\u79C1\u306E\u30A4\u30E1\u30FC\u30B8\u3060\u3068\u3053\u3093\u306A\u611F\u3058\u306A\u3093\u3067\u3059\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404892
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 2
+        Text: "\u3042\u30FC\u306A\u308B\u307B\u3069\u3002\u78BA\u304B\u306B\u3053\u308C\u306F\u51C4\u304F\u7DBA\u9E97\u3067\u3059\u306D\u3002\u529B\u5B66\u7684\u306B\u3082\u77DB\u76FE\u70B9\u304C\u306A\u3055\u305D\u3046\u3067\u3059\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404893
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "\u5DE6\u8155\u306F\u826F\u3044\u611F\u3058\u3067\u3059\u306D\u3002\u305D\u308C\u3067\u306F\u6B21\u306B\u53F3\u8155\u306E\u8A71\u306B\u79FB\u884C\u3057\u307E\u3057\u3087\u3046\u3002\u53E4\u5178\u5F6B\u523B\u306B\u304A\u3044\u3066\u306F\u624B\u93E1\u304C\u6797\u6A8E\u3068\u4E26\u3076\u4EE3\u8868\u7684\u306A\u30B7\u30F3\u30DC\u30EB\u3068\u3055\u308C\u3066\u3044\u308B\u306E\u3067\u3001\u53F3\u8155\u306B\u306F\u624B\u93E1\u304C\u3042\u3063\u305F\u3068\u8003\u3048\u3089\u308C\u307E\u3059\u3002\u4E00\u5EA63D\u30E2\u30C7\u30EB\u306B\u3057\u3066\u307F\u307E\u3059\u306D\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404894
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 2
+        Text: "\u306A\u308B\u307B\u3069...\u624B\u93E1\u3092\u6301\u3063\u3066\u3044\u308B\u306E\u306F\u7D0D\u5F97\u3067\u3059\u304C\u3001\u751F\u6210\u3055\u308C\u305F\u30E2\u30C7\u30EB\u3092\u898B\u308B\u3068\u3001\u624B\u93E1\u306E\u89D2\u5EA6\u304C\u304A\u304B\u3057\u3044\u304B\u3082\u3057\u308C\u307E\u305B\u3093\u306D\u3002\u306A\u3093\u3068\u3044\u3046\u304B\u3001\u3082\u3063\u3068\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u76EE\u7DDA\u306E\u5148\u306B\u624B\u93E1\u304C\u304F\u308B\u611F\u3058\u306E\u65B9\u304C\u826F\u3055\u305D\u3046\u3067\u3059\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404895
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "\u3048\u30FC\u3068\u3001\u3069\u3093\u306A\u611F\u3058\u3067\u3057\u3087\u3046\uFF1F
+          \u3088\u3051\u308C\u3070B\u3055\u3093\u306B\u4FEE\u6B63\u3092\u304A\u4EFB\u305B\u3057\u305F\u3044\u306E\u3067\u3059\u304C\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404896
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 2
+        Text: "\u627F\u77E5\u3057\u307E\u3057\u305F\u3002\u4E00\u65E6\u3001\u624B\u9996\u306E\u3072\u306D\u308A\u3092\u5C11\u3057\u8ABF\u6574\u3057\u3066\u307F\u307E\u3057\u3087\u3046\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404897
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "\u3042\u30FC\u3001\u3044\u3044\u3067\u3059\u306D\uFF01 \u8996\u7DDA\u3068\u6240\u4F5C\u304C\u3074\u3063\u305F\u308A\u5408\u3044\u307E\u3057\u305F\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404898
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 2
+        Text: "\u3067\u306F\u3001\u3053\u308C\u307E\u3067\u306E\u904E\u7A0B\u3092\u632F\u308A\u8FD4\u3063\u3066\u307F\u307E\u3057\u3087\u3046\u3002\u6700\u521D\u306E\u6848\u3068\u3001\u4ECA\u306E\u6848\u3092\u4E26\u3079\u3066\u307F\u3066\u304F\u3060\u3055\u3044\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404899
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "\u3046\u30FC\u3093\u3001\u3084\u306F\u308A\u3053\u3046\u3057\u3066\u307F\u308B\u3068\u73FE\u5728\u306E\u6848\u304C\u4E00\u756A\u7F8E\u3057\u304F\u898B\u3048\u307E\u3059\u306D\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404900
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 2
+        Text: "\u3048\u3048\u3001\u3068\u3066\u3082\u3044\u3044\u304B\u3093\u3058\u3067\u3059\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404901
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "\u6700\u5F8C\u306B\u5FA9\u5143\u6848\u306E\u30F4\u30A3\u30FC\u30CA\u30B9\u304C\u795E\u6BBF\u3092\u80CC\u666F\u306B\u3057\u3066\u3082\u81EA\u7136\u304B\u3069\u3046\u304B\u78BA\u304B\u3081\u3066\u307F\u307E\u3057\u3087\u3046"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404902
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "\u304A\u30FC\u3002\u73FE\u5728\u306E\u6848\u306F\u795E\u6BBF\u3068\u3082\u304B\u306A\u308A\u3088\u304F\u8ABF\u548C\u3057\u3066\u3044\u307E\u3059\u306D\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404903
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 2
+        Text: "\u3048\u3048\u3001\u898B\u305F\u76EE\u306E\u7F8E\u3057\u3055\u3068\u69CB\u9020\u306E\u81EA\u7136\u3055\u304C\u3001\u3046\u307E\u304F\u4E21\u7ACB\u3067\u304D\u307E\u3057\u305F\u306D"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404904
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 1
+        Text: "B\u3055\u3093\u306E\u92ED\u3044\u3054\u6307\u6458\u3084\u7A7A\u9593\u30DA\u30F3\u306B\u3088\u308B\u4FEE\u6B63\u304C\u30F4\u30A3\u30FC\u30CA\u30B9\u50CF\u306E\u5FA9\u5143\u6848\u306E\u69CB\u7BC9\u306B\u6709\u52B9\u7684\u3067\u3057\u305F\u3002\u3042\u308A\u304C\u3068\u3046\u3054\u3056\u3044\u307E\u3059\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404905
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 2
+        Text: "\u3053\u3061\u3089\u3053\u305D\u672C\u65E5\u306F\u3069\u3046\u3082\u3042\u308A\u304C\u3068\u3046\u3054\u3056\u3044\u307E\u3057\u305F\u3002"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404906
+      type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Speaker: 0
+        Text: "\u8A00\u8449\u304B\u3089\u751F\u307E\u308C\u305F\u300E\u8A8D\u8B58\u306E\u30BA\u30EC\u300F\u306B\u3064\u3044\u3066\u3001\u7A7A\u9593\u30C4\u30FC\u30EB\u3092\u4F7F\u3063\u3066\u4E92\u3044\u306E\u30A4\u30E1\u30FC\u30B8\u3092\u300E\u3059\u308A\u5408\u308F\u305B\u308B\u300F\u3002\n\u3053\u308C\u304C\u3001XR\u3068AI\u306B\u3088\u308B\u65B0\u3057\u3044\u5171\u5275\u306E\u5F62\u3067\u3059\u3002\u6587\u5316\u8CA1\u5FA9\u5143\u30EF\u30FC\u30AF\u30B7\u30E7\u30C3\u30D7\u3001\u3053\u308C\u306B\u3066\u7D42\u4E86\u3067\u3059"
+        Voice: {fileID: 0}
+    - rid: 1662061592158404907
+      type: {class: WaitCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Seconds: 1
+    - rid: 1662061592158404908
+      type: {class: BannerCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Visible: 1
+        Text: WORKSHOP COMPLETE
+        FadeSeconds: 1.5
+    - rid: 1662061592158404909
+      type: {class: WaitCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Seconds: 5
+    - rid: 1662061592158404910
+      type: {class: BannerCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Visible: 0
+        Text: WORKSHOP COMPLETE
+        FadeSeconds: 2
+    - rid: 1662061592158404911
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u300C\u624B\u306E\u3072\u3089\u306B\u6797\u6A8E\u304C\u306E\u3063\u305F\u6C34\u5E73\u306B\u4F38\u3073\u308B\u5DE6\u624B\u3092\u8FFD\u52A0\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
+        SimulatedMode: 4
+        RequiredPresses: 3
+    - rid: 1662061592158404912
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u6797\u6A8E\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
+        SimulatedMode: 1
+        RequiredPresses: 3
+    - rid: 1662061592158404913
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u6797\u6A8E\u3092\u624B\u306E\u4E0B\u3078\u79FB\u52D5\u3059\u308B"
+        SimulatedMode: 3
+        RequiredPresses: 3
+    - rid: 1662061592158404914
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u5DE6\u624B\u304B\u3089\u524D\u8155\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
+        SimulatedMode: 1
+        RequiredPresses: 3
+    - rid: 1662061592158404915
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u300C\u4E0A\u304B\u3089\u30DC\u30FC\u30EB\u3092\u5305\u307F\u8FBC\u3080\u3088\u3046\u306B\u6797\u6A8E\u3092\u6301\u3061\u76F4\u3059\u5F62\u306B\u4FEE\u6B63\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
+        SimulatedMode: 4
+        RequiredPresses: 3
+    - rid: 1662061592158404916
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u5DE6\u80A9\u304B\u3089\u8098\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
+        SimulatedMode: 1
+        RequiredPresses: 3
+    - rid: 1662061592158404917
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u8155\u3092\u5185\u5074\u3078\u30B9\u30E9\u30A4\u30C9\u3059\u308B"
+        SimulatedMode: 3
+        RequiredPresses: 3
+    - rid: 1662061592158404918
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u5DE6\u80A9\u304B\u3089\u80F8\u306E\u524D\u3078\u7DE9\u3084\u304B\u306A\u30AB\u30FC\u30D6\u3092\u63CF\u304F"
+        SimulatedMode: 2
+        RequiredPresses: 3
+    - rid: 1662061592158404919
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u7A7A\u4E2D\u306B\u624B\u93E1\u306E\u7DDA\u753B\u3092\u63CF\u304F"
+        SimulatedMode: 2
+        RequiredPresses: 3
+    - rid: 1662061592158404920
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u300C\u7DDA\u753B\u3092\u897F\u6D0B\u306E\u30A2\u30F3\u30C6\u30A3\u30FC\u30AF\u306A\u624B\u93E1\u306B\u5909\u63DB\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
+        SimulatedMode: 4
+        RequiredPresses: 3
+    - rid: 1662061592158404921
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u624B\u93E1\u3092\u6240\u5B9A\u306E\u4F4D\u7F6E\u3078\u79FB\u52D5\u3059\u308B"
+        SimulatedMode: 3
+        RequiredPresses: 3
+    - rid: 1662061592158404922
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u53F3\u80A9\u304B\u3089\u624B\u93E1\u307E\u3067\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
+        SimulatedMode: 1
+        RequiredPresses: 3
+    - rid: 1662061592158404923
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u300C\u93E1\u3092\u63E1\u3089\u305B\u308B\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
+        SimulatedMode: 4
+        RequiredPresses: 3
+    - rid: 1662061592158404924
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u53F3\u624B\u9996\u3068\u624B\u93E1\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
+        SimulatedMode: 1
+        RequiredPresses: 3
+    - rid: 1662061592158404925
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u76EE\u7DDA\u306B\u5408\u308F\u305B\u3066\u93E1\u306E\u89D2\u5EA6\u3092\u4FEE\u6B63\u3059\u308B"
+        SimulatedMode: 3
+        RequiredPresses: 3
+    - rid: 1662061592158404926
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u5C65\u6B74\u4E00\u89A7\u304B\u3089 Ver 1.0 \u3092\u547C\u3073\u51FA\u3059"
+        SimulatedMode: 5
+        RequiredPresses: 3
+    - rid: 1662061592158404927
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u50CF\u5168\u4F53\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
+        SimulatedMode: 1
+        RequiredPresses: 3
+    - rid: 1662061592158404928
+      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u300C\u9078\u629E\u3057\u305F\u50CF\u306E\u80CC\u666F\u3092\u795E\u6BBF\u306B\u5909\u66F4\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
+        SimulatedMode: 4
+        RequiredPresses: 3

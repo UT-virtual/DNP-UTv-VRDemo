@@ -1,2 +1,49 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# DNP demo: shell scripts must keep LF on Windows checkouts, or sh fails on the trailing CR.
+*.sh text eol=lf
+
+# DNP demo: binary assets under Basis/Assets/DNPDemo are stored in Git LFS.
+# Basis itself (Basis/Packages and the rest) stays in plain git so that upstream merges keep working.
+# Extensions are matched case-insensitively with bracket expressions, because Linux CI matches case-sensitively.
+
+# 3D models
+Basis/Assets/DNPDemo/**/*.[fF][bB][xX] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[oO][bB][jJ] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[bB][lL][eE][nN][dD] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[gG][lL][bB] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[dD][aA][eE] filter=lfs diff=lfs merge=lfs -text
+
+# Images
+Basis/Assets/DNPDemo/**/*.[pP][nN][gG] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[jJ][pP][gG] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[jJ][pP][eE][gG] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[tT][gG][aA] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[tT][iI][fF] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[tT][iI][fF][fF] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[pP][sS][dD] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[eE][xX][rR] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[hH][dD][rR] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[bB][mM][pP] filter=lfs diff=lfs merge=lfs -text
+
+# Audio
+Basis/Assets/DNPDemo/**/*.[wW][aA][vV] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[mM][pP]3 filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[oO][gG][gG] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[fF][lL][aA][cC] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[aA][iI][fF] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[aA][iI][fF][fF] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[mM]4[aA] filter=lfs diff=lfs merge=lfs -text
+
+# Video
+Basis/Assets/DNPDemo/**/*.[mM][pP]4 filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[mM][oO][vV] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[wW][eE][bB][mM] filter=lfs diff=lfs merge=lfs -text
+
+# Fonts
+Basis/Assets/DNPDemo/**/*.[tT][tT][fF] filter=lfs diff=lfs merge=lfs -text
+Basis/Assets/DNPDemo/**/*.[oO][tT][fF] filter=lfs diff=lfs merge=lfs -text
+
+# Unity assets that are always serialized as binary
+Basis/Assets/DNPDemo/**/LightingData.asset filter=lfs diff=lfs merge=lfs -text

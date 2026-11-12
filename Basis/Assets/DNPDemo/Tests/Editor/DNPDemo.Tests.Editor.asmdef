@@ -4,6 +4,8 @@
     "references": [
         "DNPDemo.Runtime",
         "DNPDemo.Editor",
+        "Basis Framework",
+        "BasisSDK",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

@@ -294,7 +294,16 @@ public static class BasisActionDriver
         {
             await SaveFromDriver();
         }
+
+        BindingsLoaded?.Invoke();
     }
+
+    /// <summary>
+    /// Raised at the end of <see cref="LoadBindings"/>, once defaults and any saved bindings are in place.
+    /// Bindings are rebuilt on startup, on every device mode switch and on a reset to defaults, so code that
+    /// adjusts them (for example a world that removes actions it does not want) reapplies its changes here.
+    /// </summary>
+    public static event Action BindingsLoaded;
 
     /// <summary>
     /// Executes all compiled actions for a role given current and last input states.

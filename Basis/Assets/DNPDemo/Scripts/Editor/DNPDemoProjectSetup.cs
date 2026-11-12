@@ -33,6 +33,7 @@ namespace DNPDemo.Editor
             PlayerSettings.productName = ProductName;
             PlayerSettings.companyName = CompanyName;
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Android, AndroidAppId);
+            DemoBuildVersionPolicy.Apply();
         }
 
         [MenuItem("DNP Demo/Setup/Apply Build Scenes")]

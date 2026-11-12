@@ -15,10 +15,11 @@ Built with [Basis](https://github.com/BasisVR/basis)
 
 ## セットアップ
 
-1. リポジトリを clone する。
-2. Unity Hub で `Basis/` フォルダをプロジェクトとして開く（Unity 6000.5.10f1）。
-3. メニュー `DNP Demo > Setup > Run All` を実行する。Player Settings（アプリ名、Android のパッケージ名 `com.dnputv.vrdemo`）とビルドシーンの順序が設定されます。
-4. Build Profiles でプラットフォームを Android に切り替え、APK をビルドして Quest にインストールする。
+1. [Git LFS](https://git-lfs.com) をインストールしてから、リポジトリを clone する。
+2. リポジトリのルートで `sh tools/setup-git.sh` を実行する（Git LFS と UnityYAMLMerge の設定。詳しくは [CONTRIBUTING.md](CONTRIBUTING.md)）。
+3. Unity Hub で `Basis/` フォルダをプロジェクトとして開く（Unity 6000.5.10f1）。
+4. メニュー `DNP Demo > Setup > Run All` を実行する。Player Settings（アプリ名、Android のパッケージ名 `com.dnputv.vrdemo`）とビルドシーンの順序が設定されます。
+5. Build Profiles でプラットフォームを Android に切り替え、APK をビルドして Quest にインストールする。
 
 ビルドの先頭シーンは `Assets/DNPDemo/Scenes/DNPDemo_Main.unity` です。
 
@@ -44,6 +45,7 @@ DNP_UTv_VRDemo/
 
 ## ドキュメント
 
+- [CONTRIBUTING.md](CONTRIBUTING.md): 開発ルール（セットアップ、ブランチと PR、コミットメッセージ、テスト、アセットの置き場所）
 - [docs/PLAN.md](docs/PLAN.md): 開発プラン（技術方針、アーキテクチャ、ステップ定義、マイルストーン）
 - [docs/BASIS_PATCHES.md](docs/BASIS_PATCHES.md): Basis 本体への改造記録
 - [docs/SCENARIO.md](docs/SCENARIO.md): シナリオ
