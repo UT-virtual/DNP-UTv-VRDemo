@@ -12,7 +12,7 @@ namespace DNPDemo.Interaction
     /// Runs the interaction parts of the current step (<see cref="ScenarioStep.Interaction"/>) on every device.
     /// <para>
     /// It hands each part to the tool that can run it (<see cref="InteractionTool"/>), tells the tool whether this device
-    /// is the actor, and decides the local pen mode. On the actor's device a completed part moves on to the next one,
+    /// is the actor, and states the pen mode the part needs. On the actor's device a completed part moves on to the next one,
     /// and the last one reports the step done through <see cref="ScenarioDirector.ReportInteractionComplete"/>.
     /// </para>
     /// <para>
@@ -42,7 +42,7 @@ namespace DNPDemo.Interaction
         InteractionTool _currentTool;
         bool _ready;
 
-        /// <summary>Raised when the current part, the actor flag or the pen mode may have changed.</summary>
+        /// <summary>Raised when the current part, the actor flag or the required pen mode may have changed.</summary>
         public event Action StateChanged;
 
         /// <summary>The current part, or null when nothing is waiting (no interaction step, or every part is done).</summary>
@@ -57,8 +57,11 @@ namespace DNPDemo.Interaction
         /// <summary>Role that performs the current step, or None.</summary>
         public DemoRole Actor => _session?.Actor ?? DemoRole.None;
 
-        /// <summary>What the local pen does now: the current part's mode on the actor's device, otherwise None.</summary>
-        public PenMode LocalPenMode => IsLocalActor ? _session.Part.Mode : PenMode.None;
+        /// <summary>
+        /// The pen mode the local player needs for the current part: its mode on the actor's device, otherwise None.
+        /// Tools take pen input only while the player's chosen mode (<see cref="Pen.PenModeSelection"/>) matches it.
+        /// </summary>
+        public PenMode RequiredPenMode => IsLocalActor ? _session.Part.Mode : PenMode.None;
 
         public override void Start()
         {

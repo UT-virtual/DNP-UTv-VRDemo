@@ -19,7 +19,7 @@ namespace DNPDemo.Interaction
         [TextArea(1, 3)]
         public string Instruction;
 
-        /// <summary>Pen mode on the actor's device while this part is current.</summary>
+        /// <summary>Pen mode the actor needs for this part. The tool takes pen input only while the pen is in this mode.</summary>
         public abstract PenMode Mode { get; }
 
         /// <summary>One-line summary used as the inspector label.</summary>
