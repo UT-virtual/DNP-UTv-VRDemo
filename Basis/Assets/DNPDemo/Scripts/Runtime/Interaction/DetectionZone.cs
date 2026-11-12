@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 namespace DNPDemo.Interaction
@@ -13,6 +12,11 @@ namespace DNPDemo.Interaction
     /// <summary>
     /// Sphere / Capsule / Box の形状を持つ検出ゾーン。
     /// 点との包含判定、および球との重なり判定を行う。
+    ///
+    /// スケールの制約：
+    /// ゾーン自身と、すべての祖先の localScale が均一であること。
+    /// 非均一スケールは扱いが難しくメリットが小さいため禁止する。
+    /// （IsScaleHierarchyUniform で検査し、OnValidate と Editor テストで検出する）
     /// </summary>
     public class DetectionZone : MonoBehaviour
     {
@@ -85,6 +89,9 @@ namespace DNPDemo.Interaction
 
         private const float Epsilon = 0.000001f;
 
+        // 各軸スケールの差が最大値に対してこの比率以内なら均一とみなす
+        private const float UniformTolerance = 0.001f;
+
         private void OnValidate()
         {
             _radius = Mathf.Max(0f, _radius);
@@ -100,6 +107,51 @@ namespace DNPDemo.Interaction
             {
                 _height = Mathf.Max(_height, _radius * 2f);
             }
+
+            if (!IsScaleHierarchyUniform())
+            {
+                Debug.LogWarning(
+                    $"[DetectionZone] '{name}' 自身または祖先の localScale が非均一です。" +
+                    "非均一スケールは禁止です。OverlapsSphere は最小スケールによる近似になります。",
+                    this
+                );
+            }
+        }
+
+        // --------------------------------------------------
+        // Scale validation
+        // --------------------------------------------------
+
+        /// <summary>
+        /// ゾーン自身と、すべての祖先の localScale が均一かを返す。
+        /// （符号だけ反転したミラーは形状が歪まないため、絶対値で比較する）
+        /// </summary>
+        public bool IsScaleHierarchyUniform()
+        {
+            for (Transform t = transform; t != null; t = t.parent)
+            {
+                if (!IsUniformScale(t.localScale))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 3軸のスケールが均一かを返す（絶対値で比較）。
+        /// </summary>
+        public static bool IsUniformScale(Vector3 scale)
+        {
+            float x = Mathf.Abs(scale.x);
+            float y = Mathf.Abs(scale.y);
+            float z = Mathf.Abs(scale.z);
+
+            float max = Mathf.Max(x, y, z);
+            float min = Mathf.Min(x, y, z);
+
+            return max - min <= UniformTolerance * max;
         }
 
         // --------------------------------------------------
@@ -126,10 +178,10 @@ namespace DNPDemo.Interaction
         /// <summary>
         /// ワールド座標の球とゾーンが重なっているか判定する。
         ///
-        /// 注意：
-        /// 均等スケールでは正確な判定になる。
-        /// 不均等スケールでは最小スケールを使った
-        /// 保守的な判定（偽陽性の可能性あり）となる。
+        /// 前提：ゾーン自身と祖先の localScale が均一であること
+        /// （IsScaleHierarchyUniform）。この前提では厳密な判定になる。
+        /// 前提に反する場合は、最小スケールを使った近似となり、
+        /// 偽陽性（実際には重ならないのに重なると判定）が出る。
         /// </summary>
         public bool OverlapsSphere(
             Vector3 sphereCenter,
@@ -152,9 +204,6 @@ namespace DNPDemo.Interaction
             }
 
             // ワールド単位の球の半径をローカル単位に変換
-            //
-            // 均等スケール：正確
-            // 不均等スケール：最小スケールを使った保守的な近似
             float localMargin = sphereRadius / minScale;
 
             Vector3 localCenter =
@@ -210,8 +259,9 @@ namespace DNPDemo.Interaction
                 // ------------------------------------------
                 case ZoneShapeType.Capsule:
                 {
-                    // 元のカプセル形状から芯の線分を計算する。
-                    // marginをradiusに加える前に計算することが重要。
+                    // 芯の線分は、元の radius / height から計算する。
+                    // marginを加えた半径では計算しない
+                    // （球の半径を足しても線分の長さは変わらない）。
                     float halfSegment = Mathf.Max(
                         0f,
                         height * 0.5f - radius
@@ -273,19 +323,13 @@ namespace DNPDemo.Interaction
             {
                 case ZoneShapeType.Sphere:
                 {
-                    Gizmos.DrawWireSphere(
-                        Vector3.zero,
-                        _radius
-                    );
+                    Gizmos.DrawWireSphere(Vector3.zero, _radius);
                     break;
                 }
 
                 case ZoneShapeType.Box:
                 {
-                    Gizmos.DrawWireCube(
-                        Vector3.zero,
-                        _boxSize
-                    );
+                    Gizmos.DrawWireCube(Vector3.zero, _boxSize);
                     break;
                 }
 
@@ -298,35 +342,23 @@ namespace DNPDemo.Interaction
 
                     // 上下の半球
                     Gizmos.DrawWireSphere(
-                        Vector3.up * halfSegment,
-                        _radius
-                    );
-
+                        Vector3.up * halfSegment, _radius);
                     Gizmos.DrawWireSphere(
-                        Vector3.down * halfSegment,
-                        _radius
-                    );
+                        Vector3.down * halfSegment, _radius);
 
                     // 側面の接続線
                     Gizmos.DrawLine(
                         new Vector3(-_radius, -halfSegment, 0f),
-                        new Vector3(-_radius, halfSegment, 0f)
-                    );
-
+                        new Vector3(-_radius, halfSegment, 0f));
                     Gizmos.DrawLine(
                         new Vector3(_radius, -halfSegment, 0f),
-                        new Vector3(_radius, halfSegment, 0f)
-                    );
-
+                        new Vector3(_radius, halfSegment, 0f));
                     Gizmos.DrawLine(
                         new Vector3(0f, -halfSegment, -_radius),
-                        new Vector3(0f, halfSegment, -_radius)
-                    );
-
+                        new Vector3(0f, halfSegment, -_radius));
                     Gizmos.DrawLine(
                         new Vector3(0f, -halfSegment, _radius),
-                        new Vector3(0f, halfSegment, _radius)
-                    );
+                        new Vector3(0f, halfSegment, _radius));
 
                     break;
                 }
