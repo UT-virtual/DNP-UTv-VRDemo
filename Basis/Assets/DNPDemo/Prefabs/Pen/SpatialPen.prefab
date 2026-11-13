@@ -150,7 +150,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8b7cb57e80a80b46a2f3f927876eb77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Basis Framework::Basis.Scripts.BasisSdk.Interactions.BasisPickupInteractable
-  _colliderRefs: []
+  _colliderRefs:
+  - {fileID: 2024456039131180972}
   Inputs:
     desktopCenterEye:
       Source: {fileID: 0}
