@@ -67,13 +67,25 @@ namespace DNPDemo.Scenario
 
         public void SetObjectActive(string key, bool active)
         {
-            EnsureBindings();
-            if (!_bindings.TryGetObject(key, out GameObject target) || target == null)
+            if (TryGetObject(key, out GameObject target))
             {
-                ReportMissing("object:" + key, $"キー「{key}」のオブジェクト（ScenarioObjectBinding）がシーンにありません。");
-                return;
+                target.SetActive(active);
             }
-            target.SetActive(active);
+        }
+
+        /// <summary>
+        /// The scene object bound to <paramref name="key"/>, for cues and interaction tools. A missing key is reported
+        /// once as a warning.
+        /// </summary>
+        public bool TryGetObject(string key, out GameObject target)
+        {
+            EnsureBindings();
+            if (_bindings.TryGetObject(key, out target) && target != null)
+            {
+                return true;
+            }
+            ReportMissing("object:" + key, $"キー「{key}」のオブジェクト（ScenarioObjectBinding）がシーンにありません。");
+            return false;
         }
 
         public void SetBanner(bool visible, string text, float fadeSeconds)
