@@ -32,6 +32,7 @@ namespace DNPDemo.Menu
             PenMode.Select => AddressableAssets.Sprites.Select,
             PenMode.Voice => AddressableAssets.Sprites.Microphone,
             PenMode.Draw => AddressableAssets.Sprites.Polygons,
+            PenMode.Manipulate => AddressableAssets.Sprites.Move,
             _ => AddressableAssets.Sprites.Information,
         };
     }

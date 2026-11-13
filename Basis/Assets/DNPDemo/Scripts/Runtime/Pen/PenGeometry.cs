@@ -31,6 +31,12 @@ namespace DNPDemo.Pen
         /// <summary>Radius of the eraser sphere (<c>PenEraser</c>) at the butt. A stroke it touches is erased.</summary>
         public const float EraserRadius = 0.025f;
 
+        /// <summary>
+        /// Radius of the tip sphere in manipulate mode. An object is grabbed when this sphere touches its grab zone; the
+        /// sphere is drawn at this size so the player sees the point that grabs.
+        /// </summary>
+        public const float GrabRadius = 0.025f;
+
         public static float ClampRadius(float radius) => Mathf.Clamp(radius, MinSelectRadius, MaxSelectRadius);
 
         /// <summary><c>Extension</c> blend shape amount (0..1) for a selection radius.</summary>

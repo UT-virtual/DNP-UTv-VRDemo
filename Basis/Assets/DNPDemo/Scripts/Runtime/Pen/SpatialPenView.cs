@@ -18,6 +18,7 @@ namespace DNPDemo.Pen
     /// <item>Voice: the microphone head (<c>PenMicrophone</c>); its indicator ring turns from idle to active colour
     /// while the pen is held with the trigger down.</item>
     /// <item>Draw: the eraser sphere (<c>PenEraser</c>, radius <see cref="PenGeometry.EraserRadius"/>) at the butt.</item>
+    /// <item>Manipulate: the tip sphere at <see cref="PenGeometry.GrabRadius"/>, the point that grabs.</item>
     /// </list>
     /// The local player's pen is driven by <see cref="SpatialPenController"/>, the other player's by
     /// <see cref="SpatialPenSync"/>.
@@ -161,7 +162,8 @@ namespace DNPDemo.Pen
             {
                 Transform area = _selectArea.transform;
                 area.localPosition = PenGeometry.TipLocalPosition(_extension);
-                area.localScale = Vector3.one * PenGeometry.SelectAreaScale(radius);
+                float shownRadius = mode == PenMode.Manipulate ? PenGeometry.GrabRadius : radius;
+                area.localScale = Vector3.one * PenGeometry.SelectAreaScale(shownRadius);
             }
 
             if (_microphone != null)
@@ -225,7 +227,7 @@ namespace DNPDemo.Pen
             }
             if (_selectArea != null)
             {
-                _selectArea.enabled = _visible && _mode == PenMode.Select;
+                _selectArea.enabled = _visible && (_mode == PenMode.Select || _mode == PenMode.Manipulate);
             }
             if (_microphone != null)
             {
