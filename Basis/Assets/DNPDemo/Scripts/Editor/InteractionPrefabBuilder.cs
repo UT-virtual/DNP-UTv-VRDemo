@@ -1,9 +1,13 @@
+using System;
+using System.IO;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Selection;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using static DNPDemo.Editor.WorldUiBuilder;
+using Object = UnityEngine.Object;
 
 namespace DNPDemo.Editor
 {
@@ -15,13 +19,72 @@ namespace DNPDemo.Editor
     {
         const string Folder = DNPDemoProjectSetup.Root + "/Prefabs/Interaction";
         public const string DummyToolPath = Folder + "/DummyTool.prefab";
+        public const string SelectionToolPath = Folder + "/SelectionTool.prefab";
+
+        public const string SelectionVolumeShaderName = "DNPDemo/SelectionVolume";
+        public const string SelectionVolumeMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/Selection/SelectionVolume.mat";
 
         static readonly Color PanelBackground = new(0.06f, 0.08f, 0.14f, 0.92f);
+
+        // Same red as the pen's tip sphere (PenSelectAreaMaterial), a little lighter so the volume does not hide the statue.
+        static readonly Color SelectionVolumeColor = new(1f, 0f, 0f, 0.3f);
 
         [MenuItem("DNP Demo/Create/Interaction Prefabs")]
         public static void CreateAllIfMissing()
         {
             CreateDummyTool();
+            CreateSelectionTool();
+        }
+
+        /// <summary>
+        /// Tool for <see cref="SelectionPart"/>, with the view that draws the selection. The pen and the stage live in
+        /// DemoSystems, so <see cref="ScenarioInstaller"/> wires them when it places the tool there.
+        /// </summary>
+        public static GameObject CreateSelectionTool()
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(SelectionToolPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+            Material material = CreateSelectionVolumeMaterial();
+            var root = new GameObject("SelectionTool");
+            try
+            {
+                var view = root.AddComponent<SelectionVolumeView>();
+                Assign(view, "_material", material);
+                var tool = root.AddComponent<SelectionTool>();
+                Assign(tool, "_view", view);
+                Directory.CreateDirectory(Path.GetDirectoryName(SelectionToolPath));
+                GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, SelectionToolPath);
+                Debug.Log($"[DNPDemo] Created {SelectionToolPath}");
+                return prefab;
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        /// <summary>Material of <see cref="SelectionVolumeView"/>: the selection shader with GPU instancing on.</summary>
+        public static Material CreateSelectionVolumeMaterial()
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<Material>(SelectionVolumeMaterialPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+            Shader shader = Shader.Find(SelectionVolumeShaderName);
+            if (shader == null)
+            {
+                throw new InvalidOperationException($"Shader {SelectionVolumeShaderName} was not found.");
+            }
+            var material = new Material(shader) { enableInstancing = true };
+            material.SetColor("_BaseColor", SelectionVolumeColor);
+            Directory.CreateDirectory(Path.GetDirectoryName(SelectionVolumeMaterialPath));
+            AssetDatabase.CreateAsset(material, SelectionVolumeMaterialPath);
+            Debug.Log($"[DNPDemo] Created {SelectionVolumeMaterialPath}");
+            return material;
         }
 
         /// <summary>
