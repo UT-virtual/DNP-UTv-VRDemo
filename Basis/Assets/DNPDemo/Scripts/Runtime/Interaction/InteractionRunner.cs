@@ -18,7 +18,8 @@ namespace DNPDemo.Interaction
     /// <para>
     /// It also carries all tool traffic: every message is pinned to (sequence, step, part) and dropped when that is no
     /// longer current, so tools never see progress from another step. Part changes come from the actor; a device that
-    /// enters the step asks the actor where it is, which covers late joins and reconnects.
+    /// enters the step asks the actor where it is, which covers late joins and reconnects. The actor answers with the part
+    /// index and the current tool's snapshot (<see cref="InteractionTool.CreateSnapshot"/>).
     /// </para>
     /// <para>
     /// In-progress state is discarded when the step changes; what remains visible afterwards derives from the step
@@ -122,11 +123,16 @@ namespace DNPDemo.Interaction
                     }
                     break;
                 case InteractionMessageType.RequestPartState:
-                    if (IsActorForCurrentStep() && _progress.PartIndex > 0)
+                    if (IsActorForCurrentStep())
                     {
                         _singleRecipient[0] = playerId;
-                        Send(new InteractionMessage(InteractionMessageType.PartAdvanced, _progress.Sequence, _progress.StepIndex, _progress.PartIndex),
-                            null, DeliveryMethod.ReliableOrdered, _singleRecipient);
+                        if (_progress.PartIndex > 0)
+                        {
+                            Send(new InteractionMessage(InteractionMessageType.PartAdvanced, _progress.Sequence, _progress.StepIndex, _progress.PartIndex),
+                                null, DeliveryMethod.ReliableOrdered, _singleRecipient);
+                        }
+                        // After the part index, on the same ordered channel, so the device has begun this part when it arrives.
+                        SendSnapshot(_singleRecipient);
                     }
                     break;
             }
@@ -155,6 +161,23 @@ namespace DNPDemo.Interaction
             {
                 Send(new InteractionMessage(InteractionMessageType.Progress, _progress.Sequence, _progress.StepIndex, session.PartIndex),
                     payload, deliveryMethod, null);
+            }
+        }
+
+        /// <summary>Sends the current tool's snapshot (<see cref="InteractionTool.CreateSnapshot"/>) to <paramref name="recipients"/>.</summary>
+        void SendSnapshot(ushort[] recipients)
+        {
+            if (_session == null || !_session.IsLocalActor || _currentTool == null)
+            {
+                return;
+            }
+            byte[] snapshot = null;
+            InteractionSession session = _session;
+            Invoke(_currentTool, tool => snapshot = tool.CreateSnapshot(session));
+            if (snapshot != null)
+            {
+                Send(new InteractionMessage(InteractionMessageType.Progress, _progress.Sequence, _progress.StepIndex, session.PartIndex),
+                    snapshot, DeliveryMethod.ReliableOrdered, recipients);
             }
         }
 
