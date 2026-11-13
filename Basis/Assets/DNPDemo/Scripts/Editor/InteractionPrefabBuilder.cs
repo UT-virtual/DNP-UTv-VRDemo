@@ -3,6 +3,7 @@ using System.IO;
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
+using DNPDemo.Interaction.Stroke.Testing;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace DNPDemo.Editor
         public const string DummyToolPath = Folder + "/DummyTool.prefab";
         public const string SelectionToolPath = Folder + "/SelectionTool.prefab";
         public const string StrokeToolPath = Folder + "/StrokeTool.prefab";
+        public const string StrokeTestPanelPath = Folder + "/Testing/StrokeTestPanel.prefab";
 
         public const string SelectionVolumeShaderName = "DNPDemo/SelectionVolume";
         public const string SelectionVolumeMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/Selection/SelectionVolume.mat";
@@ -143,6 +145,35 @@ namespace DNPDemo.Editor
             Debug.Log($"[DNPDemo] Created {StrokeLineMaterialPath}");
             return material;
         }
+
+        /// <summary>
+        /// Panel of the pen test scene that switches <see cref="StrokeTestHarness"/> between the guide and the sketch
+        /// and shows the last verdict. Its harness is a scene object, so it is wired where the panel is placed.
+        /// </summary>
+        [MenuItem("DNP Demo/Create/Stroke Test Panel")]
+        public static GameObject CreateStrokeTestPanel() =>
+            CreatePrefabIfMissing(StrokeTestPanelPath, "StrokeTestPanel", root =>
+            {
+                SetupWorldCanvas(root, new Vector2(600, 340), interactive: true);
+                root.AddComponent<Image>().color = PanelBackground;
+
+                Transform content = CreateVerticalGroup("Content", root.transform, new Vector2(30, 24), new Vector2(-30, -24), 12);
+                CreateText("Title", content, "線画のテスト", 30, TextAlignmentOptions.TopLeft, 40);
+                TMP_Text goal = CreateText("Goal", content, string.Empty, 26, TextAlignmentOptions.TopLeft, 80);
+                goal.textWrappingMode = TextWrappingModes.Normal;
+                TMP_Text verdict = CreateText("Verdict", content, string.Empty, 22, TextAlignmentOptions.TopLeft);
+                verdict.textWrappingMode = TextWrappingModes.Normal;
+                verdict.gameObject.AddComponent<LayoutElement>().flexibleHeight = 1;
+                Button switchButton = CreateButton("SwitchButton", content, string.Empty, 70, 28);
+
+                var panel = root.AddComponent<StrokeTestPanel>();
+                Assign(panel, "_goalText", goal);
+                Assign(panel, "_verdictText", verdict);
+                Assign(panel, "_switchButton", switchButton);
+                Assign(panel, "_switchLabel", switchButton.GetComponentInChildren<TMP_Text>());
+
+                SetLayerRecursively(root.transform, LayerMask.NameToLayer(UILayerName));
+            });
 
         /// <summary>
         /// Tool for <see cref="DummyInteractionPart"/>. The tool sits on the root; the panel is a child canvas that is
