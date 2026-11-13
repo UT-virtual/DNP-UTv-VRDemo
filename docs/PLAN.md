@@ -106,7 +106,9 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
 
 プレイヤーA・B が1本ずつペンを使う。ペンは空間に置かれていて、掴んでいる間だけ手に付いてくる。ペンのモードは体験者がメニューで選び、各ツールはペンのモードが現在の部品のモード（`InteractionPart.Mode`）と一致しているときだけ入力を受け付ける。どのモードを使うかは HUD の手順文で案内する。
 
-コードは `Scripts/Runtime/Pen/`。ペンは `Prefabs/Pen/SpatialPen.prefab`（ペンのモデルのバリアント。ピックアップ、同期、掴むためのコライダーを持つ）で、`DemoSystems/Pen` にプレイヤーA・B 用の2本（`Pen_PlayerA` / `Pen_PlayerB`）を置いている。どちらもプレハブを正とし、直接編集する。ペンの開始位置は、DemoSystems 内の `Pen_PlayerA` / `Pen_PlayerB` の位置で決まる。
+コードは `Scripts/Runtime/Pen/`。ペンは `Prefabs/Pen/SpatialPen.prefab`（ペンのモデルのバリアント。ピックアップ、同期、掴むためのコライダーを持つ）で、`DemoSystems/Pen` にプレイヤーA・B 用の2本（`Pen_PlayerA` / `Pen_PlayerB`）を置いている。ペンの開始位置は、DemoSystems 内の `Pen_PlayerA` / `Pen_PlayerB` の位置で決まる。
+
+ペン単体の動作確認には `Art/Pen/PenTestScene.unity` を使う。ネットワークへの接続もロールも不要で、再生すると `PenTestHarness`（`Scripts/Runtime/Pen/Testing/`）がシーン内のペンを `SpatialPenController` に渡す。掴む・離す、ホバー時のハイライト、トリガー、半径、モードの切り替えを確認できる。端末間の同期とロールごとの表示は対象外で、`DNPDemo_Main` を2台で接続して確認する。
 
 | 要素 | 仕様 |
 |---|---|
