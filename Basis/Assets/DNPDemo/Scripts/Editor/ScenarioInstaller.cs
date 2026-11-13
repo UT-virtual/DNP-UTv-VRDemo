@@ -1,4 +1,5 @@
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
 using DNPDemo.Operator;
@@ -136,6 +137,11 @@ namespace DNPDemo.Editor
             if (interaction.GetComponentInChildren<StrokeTool>(true) == null)
             {
                 InstallPenTool<StrokeTool>(InteractionPrefabBuilder.StrokeToolPath, root, scenario, interaction, runner);
+                changed = true;
+            }
+            if (interaction.GetComponentInChildren<ManipulateTool>(true) == null)
+            {
+                InstallPenTool<ManipulateTool>(InteractionPrefabBuilder.ManipulateToolPath, root, scenario, interaction, runner);
                 changed = true;
             }
             if (interaction.GetComponentInChildren<DummyInteractionTool>(true) == null)

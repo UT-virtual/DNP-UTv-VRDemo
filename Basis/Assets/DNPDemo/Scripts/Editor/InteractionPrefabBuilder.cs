@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
 using DNPDemo.Interaction.Stroke.Testing;
@@ -23,6 +24,7 @@ namespace DNPDemo.Editor
         public const string DummyToolPath = Folder + "/DummyTool.prefab";
         public const string SelectionToolPath = Folder + "/SelectionTool.prefab";
         public const string StrokeToolPath = Folder + "/StrokeTool.prefab";
+        public const string ManipulateToolPath = Folder + "/ManipulateTool.prefab";
         public const string StrokeTestPanelPath = Folder + "/Testing/StrokeTestPanel.prefab";
 
         public const string SelectionVolumeShaderName = "DNPDemo/SelectionVolume";
@@ -31,10 +33,16 @@ namespace DNPDemo.Editor
         public const string StrokeLineShaderName = "Universal Render Pipeline/Unlit";
         public const string StrokeLineMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/Stroke/StrokeLine.mat";
 
+        public const string ManipulateGhostShaderName = "Universal Render Pipeline/Unlit";
+        public const string ManipulateGhostMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/Manipulate/ManipulateGhost.mat";
+
         static readonly Color PanelBackground = new(0.06f, 0.08f, 0.14f, 0.92f);
 
         // Same red as the pen's tip sphere (PenSelectAreaMaterial), a little lighter so the volume does not hide the statue.
         static readonly Color SelectionVolumeColor = new(1f, 0f, 0f, 0.3f);
+
+        // Pale cyan, apart from the red selection, so the goal reads as a different thing.
+        static readonly Color ManipulateGhostColor = new(0.45f, 0.85f, 1f, 0.35f);
 
         [MenuItem("DNP Demo/Create/Interaction Prefabs")]
         public static void CreateAllIfMissing()
@@ -42,6 +50,7 @@ namespace DNPDemo.Editor
             CreateDummyTool();
             CreateSelectionTool();
             CreateStrokeTool();
+            CreateManipulateTool();
         }
 
         /// <summary>
@@ -143,6 +152,71 @@ namespace DNPDemo.Editor
             Directory.CreateDirectory(Path.GetDirectoryName(StrokeLineMaterialPath));
             AssetDatabase.CreateAsset(material, StrokeLineMaterialPath);
             Debug.Log($"[DNPDemo] Created {StrokeLineMaterialPath}");
+            return material;
+        }
+
+        /// <summary>
+        /// Tool for <see cref="ManipulatePart"/>, with the view that draws the ghost. The pen and the stage live in
+        /// DemoSystems, so <see cref="ScenarioInstaller"/> wires them when it places the tool there.
+        /// </summary>
+        public static GameObject CreateManipulateTool()
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(ManipulateToolPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+            Material material = CreateManipulateGhostMaterial();
+            var root = new GameObject("ManipulateTool");
+            try
+            {
+                var ghost = root.AddComponent<ManipulateGhostView>();
+                Assign(ghost, "_material", material);
+                var tool = root.AddComponent<ManipulateTool>();
+                Assign(tool, "_ghost", ghost);
+                Directory.CreateDirectory(Path.GetDirectoryName(ManipulateToolPath));
+                GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, ManipulateToolPath);
+                Debug.Log($"[DNPDemo] Created {ManipulateToolPath}");
+                return prefab;
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        /// <summary>
+        /// Material of <see cref="ManipulateGhostView"/>: translucent unlit, without depth writes so the object behind the
+        /// ghost stays visible.
+        /// </summary>
+        public static Material CreateManipulateGhostMaterial()
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<Material>(ManipulateGhostMaterialPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+            Shader shader = Shader.Find(ManipulateGhostShaderName);
+            if (shader == null)
+            {
+                throw new InvalidOperationException($"Shader {ManipulateGhostShaderName} was not found.");
+            }
+            var material = new Material(shader);
+            material.SetColor("_BaseColor", ManipulateGhostColor);
+            // URP's transparent surface: the same properties the material inspector sets for Surface Type = Transparent.
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", 0f);
+            material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_SrcBlendAlpha", (float)UnityEngine.Rendering.BlendMode.One);
+            material.SetFloat("_DstBlendAlpha", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_ZWrite", 0f);
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            Directory.CreateDirectory(Path.GetDirectoryName(ManipulateGhostMaterialPath));
+            AssetDatabase.CreateAsset(material, ManipulateGhostMaterialPath);
+            Debug.Log($"[DNPDemo] Created {ManipulateGhostMaterialPath}");
             return material;
         }
 
