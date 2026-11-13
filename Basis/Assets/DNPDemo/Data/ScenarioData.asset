@@ -497,17 +497,21 @@ MonoBehaviour:
         SimulatedMode: 3
         RequiredPresses: 3
     - rid: 1662061592158404918
-      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      type: {class: StrokePart, ns: DNPDemo.Interaction.Stroke, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u5DE6\u80A9\u304B\u3089\u80F8\u306E\u524D\u3078\u7DE9\u3084\u304B\u306A\u30AB\u30FC\u30D6\u3092\u63CF\u304F"
-        SimulatedMode: 2
-        RequiredPresses: 3
+        Goal: 0
+        StartZoneKey: Zone_LeftShoulder
+        EndZoneKey: Zone_ChestFront
+        MinExtent: 0.15
     - rid: 1662061592158404919
-      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      type: {class: StrokePart, ns: DNPDemo.Interaction.Stroke, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u7A7A\u4E2D\u306B\u624B\u93E1\u306E\u7DDA\u753B\u3092\u63CF\u304F"
-        SimulatedMode: 2
-        RequiredPresses: 3
+        Goal: 1
+        StartZoneKey: 
+        EndZoneKey: 
+        MinExtent: 0.15
     - rid: 1662061592158404920
       type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
       data:
