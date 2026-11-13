@@ -92,7 +92,7 @@ ScenarioCue（キュー）… LineCue（話者＋字幕＋音声）/ WaitCue / S
 ScenarioPlayer … ステップに入るたびに、舞台を初期状態に戻し、それまでのステップの永続キューを即時に適用してから、
                  現在のステップのキューを頭から再生する
 ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシーンを参照できないため、話者（音声と字幕）とキー付きオブジェクトは、
-                 対象のプレハブに付けた ScenarioSpeakerBinding / ScenarioObjectBinding を起動時にシーンから集めて引く
+                 対象のプレハブに付けた ScenarioSpeakerBinding / ScenarioObjectBinding を、シーンの読み込みが終わってから（Start 時点で）集めて引く
 ```
 
 - 見た目の状態はすべてステップ番号から決まる。途中参加・運営のジャンプ・通常の進行のどれでも同じ見た目になり、同期は {seq, ステップ番号} だけで済む。途中参加した端末は、現在のステップの台詞を頭から再生する。
