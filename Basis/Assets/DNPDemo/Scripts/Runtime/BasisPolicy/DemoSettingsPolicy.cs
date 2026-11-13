@@ -6,8 +6,7 @@ using Basis.Scripts.Device_Management;
 namespace DNPDemo.BasisPolicy
 {
     /// <summary>
-    /// Pins Basis settings that would let a visitor grab or move things the demo does not expect, and hides the
-    /// microphone icon.
+    /// Pins Basis settings that decide what a visitor can grab or move, and hides the microphone icon.
     /// Settings persist on the device, so values changed during development are overwritten here once Basis has
     /// loaded them. The settings page is not on the demo menu, so they cannot be changed back during the demo.
     /// </summary>
@@ -28,8 +27,9 @@ namespace DNPDemo.BasisPolicy
             Pin(BasisSettingsDefaults.MicrophoneIcon, MicrophoneIconHidden);
             // Grabbing another player's hair or clothes (trigger or grip).
             Pin(BasisSettingsDefaults.JiggleGrabInteractions, false);
-            // Picking up props (trigger or grip).
-            Pin(BasisSettingsDefaults.DisablePropPickup, true);
+            // Picking up props. The spatial pens are pickups, so this stays allowed; the world holds no other pickups
+            // (the library and camera menus that spawn them are off), and each pen limits who may grab it.
+            Pin(BasisSettingsDefaults.DisablePropPickup, false);
             // Dragging the play space with the grip.
             Pin(BasisSettingsDefaults.EnablePlayspaceMover, false);
         }
