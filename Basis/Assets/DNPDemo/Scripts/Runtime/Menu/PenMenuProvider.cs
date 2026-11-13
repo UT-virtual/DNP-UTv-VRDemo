@@ -1,12 +1,38 @@
+using System.Collections.Generic;
 using Basis.BasisUI;
+using DNPDemo.Interaction;
+using DNPDemo.Pen;
 
 namespace DNPDemo.Menu
 {
-    /// <summary>Menu entry for choosing the pen. Placeholder until the pen tools are implemented.</summary>
-    public sealed class PenMenuProvider : PlaceholderMenuProvider
+    /// <summary>Menu entry for choosing the pen's mode. Opens a bar with one button per mode above the hotbar.</summary>
+    public sealed class PenMenuProvider : DemoBarMenuProvider
     {
-        public override string Title => "ペン";
+        public override string Title => "空間ペン";
         public override string IconAddress => AddressableAssets.Sprites.Select;
         public override int Order => 10;
+
+        protected override IReadOnlyList<BarItem> CreateItems()
+        {
+            var items = new List<BarItem>(PenModeSelection.Selectable.Length);
+            foreach (PenMode mode in PenModeSelection.Selectable)
+            {
+                PenMode captured = mode;
+                items.Add(new BarItem(
+                    mode.ToDisplayName(),
+                    IconFor(mode),
+                    () => PenModeSelection.Select(captured),
+                    () => PenModeSelection.Current == captured));
+            }
+            return items;
+        }
+
+        static string IconFor(PenMode mode) => mode switch
+        {
+            PenMode.Select => AddressableAssets.Sprites.Select,
+            PenMode.Voice => AddressableAssets.Sprites.Microphone,
+            PenMode.Draw => AddressableAssets.Sprites.Polygons,
+            _ => AddressableAssets.Sprites.Information,
+        };
     }
 }
