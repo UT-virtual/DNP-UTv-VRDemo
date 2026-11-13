@@ -336,6 +336,7 @@ GameObject:
   - component: {fileID: 1430895145989976756}
   - component: {fileID: 8069570808309648135}
   - component: {fileID: 7550779398189503583}
+  - component: {fileID: 3325990825400233132}
   m_Layer: 0
   m_Name: Zone_LeftShoulder
   m_TagString: Untagged
@@ -453,6 +454,19 @@ MonoBehaviour:
   _height: 0.4
   _boxSize: {x: 0.2, y: 0.2, z: 0.2}
   _gizmoColor: {r: 0, g: 1, b: 0.2, a: 0.5}
+--- !u!114 &3325990825400233132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7946262102849853529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 998c79d74c621ac4593d08c949a4e71a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Scenario.ScenarioObjectBinding
+  _key: Zone_LeftShoulder
 --- !u!1 &8805264053235961467
 GameObject:
   m_ObjectHideFlags: 0

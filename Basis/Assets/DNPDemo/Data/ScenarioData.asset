@@ -483,11 +483,13 @@ MonoBehaviour:
         SimulatedMode: 4
         RequiredPresses: 3
     - rid: 1662061592158404916
-      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      type: {class: SelectionPart, ns: DNPDemo.Interaction.Selection, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u5DE6\u80A9\u304B\u3089\u8098\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
-        SimulatedMode: 1
-        RequiredPresses: 3
+        TargetZoneKeys:
+        - Zone_LeftShoulder
+        RequiredInsideRatio: 0.9
+        RequiredCoverage: 0.5
     - rid: 1662061592158404917
       type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
       data:
