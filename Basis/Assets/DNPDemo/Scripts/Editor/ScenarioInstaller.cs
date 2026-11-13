@@ -1,5 +1,6 @@
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.Selection;
+using DNPDemo.Interaction.Stroke;
 using DNPDemo.Operator;
 using DNPDemo.Pen;
 using DNPDemo.Presentation;
@@ -129,15 +130,12 @@ namespace DNPDemo.Editor
 
             if (interaction.GetComponentInChildren<SelectionTool>(true) == null)
             {
-                var selection = InstantiatePrefab<SelectionTool>(InteractionPrefabBuilder.SelectionToolPath, interaction);
-                WorldUiBuilder.Assign(selection, "_stage", scenario.GetComponent<ScenarioStage>());
-                var pen = root.GetComponentInChildren<SpatialPenController>(true);
-                if (pen == null)
-                {
-                    Debug.LogWarning($"[DNPDemo] {DemoSystemsPrefabPath} に SpatialPenController がないため、SelectionTool のペンを手動で設定してください。");
-                }
-                WorldUiBuilder.Assign(selection, "_pen", pen);
-                RegisterTool(runner, selection);
+                InstallPenTool<SelectionTool>(InteractionPrefabBuilder.SelectionToolPath, root, scenario, interaction, runner);
+                changed = true;
+            }
+            if (interaction.GetComponentInChildren<StrokeTool>(true) == null)
+            {
+                InstallPenTool<StrokeTool>(InteractionPrefabBuilder.StrokeToolPath, root, scenario, interaction, runner);
                 changed = true;
             }
             if (interaction.GetComponentInChildren<DummyInteractionTool>(true) == null)
@@ -147,6 +145,21 @@ namespace DNPDemo.Editor
                 changed = true;
             }
             return changed;
+        }
+
+        /// <summary>Places a tool that reads the pen and resolves zone keys, and wires its <c>_pen</c> and <c>_stage</c>.</summary>
+        static void InstallPenTool<T>(string prefabPath, Transform root, Transform scenario, Transform interaction, InteractionRunner runner)
+            where T : InteractionTool
+        {
+            var tool = InstantiatePrefab<T>(prefabPath, interaction);
+            WorldUiBuilder.Assign(tool, "_stage", scenario.GetComponent<ScenarioStage>());
+            var pen = root.GetComponentInChildren<SpatialPenController>(true);
+            if (pen == null)
+            {
+                Debug.LogWarning($"[DNPDemo] {DemoSystemsPrefabPath} に SpatialPenController がないため、{typeof(T).Name} のペンを手動で設定してください。");
+            }
+            WorldUiBuilder.Assign(tool, "_pen", pen);
+            RegisterTool(runner, tool);
         }
 
         static void RegisterTool(InteractionRunner runner, InteractionTool tool)

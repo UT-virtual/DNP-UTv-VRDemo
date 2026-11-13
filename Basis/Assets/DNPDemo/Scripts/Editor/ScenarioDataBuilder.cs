@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.Selection;
+using DNPDemo.Interaction.Stroke;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
 using UnityEditor;
@@ -22,6 +23,9 @@ namespace DNPDemo.Editor
 
         /// <summary>Key of the left shoulder zone on the placeholder statue (<see cref="ScenarioObjectBinding"/> on Statue_Original/Zone_LeftShoulder).</summary>
         public const string LeftShoulderZoneKey = "Zone_LeftShoulder";
+
+        /// <summary>Key of the zone in front of the chest on the placeholder statue (<see cref="ScenarioObjectBinding"/> on Statue_Original/Zone_ChestFront).</summary>
+        public const string ChestFrontZoneKey = "Zone_ChestFront";
 
         public const string CompletionBannerText = "WORKSHOP COMPLETE";
 
@@ -100,13 +104,13 @@ namespace DNPDemo.Editor
                     A("うーん私のイメージとズレていますね。私のイメージだとこんな感じなんです。")),
                 Operation("s2-guide-curve", "Scene 2 [A] ガイドでカーブを描く", DemoRole.PlayerA,
                     "空間ペン（ガイドモード）を使用し、左肩から胸の前へ「緩やかなカーブを描く軌跡」をなぞるように描け。",
-                    Draw("左肩から胸の前へ緩やかなカーブを描く")),
+                    StrokePart.Guide("左肩から胸の前へ緩やかなカーブを描く", LeftShoulderZoneKey, ChestFrontZoneKey)),
                 Auto("s3-hand-mirror", "Scene 3 右腕と手鏡",
                     B("あーなるほど。確かにこれは凄く綺麗ですね。力学的にも矛盾点がなさそうです。"),
                     A("左腕は良い感じですね。それでは次に右腕の話に移行しましょう。古典彫刻においては手鏡が林檎と並ぶ代表的なシンボルとされているので、右腕には手鏡があったと考えられます。一度3Dモデルにしてみますね。")),
                 Operation("s3-draw-mirror", "Scene 3 [A] 手鏡の線画を変換", DemoRole.PlayerA,
                     "空間ペンで空中に手鏡の線画を描け。「線画を西洋のアンティークな手鏡に変換」と音声指示せよ。",
-                    Draw("空中に手鏡の線画を描く"), Voice("「線画を西洋のアンティークな手鏡に変換」と音声指示する")),
+                    StrokePart.Sketch("空中に手鏡の線画を描く"), Voice("「線画を西洋のアンティークな手鏡に変換」と音声指示する")),
                 Operation("s3-place-mirror", "Scene 3 [A] 手鏡を移動", DemoRole.PlayerA,
                     "生成された手鏡を所定の位置に移動させよ。",
                     Manipulate("手鏡を所定の位置へ移動する")),
@@ -172,10 +176,9 @@ namespace DNPDemo.Editor
             Interaction = new List<InteractionPart>(parts),
         };
 
-        // Stand-ins until the real tools (StrokeTool, ManipulateTool, VoiceCommandTool, HistoryPanel) replace them, and for
+        // Stand-ins until the real tools (ManipulateTool, VoiceCommandTool, HistoryPanel) replace them, and for
         // selections whose zones are not placed on the statue yet.
         static InteractionPart Select(string instruction) => new DummyInteractionPart(PenMode.Select, instruction);
-        static InteractionPart Draw(string instruction) => new DummyInteractionPart(PenMode.Draw, instruction);
         static InteractionPart Manipulate(string instruction) => new DummyInteractionPart(PenMode.Manipulate, instruction);
         static InteractionPart Voice(string instruction) => new DummyInteractionPart(PenMode.Voice, instruction);
         static InteractionPart Panel(string instruction) => new DummyInteractionPart(PenMode.Panel, instruction);

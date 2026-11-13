@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static DNPDemo.Interaction.PayloadCodec;
 
 namespace DNPDemo.Interaction.Selection
 {
@@ -95,46 +96,6 @@ namespace DNPDemo.Interaction.Selection
                 max = Vector3.Max(max, samples[i].Position);
             }
             return (min + max) * 0.5f;
-        }
-
-        static int Quantize(float value, float step, int min, int max) =>
-            Mathf.Clamp(Mathf.RoundToInt(value / step), min, max);
-
-        static bool IsFinite(Vector3 v) =>
-            !float.IsNaN(v.x) && !float.IsNaN(v.y) && !float.IsNaN(v.z)
-            && !float.IsInfinity(v.x) && !float.IsInfinity(v.y) && !float.IsInfinity(v.z);
-
-        static void WriteUInt16(byte[] buffer, ref int offset, ushort value)
-        {
-            buffer[offset++] = (byte)value;
-            buffer[offset++] = (byte)(value >> 8);
-        }
-
-        static void WriteInt16(byte[] buffer, ref int offset, int value) => WriteUInt16(buffer, ref offset, (ushort)(short)value);
-
-        static void WriteSingle(byte[] buffer, ref int offset, float value)
-        {
-            int bits = BitConverter.SingleToInt32Bits(value);
-            buffer[offset++] = (byte)bits;
-            buffer[offset++] = (byte)(bits >> 8);
-            buffer[offset++] = (byte)(bits >> 16);
-            buffer[offset++] = (byte)(bits >> 24);
-        }
-
-        static ushort ReadUInt16(byte[] buffer, ref int offset)
-        {
-            int value = buffer[offset] | (buffer[offset + 1] << 8);
-            offset += 2;
-            return (ushort)value;
-        }
-
-        static short ReadInt16(byte[] buffer, ref int offset) => (short)ReadUInt16(buffer, ref offset);
-
-        static float ReadSingle(byte[] buffer, ref int offset)
-        {
-            int bits = buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16) | (buffer[offset + 3] << 24);
-            offset += 4;
-            return BitConverter.Int32BitsToSingle(bits);
         }
     }
 }

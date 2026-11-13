@@ -32,6 +32,7 @@ Transform:
   m_Children:
   - {fileID: 2564679828604498861}
   - {fileID: 3680512422023139052}
+  - {fileID: 4654115080082946527}
   m_Father: {fileID: 7372542472398596075}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2493661690745391217
@@ -55,6 +56,7 @@ MonoBehaviour:
   _tools:
   - {fileID: 993567515092701792}
   - {fileID: 4401761258744161385}
+  - {fileID: 5571027581917736288}
 --- !u!1 &870944090728255067
 GameObject:
   m_ObjectHideFlags: 0
@@ -783,6 +785,87 @@ MonoBehaviour:
   _playerBPen: {fileID: 2377861282227359224}
   _sendRate: 20
   _settleSeconds: 0.3
+--- !u!1001 &988120764955278002
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 7668987521185825665}
+    m_Modifications:
+    - target: {fileID: 1760293421825884516, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+      propertyPath: m_Name
+      value: StrokeTool
+      objectReference: {fileID: 0}
+    - target: {fileID: 4676643550493186002, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+      propertyPath: _pen
+      value: 
+      objectReference: {fileID: 3860300835675763750}
+    - target: {fileID: 4676643550493186002, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+      propertyPath: _stage
+      value: 
+      objectReference: {fileID: 3240398646132276269}
+    - target: {fileID: 5557511862418490221, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5557511862418490221, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5557511862418490221, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5557511862418490221, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5557511862418490221, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5557511862418490221, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5557511862418490221, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5557511862418490221, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5557511862418490221, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5557511862418490221, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+--- !u!4 &4654115080082946527 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5557511862418490221, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+  m_PrefabInstance: {fileID: 988120764955278002}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5571027581917736288 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4676643550493186002, guid: 00964ba4a8cee7545861916b2b88a4ef, type: 3}
+  m_PrefabInstance: {fileID: 988120764955278002}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdc1224d2f46ae1479f1551418e03dc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Interaction.Stroke.StrokeTool
 --- !u!1001 &1771436058584492876
 PrefabInstance:
   m_ObjectHideFlags: 0

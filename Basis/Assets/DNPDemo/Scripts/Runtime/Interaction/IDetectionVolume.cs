@@ -41,6 +41,25 @@ namespace DNPDemo.Interaction
         }
 
         /// <summary>
+        /// The region of the object registered under <paramref name="key"/> on <paramref name="stage"/>. Null, with an
+        /// error in the log, when the key is not bound or its object has no zone; a part that needs the region must then
+        /// fail every attempt rather than judge without it.
+        /// </summary>
+        public static IDetectionVolume Resolve(Scenario.ScenarioStage stage, string key)
+        {
+            if (stage == null || string.IsNullOrWhiteSpace(key) || !stage.TryGetObject(key, out GameObject target))
+            {
+                return null;
+            }
+            IDetectionVolume volume = Find(target);
+            if (volume == null)
+            {
+                Debug.LogError($"[DNPDemo] キー「{key}」のオブジェクトに DetectionZoneGroup も DetectionZone もありません。", target);
+            }
+            return volume;
+        }
+
+        /// <summary>
         /// False for null and for a destroyed component. A plain <c>== null</c> on the interface does not see Unity's
         /// destroyed state.
         /// </summary>
