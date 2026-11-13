@@ -1,5 +1,6 @@
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Selection;
 using DNPDemo.Scenario;
 using NUnit.Framework;
 using UnityEditor;
@@ -42,6 +43,35 @@ namespace DNPDemo.Tests
             {
                 Assert.IsNotNull(tools.GetArrayElementAtIndex(i).objectReferenceValue, $"Tool {i} is missing.");
             }
+        }
+
+        [Test]
+        public void DemoSystemsSelectionToolIsWired()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioInstaller.DemoSystemsPrefabPath);
+            Assert.IsNotNull(prefab);
+            var runner = prefab.GetComponentInChildren<InteractionRunner>(true);
+            Assert.IsNotNull(runner);
+            var selection = runner.GetComponentInChildren<SelectionTool>(true);
+            Assert.IsNotNull(selection, "Install it from DNP Demo/Setup/Install Scenario Into DemoSystems Prefab.");
+
+            var tool = new SerializedObject(selection);
+            Assert.IsNotNull(tool.FindProperty("_pen").objectReferenceValue, "SelectionTool needs the pen controller.");
+            Assert.IsNotNull(tool.FindProperty("_stage").objectReferenceValue, "SelectionTool needs the scenario stage.");
+            var view = (SelectionVolumeView)tool.FindProperty("_view").objectReferenceValue;
+            Assert.IsNotNull(view, "SelectionTool needs its view.");
+            var material = (Material)new SerializedObject(view).FindProperty("_material").objectReferenceValue;
+            Assert.IsNotNull(material, "SelectionVolumeView needs its material.");
+            Assert.AreEqual(InteractionPrefabBuilder.SelectionVolumeShaderName, material.shader.name);
+            Assert.IsTrue(material.enableInstancing, "The selection is drawn with GPU instancing.");
+
+            SerializedProperty tools = new SerializedObject(runner).FindProperty("_tools");
+            bool registered = false;
+            for (int i = 0; i < tools.arraySize; i++)
+            {
+                registered |= tools.GetArrayElementAtIndex(i).objectReferenceValue == selection;
+            }
+            Assert.IsTrue(registered, "SelectionTool is not registered with the runner.");
         }
 
         [Test]

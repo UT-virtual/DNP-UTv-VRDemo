@@ -31,6 +31,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2564679828604498861}
+  - {fileID: 3680512422023139052}
   m_Father: {fileID: 7372542472398596075}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2493661690745391217
@@ -52,6 +53,7 @@ MonoBehaviour:
   _director: {fileID: 1978633991536262902}
   _roles: {fileID: 155232889495195380}
   _tools:
+  - {fileID: 993567515092701792}
   - {fileID: 4401761258744161385}
 --- !u!1 &870944090728255067
 GameObject:
@@ -758,7 +760,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4545fc6971abb3844a955dbeabc16fd2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Pen.SpatialPenController
-  _grabReach: 0.15
   _radiusFullRangeSeconds: 1.5
 --- !u!114 &7177373001870550533
 MonoBehaviour:
@@ -1633,4 +1634,85 @@ PrefabInstance:
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5296954773302830861, guid: c13ab75f6b39f6e4a89cfc712a3c5a0a, type: 3}
   m_PrefabInstance: {fileID: 4601298762420241796}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6894968842100390714
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 7668987521185825665}
+    m_Modifications:
+    - target: {fileID: 5937439504409323866, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+      propertyPath: _pen
+      value: 
+      objectReference: {fileID: 3860300835675763750}
+    - target: {fileID: 5937439504409323866, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+      propertyPath: _stage
+      value: 
+      objectReference: {fileID: 3240398646132276269}
+    - target: {fileID: 7835162934981277142, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7835162934981277142, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7835162934981277142, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7835162934981277142, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7835162934981277142, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7835162934981277142, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7835162934981277142, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7835162934981277142, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7835162934981277142, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7835162934981277142, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8406309859973862557, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+      propertyPath: m_Name
+      value: SelectionTool
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+--- !u!114 &993567515092701792 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5937439504409323866, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+  m_PrefabInstance: {fileID: 6894968842100390714}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e4af11aa4bdc51489b02f4a7e685f35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Interaction.Selection.SelectionTool
+--- !u!4 &3680512422023139052 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7835162934981277142, guid: ad2b958fc9e77934b9032242fe699a01, type: 3}
+  m_PrefabInstance: {fileID: 6894968842100390714}
   m_PrefabAsset: {fileID: 0}

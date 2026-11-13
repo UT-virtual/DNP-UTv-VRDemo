@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DNPDemo.Interaction
@@ -21,6 +22,16 @@ namespace DNPDemo.Interaction
 
         /// <summary>Pen mode the actor needs for this part. The tool takes pen input only while the pen is in this mode.</summary>
         public abstract PenMode Mode { get; }
+
+        /// <summary>Adds the scene bindings (object keys) this part addresses, so the scene can be checked for them.</summary>
+        public virtual void CollectRequirements(Scenario.ScenarioRequirements requirements)
+        {
+        }
+
+        /// <summary>Adds problems in the part's parameters that would break a run (for example a missing zone key).</summary>
+        public virtual void Validate(List<string> problems)
+        {
+        }
 
         /// <summary>One-line summary used as the inspector label.</summary>
         public abstract override string ToString();

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Selection;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
 using UnityEditor;
@@ -18,6 +19,9 @@ namespace DNPDemo.Editor
 
         /// <summary>Key of the statue spotlight (<see cref="ScenarioObjectBinding"/> on Lighting/Spot_Statue).</summary>
         public const string SpotlightKey = "Spotlight";
+
+        /// <summary>Key of the left shoulder zone on the placeholder statue (<see cref="ScenarioObjectBinding"/> on Statue_Original/Zone_LeftShoulder).</summary>
+        public const string LeftShoulderZoneKey = "Zone_LeftShoulder";
 
         public const string CompletionBannerText = "WORKSHOP COMPLETE";
 
@@ -91,7 +95,7 @@ namespace DNPDemo.Editor
                     B("なるほど。自然なカーブですか...うーん少しイメージが難しいですね。モデルで表現するとこんな感じでしょうか。")),
                 Operation("s2-slide-arm", "Scene 2 [B] 腕を内側へ", DemoRole.PlayerB,
                     "空間ペンで左肩から肘の領域を選択し、腕の角度を内側へスライド修正せよ。",
-                    Select("左肩から肘を範囲選択する"), Manipulate("腕を内側へスライドする")),
+                    new SelectionPart("左肩から肘を範囲選択する", LeftShoulderZoneKey), Manipulate("腕を内側へスライドする")),
                 Auto("s2-mismatch", "Scene 2 イメージのズレ",
                     A("うーん私のイメージとズレていますね。私のイメージだとこんな感じなんです。")),
                 Operation("s2-guide-curve", "Scene 2 [A] ガイドでカーブを描く", DemoRole.PlayerA,
@@ -168,7 +172,8 @@ namespace DNPDemo.Editor
             Interaction = new List<InteractionPart>(parts),
         };
 
-        // Stand-ins until the real tools (SelectionTool, StrokeTool, ManipulateTool, VoiceCommandTool, HistoryPanel) replace them.
+        // Stand-ins until the real tools (StrokeTool, ManipulateTool, VoiceCommandTool, HistoryPanel) replace them, and for
+        // selections whose zones are not placed on the statue yet.
         static InteractionPart Select(string instruction) => new DummyInteractionPart(PenMode.Select, instruction);
         static InteractionPart Draw(string instruction) => new DummyInteractionPart(PenMode.Draw, instruction);
         static InteractionPart Manipulate(string instruction) => new DummyInteractionPart(PenMode.Manipulate, instruction);

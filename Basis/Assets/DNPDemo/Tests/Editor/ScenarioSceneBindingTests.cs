@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using DNPDemo.Editor;
+using DNPDemo.Interaction;
+using DNPDemo.Interaction.Selection;
 using DNPDemo.Scenario;
 using NUnit.Framework;
 using UnityEditor;
@@ -63,6 +65,43 @@ namespace DNPDemo.Tests
                 count += root.GetComponentsInChildren<ScenarioStage>(true).Length;
             }
             Assert.AreEqual(1, count, "DNPDemo_Main must contain exactly one ScenarioStage (in the DemoSystems prefab).");
+        }
+
+        [Test]
+        public void SelectionZoneKeysResolveToDetectionVolumes()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data);
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            int checkedKeys = 0;
+            foreach (ScenarioStep step in data.Steps)
+            {
+                foreach (InteractionPart part in step.Interaction)
+                {
+                    if (part is not SelectionPart selection)
+                    {
+                        continue;
+                    }
+                    foreach (string key in selection.TargetZoneKeys)
+                    {
+                        Assert.IsTrue(bindings.TryGetObject(key, out UnityEngine.GameObject target), $"{step.Id}: key '{key}' is not bound.");
+                        Assert.IsNotNull(DetectionVolumes.Find(target), $"{step.Id}: '{key}' has neither a DetectionZoneGroup nor a DetectionZone.");
+                        checkedKeys++;
+                    }
+                }
+            }
+            Assert.Greater(checkedKeys, 0, "The scenario should have a selection part to check.");
+        }
+
+        [Test]
+        public void CollectingAnUnloadedSceneGivesAnEmptySet()
+        {
+            // A scene that is still loading (as in Awake) counts as not loaded, and has nothing to collect yet.
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(default);
+            Assert.IsEmpty(bindings.Objects);
+            Assert.IsEmpty(bindings.Speakers);
+            Assert.IsEmpty(ScenarioBindingSet.Empty.Objects);
+            Assert.IsEmpty(ScenarioBindingSet.Empty.Problems);
         }
     }
 }

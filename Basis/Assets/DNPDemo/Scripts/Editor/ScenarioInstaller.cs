@@ -1,5 +1,7 @@
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Selection;
 using DNPDemo.Operator;
+using DNPDemo.Pen;
 using DNPDemo.Presentation;
 using DNPDemo.Roles;
 using DNPDemo.Scenario;
@@ -46,11 +48,13 @@ namespace DNPDemo.Editor
                     scenario = BuildScenario(root.transform, roles);
                     changed = true;
                 }
-                if (scenario.Find(InteractionObjectName) == null)
+                Transform interaction = scenario.Find(InteractionObjectName);
+                if (interaction == null)
                 {
-                    BuildInteraction(scenario, roles);
+                    interaction = BuildInteraction(scenario, roles);
                     changed = true;
                 }
+                changed |= InstallMissingTools(root.transform, scenario, interaction);
                 if (changed)
                 {
                     PrefabUtility.SaveAsPrefabAsset(root, DemoSystemsPrefabPath);
@@ -102,22 +106,56 @@ namespace DNPDemo.Editor
             return scenario.transform;
         }
 
-        /// <summary>Adds the interaction runner and the tools it can hand parts to.</summary>
-        static void BuildInteraction(Transform scenario, DemoRoleService roles)
+        /// <summary>Adds the interaction runner. Its tools are added by <see cref="InstallMissingTools"/>.</summary>
+        static Transform BuildInteraction(Transform scenario, DemoRoleService roles)
         {
-            InteractionPrefabBuilder.CreateAllIfMissing();
-
             var interaction = new GameObject(InteractionObjectName);
             interaction.transform.SetParent(scenario, false);
             var runner = interaction.AddComponent<InteractionRunner>();
-            var dummy = InstantiatePrefab<DummyInteractionTool>(InteractionPrefabBuilder.DummyToolPath, interaction.transform);
-
             WorldUiBuilder.Assign(runner, "_director", scenario.GetComponent<ScenarioDirector>());
             WorldUiBuilder.Assign(runner, "_roles", roles);
+            return interaction.transform;
+        }
+
+        /// <summary>
+        /// Places every tool that is not under <paramref name="interaction"/> yet and registers it with the runner.
+        /// Returns true when anything was added.
+        /// </summary>
+        static bool InstallMissingTools(Transform root, Transform scenario, Transform interaction)
+        {
+            InteractionPrefabBuilder.CreateAllIfMissing();
+            var runner = interaction.GetComponent<InteractionRunner>();
+            bool changed = false;
+
+            if (interaction.GetComponentInChildren<SelectionTool>(true) == null)
+            {
+                var selection = InstantiatePrefab<SelectionTool>(InteractionPrefabBuilder.SelectionToolPath, interaction);
+                WorldUiBuilder.Assign(selection, "_stage", scenario.GetComponent<ScenarioStage>());
+                var pen = root.GetComponentInChildren<SpatialPenController>(true);
+                if (pen == null)
+                {
+                    Debug.LogWarning($"[DNPDemo] {DemoSystemsPrefabPath} に SpatialPenController がないため、SelectionTool のペンを手動で設定してください。");
+                }
+                WorldUiBuilder.Assign(selection, "_pen", pen);
+                RegisterTool(runner, selection);
+                changed = true;
+            }
+            if (interaction.GetComponentInChildren<DummyInteractionTool>(true) == null)
+            {
+                var dummy = InstantiatePrefab<DummyInteractionTool>(InteractionPrefabBuilder.DummyToolPath, interaction);
+                RegisterTool(runner, dummy);
+                changed = true;
+            }
+            return changed;
+        }
+
+        static void RegisterTool(InteractionRunner runner, InteractionTool tool)
+        {
             var so = new SerializedObject(runner);
             SerializedProperty tools = so.FindProperty("_tools");
-            tools.arraySize = 1;
-            tools.GetArrayElementAtIndex(0).objectReferenceValue = dummy;
+            int index = tools.arraySize;
+            tools.InsertArrayElementAtIndex(index);
+            tools.GetArrayElementAtIndex(index).objectReferenceValue = tool;
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
