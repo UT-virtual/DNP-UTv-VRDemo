@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Scenario;
 using NUnit.Framework;
@@ -91,6 +92,30 @@ namespace DNPDemo.Tests
                 }
             }
             Assert.Greater(checkedKeys, 0, "The scenario should have a selection part to check.");
+        }
+
+        [Test]
+        public void ManipulateGrabZonesResolveToDetectionVolumes()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data);
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            int checkedParts = 0;
+            foreach (ScenarioStep step in data.Steps)
+            {
+                foreach (InteractionPart part in step.Interaction)
+                {
+                    if (part is not ManipulatePart manipulate)
+                    {
+                        continue;
+                    }
+                    string key = manipulate.EffectiveGrabZoneKey;
+                    Assert.IsTrue(bindings.TryGetObject(key, out UnityEngine.GameObject target), $"{step.Id}: key '{key}' is not bound.");
+                    Assert.IsNotNull(DetectionVolumes.Find(target), $"{step.Id}: '{key}' has neither a DetectionZoneGroup nor a DetectionZone to grab.");
+                    checkedParts++;
+                }
+            }
+            Assert.Greater(checkedParts, 0, "The scenario should have a manipulate part to check.");
         }
 
         [Test]
