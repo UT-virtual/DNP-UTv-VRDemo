@@ -141,15 +141,7 @@ namespace DNPDemo.Interaction.Selection
             {
                 foreach (string key in _part.TargetZoneKeys)
                 {
-                    IDetectionVolume volume = null;
-                    if (_stage.TryGetObject(key, out GameObject target))
-                    {
-                        volume = DetectionVolumes.Find(target);
-                        if (volume == null)
-                        {
-                            Debug.LogError($"[DNPDemo] キー「{key}」のオブジェクトに DetectionZoneGroup も DetectionZone もありません。", target);
-                        }
-                    }
+                    IDetectionVolume volume = DetectionVolumes.Resolve(_stage, key);
                     if (volume == null)
                     {
                         _targetsComplete = false;
