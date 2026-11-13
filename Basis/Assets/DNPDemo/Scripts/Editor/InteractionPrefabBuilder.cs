@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.Selection;
+using DNPDemo.Interaction.Stroke;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -20,9 +21,13 @@ namespace DNPDemo.Editor
         const string Folder = DNPDemoProjectSetup.Root + "/Prefabs/Interaction";
         public const string DummyToolPath = Folder + "/DummyTool.prefab";
         public const string SelectionToolPath = Folder + "/SelectionTool.prefab";
+        public const string StrokeToolPath = Folder + "/StrokeTool.prefab";
 
         public const string SelectionVolumeShaderName = "DNPDemo/SelectionVolume";
         public const string SelectionVolumeMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/Selection/SelectionVolume.mat";
+
+        public const string StrokeLineShaderName = "Universal Render Pipeline/Unlit";
+        public const string StrokeLineMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/Stroke/StrokeLine.mat";
 
         static readonly Color PanelBackground = new(0.06f, 0.08f, 0.14f, 0.92f);
 
@@ -34,6 +39,7 @@ namespace DNPDemo.Editor
         {
             CreateDummyTool();
             CreateSelectionTool();
+            CreateStrokeTool();
         }
 
         /// <summary>
@@ -84,6 +90,57 @@ namespace DNPDemo.Editor
             Directory.CreateDirectory(Path.GetDirectoryName(SelectionVolumeMaterialPath));
             AssetDatabase.CreateAsset(material, SelectionVolumeMaterialPath);
             Debug.Log($"[DNPDemo] Created {SelectionVolumeMaterialPath}");
+            return material;
+        }
+
+        /// <summary>
+        /// Tool for <see cref="StrokePart"/>, with the view that draws the lines. The pen and the stage live in
+        /// DemoSystems, so <see cref="ScenarioInstaller"/> wires them when it places the tool there.
+        /// </summary>
+        public static GameObject CreateStrokeTool()
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(StrokeToolPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+            Material material = CreateStrokeLineMaterial();
+            var root = new GameObject("StrokeTool");
+            try
+            {
+                var view = root.AddComponent<StrokeView>();
+                Assign(view, "_material", material);
+                var tool = root.AddComponent<StrokeTool>();
+                Assign(tool, "_view", view);
+                Directory.CreateDirectory(Path.GetDirectoryName(StrokeToolPath));
+                GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, StrokeToolPath);
+                Debug.Log($"[DNPDemo] Created {StrokeToolPath}");
+                return prefab;
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        /// <summary>Material of <see cref="StrokeView"/>: opaque unlit white, the colour of the pen's lines.</summary>
+        public static Material CreateStrokeLineMaterial()
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<Material>(StrokeLineMaterialPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+            Shader shader = Shader.Find(StrokeLineShaderName);
+            if (shader == null)
+            {
+                throw new InvalidOperationException($"Shader {StrokeLineShaderName} was not found.");
+            }
+            var material = new Material(shader);
+            material.SetColor("_BaseColor", Color.white);
+            Directory.CreateDirectory(Path.GetDirectoryName(StrokeLineMaterialPath));
+            AssetDatabase.CreateAsset(material, StrokeLineMaterialPath);
+            Debug.Log($"[DNPDemo] Created {StrokeLineMaterialPath}");
             return material;
         }
 

@@ -1,6 +1,8 @@
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.Selection;
+using DNPDemo.Interaction.Stroke;
+using DNPDemo.Pen;
 using DNPDemo.Scenario;
 using NUnit.Framework;
 using UnityEditor;
@@ -10,6 +12,8 @@ namespace DNPDemo.Tests
 {
     public class InteractionPrefabTests
     {
+        const string SpatialPenPrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Pen/SpatialPen.prefab";
+
         [Test]
         public void DummyToolPanelIsOnUILayer()
         {
@@ -72,6 +76,46 @@ namespace DNPDemo.Tests
                 registered |= tools.GetArrayElementAtIndex(i).objectReferenceValue == selection;
             }
             Assert.IsTrue(registered, "SelectionTool is not registered with the runner.");
+        }
+
+        [Test]
+        public void DemoSystemsStrokeToolIsWired()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioInstaller.DemoSystemsPrefabPath);
+            Assert.IsNotNull(prefab);
+            var runner = prefab.GetComponentInChildren<InteractionRunner>(true);
+            Assert.IsNotNull(runner);
+            var stroke = runner.GetComponentInChildren<StrokeTool>(true);
+            Assert.IsNotNull(stroke, "Install it from DNP Demo/Setup/Install Scenario Into DemoSystems Prefab.");
+
+            var tool = new SerializedObject(stroke);
+            Assert.IsNotNull(tool.FindProperty("_pen").objectReferenceValue, "StrokeTool needs the pen controller.");
+            Assert.IsNotNull(tool.FindProperty("_stage").objectReferenceValue, "StrokeTool needs the scenario stage.");
+            var view = (StrokeView)tool.FindProperty("_view").objectReferenceValue;
+            Assert.IsNotNull(view, "StrokeTool needs its view.");
+            Assert.IsNotNull(new SerializedObject(view).FindProperty("_material").objectReferenceValue, "StrokeView needs its material.");
+
+            SerializedProperty tools = new SerializedObject(runner).FindProperty("_tools");
+            bool registered = false;
+            for (int i = 0; i < tools.arraySize; i++)
+            {
+                registered |= tools.GetArrayElementAtIndex(i).objectReferenceValue == stroke;
+            }
+            Assert.IsTrue(registered, "StrokeTool is not registered with the runner.");
+        }
+
+        [Test]
+        public void SpatialPenShowsEveryModePart()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(SpatialPenPrefabPath);
+            Assert.IsNotNull(prefab, SpatialPenPrefabPath);
+            var view = prefab.GetComponent<SpatialPenView>();
+            Assert.IsNotNull(view);
+            var so = new SerializedObject(view);
+            foreach (string field in new[] { "_body", "_microphone", "_selectArea", "_eraser" })
+            {
+                Assert.IsNotNull(so.FindProperty(field).objectReferenceValue, $"SpatialPenView.{field} is not set.");
+            }
         }
 
         [Test]
