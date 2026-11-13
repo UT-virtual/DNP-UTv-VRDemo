@@ -29,7 +29,7 @@ namespace DNPDemo.Pen
         public const float ExtensionStartRadius = 0.05f;
 
         /// <summary>Radius of the eraser sphere (<c>PenEraser</c>) at the butt. A stroke it touches is erased.</summary>
-        public const float EraserRadius = 0.05f;
+        public const float EraserRadius = 0.025f;
 
         public static float ClampRadius(float radius) => Mathf.Clamp(radius, MinSelectRadius, MaxSelectRadius);
 
