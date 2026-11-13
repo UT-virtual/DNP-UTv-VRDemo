@@ -108,7 +108,7 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
 
 コードは `Scripts/Runtime/Pen/`。ペンは `Prefabs/Pen/SpatialPen.prefab`（ペンのモデルのバリアント。ピックアップ、同期、掴むためのコライダーを持つ）で、`DemoSystems/Pen` にプレイヤーA・B 用の2本（`Pen_PlayerA` / `Pen_PlayerB`）を置いている。ペンの開始位置は、DemoSystems 内の `Pen_PlayerA` / `Pen_PlayerB` の位置で決まる。
 
-ペン単体の動作確認には `Art/Pen/PenTestScene.unity` を使う。ネットワークへの接続もロールも不要で、再生すると `PenTestHarness`（`Scripts/Runtime/Pen/Testing/`）がシーン内のペンを `SpatialPenController` に渡す。掴む・離す、ホバー時のハイライト、トリガー、半径、モードの切り替えを確認できる。端末間の同期とロールごとの表示は対象外で、`DNPDemo_Main` を2台で接続して確認する。
+ペン単体の動作確認には `Art/Pen/PenTestScene.unity` を使う。ネットワークへの接続もロールも不要で、再生すると `PenTestHarness`（`Scripts/Runtime/Pen/Testing/`）がシーン内のペンを `SpatialPenController` に渡す。掴む・離す、ホバー時のハイライト、トリガー、半径、モードの切り替えを確認できる。範囲選択も試せる：`SelectionTestHarness`（`Scripts/Runtime/Interaction/Selection/Testing/`）が、範囲選択モードでトリガーを押すたびに選択範囲を記録して表示し、離すと `SelectionTarget`（白い球と同じ大きさの球ゾーン）に対して判定して、結果をコンソールに出す。端末間の同期とロールごとの表示は対象外で、`DNPDemo_Main` を2台で接続して確認する。
 
 | 要素 | 仕様 |
 |---|---|
@@ -128,14 +128,20 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
 
 | 部品 | 操作 | 完了判定 | 同期 |
 |---|---|---|---|
-| `SelectionTool` | トリガーを押している間、スフィアが通った軌跡を半透明の選択範囲としてマークする。離すと1回分の選択が確定する | 選択範囲が、ステップで指定した部位ゾーン（林檎、左肩〜肘、右手首など）にすべて重なっていれば成功。外れていれば選択範囲を消して、もう一度やってもらう | 確定した選択範囲のサンプル列 |
+| `SelectionTool` | トリガーを押している間、スフィアが通った軌跡を半透明の選択範囲としてマークする。離すと1回分の選択が確定する | 指定した部位ゾーン（林檎、左肩〜肘、右手首など）のそれぞれについて、体積の一定割合（初期値 50%）以上を選択範囲が覆い、かつ選択範囲のサンプルのうち一定割合（初期値 90%）以上がいずれかの指定ゾーンに重なっていれば成功。満たさなければ選択範囲をフェードアウトで消して、もう一度やってもらう | 成功して確定した選択範囲のサンプル列（Reliable で1回）。描いている間、相手にはペンの動きだけが見える |
 | `StrokeTool` | トリガーを押している間、空中に線を描く | ガイドモード：始点ゾーンから終点ゾーンまで届いていること。線画：描いた線の外接サイズが一定以上であること | 描画中の点列（間引いて送る）と確定したストローク |
 | `ManipulateTool` | 選択した部位をグリップで掴み、ステップごとの制約の範囲で動かす。制約は「平行移動（範囲つき）」または「支点まわりの回転（軸と角度範囲つき）」 | 目標ポーズから許容範囲内で離すと、目標へスナップして完了 | 操作中は制約パラメータを低頻度（約20Hz、Unreliable）で送り、確定時に Reliable で送る |
 | `VoiceCommandTool` | 音声入力モードのペンでトリガーを押している間を「音声入力中」として表示する。その間だけ `BasisLocalMicrophoneDriver.AddCaptureHold()` でマイクを取り込み（ミュートのままなので送信はされない）、`averageRms` がしきい値を超えた時間で発話を検知する。離したら `ReleaseCaptureHold()` | トリガーを押している間に一定時間以上の有音があり、トリガーを離した。台本の文を認識結果として表示してから完了とする | 完了イベントのみ |
 | `HistoryPanel` | 手元パネルに、これまでに到達した版の一覧を表示する。項目を選ぶと比較台に表示される | ステップで指定した版を選んだ | 選んだ版の ID |
 
 - 各部品は、トリガーなどの入力を `SpatialPenController` から受け取る（§2.3）。グリップはペンの保持に使うので、`ManipulateTool` で部位を掴む操作には別の入力が必要になる。どの入力にするかは #12 で決める。
-- 部品の内部表現：選択範囲はスフィアのサンプル列（位置＋半径）で記録し、サンプル間隔は半径に比例させる。表示は GPU インスタンシングした半透明スフィア（または生成したチューブメッシュ）。ストロークは点列と LineRenderer（またはチューブメッシュ）。
+- 部品の内部表現：選択範囲はスフィアのサンプル列（位置＋半径）で記録し、サンプル間隔は半径に比例させる。ストロークは点列と LineRenderer（またはチューブメッシュ）。
+- 範囲選択の実装（`Scripts/Runtime/Interaction/Selection/`）
+  - `SelectionPart` は対象ゾーンをキーの列（`TargetZoneKeys`）、はみ出しの許容率（`RequiredInsideRatio`）、被覆率（`RequiredCoverage`）で持つ。被覆率は `SelectionCoverage` が、ゾーンの外接ボックスに約 1000 点の格子を張り、ゾーン内の点のうち選択球に入る割合として求める。`DetectionZoneGroup` は1つのゾーンとして扱い、含まれるゾーン全体に対する被覆率を見る。キーで指すオブジェクトには `DetectionZoneGroup` か `DetectionZone` を付け、`ScenarioObjectBinding` でキーを登録する。キーの割り当て漏れは `ScenarioSceneBindingTests` が、キーの空や重複は `ScenarioData.Validate` が検出する。キーが1つでも解決できない部品は、判定が常に失敗する（運営スキップで進める）。
+  - `SelectionSampler` は、前のサンプルから「半径 × 0.5」以上動いたら（半径の変化も移動に数える）サンプルを足し、1フレームで大きく動いたときは間を補間する。1回の選択は最大 512 サンプル。判定は `SelectionJudge`、送信形式は `SelectionMessage`（1サンプル 8 バイト、最大約 4KB）。
+  - 表示は `SelectionVolumeView` が、低ポリの球（320 ポリゴン）を `Graphics.RenderMeshInstanced` で1回の描画呼び出しにまとめて描く。シェーダー `DNPDemo/SelectionVolume`（`Art/Interaction/Selection/`）はステンシルの最上位ビットで各ピクセルを1回だけ塗るので、球の重なりが濃くならない。その代わり色は単色になる。
+  - 押している途中でメニューからモードを変えると、その選択は判定せずに破棄する。
+  - 確定した選択範囲は、次の部品（音声指示など）の間も表示し、ステップが進むと消す。次の部品の途中で再接続した端末には、確定済みの選択範囲は表示されない（`InteractionRunner` が現在の部品宛ての途中経過だけを配るため）。
 - 1つのステップで複数の部品を順に使う場合（例：範囲選択 → 音声指示）は、操作定義に部品を順番に並べる。HUD は今どの手順にいるかを示す。
 
 #### 部品の共通インターフェース（`Scripts/Runtime/Interaction/`）
@@ -157,7 +163,9 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 ```
 
 - 各ツールは `InteractionPart` のサブクラスと `InteractionTool` のサブクラスを1組で実装し、`InteractionRunner` のツール一覧に登録する。
-- 本番のツールができるまでは、`DummyInteractionPart`（予定の部品のペンモードと手順文を持つ）と `DummyInteractionTool`（担当者が「完了」ボタンを規定回数押すと完了。エディタとデスクトップでは F8）で代用する。
+- 部品は、パラメータの検証（`Validate`）と、シーンに必要なキーの申告（`CollectRequirements`）を実装できる。`ScenarioData` の検証とキーの収集はこれを呼ぶ。
+- ツールは `ScenarioInstaller`（メニュー「DNP Demo/Setup/Install Scenario Into DemoSystems Prefab」）で DemoSystems に組み込む。インストーラーは足りないツールだけを追加するので、ツールを増やしたら再実行すればよい。
+- 本番のツールができるまでは、`DummyInteractionPart`（予定の部品のペンモードと手順文を持つ）と `DummyInteractionTool`（担当者が「完了」ボタンを規定回数押すと完了。エディタとデスクトップでは F8）で代用する。範囲選択は、対象ゾーンを像に置いたステップから `SelectionPart` に置き換える（現在はステップ9 の左肩のみ。仮の像の `Zone_LeftShoulder` を使う）。
 
 ### 2.5 像と版の管理
 
