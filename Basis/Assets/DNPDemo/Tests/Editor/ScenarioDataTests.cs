@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Selection;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
 using NUnit.Framework;
@@ -76,6 +77,54 @@ namespace DNPDemo.Tests
             };
             List<string> problems = ScenarioData.Validate(steps);
             Assert.AreEqual(2, problems.Count, string.Join("\n", problems));
+        }
+
+        [Test]
+        public void ValidateChecksPartParameters()
+        {
+            var steps = new List<ScenarioStep>
+            {
+                new()
+                {
+                    Id = "no-zone", Completion = StepCompletion.Interaction, Actor = DemoRole.PlayerA,
+                    Interaction = new List<InteractionPart> { new SelectionPart("x") },
+                },
+                new()
+                {
+                    Id = "bad-keys", Completion = StepCompletion.Interaction, Actor = DemoRole.PlayerA,
+                    Interaction = new List<InteractionPart> { new SelectionPart("x", "Zone_A", "", "Zone_A") },
+                },
+                new()
+                {
+                    Id = "ok", Completion = StepCompletion.Interaction, Actor = DemoRole.PlayerB,
+                    Interaction = new List<InteractionPart> { new SelectionPart("x", "Zone_A", "Zone_B") },
+                },
+            };
+            List<string> problems = ScenarioData.Validate(steps);
+            // no target zone, empty key, duplicate key
+            Assert.AreEqual(3, problems.Count, string.Join("\n", problems));
+        }
+
+        [Test]
+        public void RequirementsIncludeTheZonesOfInteractionParts()
+        {
+            var data = UnityEngine.ScriptableObject.CreateInstance<ScenarioData>();
+            try
+            {
+                data.SetSteps(new List<ScenarioStep>
+                {
+                    new()
+                    {
+                        Id = "select", Completion = StepCompletion.Interaction, Actor = DemoRole.PlayerA,
+                        Interaction = new List<InteractionPart> { new SelectionPart("x", "Zone_A", "Zone_B") },
+                    },
+                });
+                CollectionAssert.AreEquivalent(new[] { "Zone_A", "Zone_B" }, data.CollectRequirements().ObjectKeys);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(data);
+            }
         }
 
         [Test]
