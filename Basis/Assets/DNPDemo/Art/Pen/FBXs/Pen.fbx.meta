@@ -12,6 +12,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: PenEraserMaterial
+    second: {fileID: 2100000, guid: d7093ce8c4258a540b333c3889958678, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: PenMicIndicator
     second: {fileID: 2100000, guid: 393b449352d5b9745a40ce569b20d7d0, type: 2}
   - first:

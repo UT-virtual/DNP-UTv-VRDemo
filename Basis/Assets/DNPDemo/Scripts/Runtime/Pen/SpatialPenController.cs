@@ -52,6 +52,9 @@ namespace DNPDemo.Pen
         /// <summary>World position of the tip, the centre of the selection sphere.</summary>
         public Vector3 TipPosition => _view != null ? _view.TipPosition : Vector3.zero;
 
+        /// <summary>World position of the eraser sphere at the butt (radius <see cref="PenGeometry.EraserRadius"/>).</summary>
+        public Vector3 EraserPosition => _view != null ? _view.EraserPosition : Vector3.zero;
+
         public event Action TriggerPressed;
         public event Action TriggerReleased;
 

@@ -17,7 +17,7 @@ namespace DNPDemo.Pen
     /// <see cref="PenGeometry.ExtensionStartRadius"/> the body extends so the sphere stays clear of the hand.</item>
     /// <item>Voice: the microphone head (<c>PenMicrophone</c>); its indicator ring turns from idle to active colour
     /// while the pen is held with the trigger down.</item>
-    /// <item>Draw: the body only.</item>
+    /// <item>Draw: the eraser sphere (<c>PenEraser</c>, radius <see cref="PenGeometry.EraserRadius"/>) at the butt.</item>
     /// </list>
     /// The local player's pen is driven by <see cref="SpatialPenController"/>, the other player's by
     /// <see cref="SpatialPenSync"/>.
@@ -33,6 +33,7 @@ namespace DNPDemo.Pen
         [SerializeField] SkinnedMeshRenderer _body;
         [SerializeField] Renderer _microphone;
         [SerializeField] Renderer _selectArea;
+        [SerializeField] Renderer _eraser;
 
         [Tooltip("Material of the indicator ring on the microphone head. Its colour is overridden per renderer, the asset is left untouched.")]
         [SerializeField] Material _micIndicatorMaterial;
@@ -63,6 +64,9 @@ namespace DNPDemo.Pen
 
         /// <summary>World position of the tip, the centre of the selection sphere.</summary>
         public Vector3 TipPosition => transform.TransformPoint(PenGeometry.TipLocalPosition(_extension));
+
+        /// <summary>World position of the eraser sphere's centre, at the butt.</summary>
+        public Vector3 EraserPosition => _eraser != null ? _eraser.transform.position : transform.position;
 
         /// <summary>Current distance from the butt to the tip.</summary>
         public float Length => PenGeometry.Length(_extension);
@@ -131,6 +135,11 @@ namespace DNPDemo.Pen
             if (_micIndicatorIndex < 0)
             {
                 Debug.LogError("[DNPDemo] SpatialPenView: PenMicrophone にインジケーターのマテリアルが見つかりません。", this);
+            }
+
+            if (_eraser == null)
+            {
+                Debug.LogError("[DNPDemo] SpatialPenView: PenEraser が設定されていません。", this);
             }
         }
 
@@ -221,6 +230,10 @@ namespace DNPDemo.Pen
             if (_microphone != null)
             {
                 _microphone.enabled = _visible && _mode == PenMode.Voice;
+            }
+            if (_eraser != null)
+            {
+                _eraser.enabled = _visible && _mode == PenMode.Draw;
             }
             if (!_visible)
             {

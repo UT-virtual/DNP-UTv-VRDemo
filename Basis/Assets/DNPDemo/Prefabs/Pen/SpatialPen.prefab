@@ -89,6 +89,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 13c19e2d9721a054f87565170f8d9413, type: 3}
   m_PrefabInstance: {fileID: 7188671744371684566}
   m_PrefabAsset: {fileID: 0}
+--- !u!23 &7457147190962712476 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -8881572350239499446, guid: 13c19e2d9721a054f87565170f8d9413, type: 3}
+  m_PrefabInstance: {fileID: 7188671744371684566}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7998994425397397895 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 13c19e2d9721a054f87565170f8d9413, type: 3}
@@ -111,6 +116,7 @@ MonoBehaviour:
   _body: {fileID: 5619625676625715671}
   _microphone: {fileID: 1840377702804530546}
   _selectArea: {fileID: 2893202405972041837}
+  _eraser: {fileID: 7457147190962712476}
   _micIndicatorMaterial: {fileID: 2100000, guid: 393b449352d5b9745a40ce569b20d7d0, type: 2}
   _micIdleColor: {r: 1, g: 0, b: 0, a: 1}
   _micActiveColor: {r: 0, g: 1, b: 0, a: 1}
