@@ -1,11 +1,17 @@
+using System;
+using System.Collections.Generic;
+using Basis.Scripts.BasisSdk.Highlight;
+using Basis.Scripts.BasisSdk.Interactions;
+using Basis.Scripts.Device_Management.Devices;
 using DNPDemo.Interaction;
 using UnityEngine;
 
 namespace DNPDemo.Pen
 {
     /// <summary>
-    /// Draws one pen from a <see cref="PenState"/>. It only shows what it is told; the local player's pen is driven by
-    /// <see cref="SpatialPenController"/>, the other player's by <see cref="SpatialPenSync"/>.
+    /// One pen in the world. Grabbing, holding and the pose across devices are Basis's pickup
+    /// (<see cref="BasisPickupInteractable"/> with <c>BasisPickupSyncNetworking</c> on the same object); this
+    /// component draws the pen from a <see cref="PenState"/> and decides who may grab it.
     /// <list type="bullet">
     /// <item>Select: the tip sphere (<c>PenSelectArea</c>) at the selection radius. Above
     /// <see cref="PenGeometry.ExtensionStartRadius"/> the body extends so the sphere stays clear of the hand.</item>
@@ -13,10 +19,16 @@ namespace DNPDemo.Pen
     /// while the pen is held with the trigger down.</item>
     /// <item>Draw: the body only.</item>
     /// </list>
+    /// The local player's pen is driven by <see cref="SpatialPenController"/>, the other player's by
+    /// <see cref="SpatialPenSync"/>.
     /// </summary>
     public sealed class SpatialPenView : MonoBehaviour
     {
         static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+
+        [SerializeField] BasisPickupInteractable _pickup;
+        [Tooltip("The collider the hand grabs. Off while the pen is hidden.")]
+        [SerializeField] Collider _grabCollider;
 
         [SerializeField] SkinnedMeshRenderer _body;
         [SerializeField] Renderer _microphone;
@@ -29,21 +41,25 @@ namespace DNPDemo.Pen
 
         [SerializeField] string _extensionBlendShape = "Extend";
 
-        [Tooltip("How quickly the other player's pen catches up with received poses (higher is snappier).")]
-        [SerializeField, Min(1f)] float _remoteSharpness = 20f;
-
+        readonly HashSet<BasisInput> _hoveringInputs = new();
         MaterialPropertyBlock _micBlock;
         int _extensionIndex = -1;
         float _extensionFullWeight = 100f;
         int _micIndicatorIndex = -1;
         bool _initialized;
 
+        bool _visible = true;
+        bool _grabbableLocally;
+        bool _highlighted;
+        PenMode _mode = PenModeSelection.Default;
         float _extension;
         bool? _micActiveShown;
 
-        bool _followsRemoteTarget;
-        Vector3 _targetPosition;
-        Quaternion _targetRotation = Quaternion.identity;
+        /// <summary>A hand of this device grabbed the pen.</summary>
+        public event Action<BasisInput> Grabbed;
+
+        /// <summary>A hand of this device let go of the pen.</summary>
+        public event Action<BasisInput> Released;
 
         /// <summary>World position of the tip, the centre of the selection sphere.</summary>
         public Vector3 TipPosition => transform.TransformPoint(PenGeometry.TipLocalPosition(_extension));
@@ -51,9 +67,38 @@ namespace DNPDemo.Pen
         /// <summary>Current distance from the butt to the tip.</summary>
         public float Length => PenGeometry.Length(_extension);
 
-        public Pose WorldPose => new(transform.position, transform.rotation);
+        void Awake()
+        {
+            Initialize();
+            // Until a state arrives the pen shows the default mode, not every part the model has.
+            ApplyRendererVisibility();
+            if (_pickup == null)
+            {
+                Debug.LogError("[DNPDemo] SpatialPenView: BasisPickupInteractable が設定されていません。", this);
+                return;
+            }
+            _pickup.CanHoverInjected.Add(CanBeGrabbed);
+            _pickup.CanInteractInjected.Add(CanBeGrabbed);
+            _pickup.OnInteractStartEvent.AddListener(HandleInteractStart);
+            _pickup.OnInteractEndEvent.AddListener(HandleInteractEnd);
+            _pickup.OnHoverStartEvent += HandleHoverStart;
+            _pickup.OnHoverEndEvent += HandleHoverEnd;
+        }
 
-        void Awake() => Initialize();
+        void OnDestroy()
+        {
+            if (_pickup == null)
+            {
+                return;
+            }
+            _pickup.CanHoverInjected.Remove(CanBeGrabbed);
+            _pickup.CanInteractInjected.Remove(CanBeGrabbed);
+            _pickup.OnInteractStartEvent.RemoveListener(HandleInteractStart);
+            _pickup.OnInteractEndEvent.RemoveListener(HandleInteractEnd);
+            _pickup.OnHoverStartEvent -= HandleHoverStart;
+            _pickup.OnHoverEndEvent -= HandleHoverEnd;
+            SetHighlighted(false);
+        }
 
         void Initialize()
         {
@@ -81,7 +126,7 @@ namespace DNPDemo.Pen
 
             if (_microphone != null && _micIndicatorMaterial != null)
             {
-                _micIndicatorIndex = System.Array.IndexOf(_microphone.sharedMaterials, _micIndicatorMaterial);
+                _micIndicatorIndex = Array.IndexOf(_microphone.sharedMaterials, _micIndicatorMaterial);
             }
             if (_micIndicatorIndex < 0)
             {
@@ -89,10 +134,11 @@ namespace DNPDemo.Pen
             }
         }
 
-        /// <summary>Shows the mode, radius and trigger state. Leaves the pose alone.</summary>
+        /// <summary>Shows the mode, radius and trigger state.</summary>
         public void ShowState(PenMode mode, float radius, bool isHeld, bool isTriggerHeld)
         {
             Initialize();
+            _mode = mode;
             bool selecting = mode == PenMode.Select;
             bool voice = mode == PenMode.Voice;
 
@@ -104,7 +150,6 @@ namespace DNPDemo.Pen
 
             if (_selectArea != null)
             {
-                _selectArea.enabled = selecting;
                 Transform area = _selectArea.transform;
                 area.localPosition = PenGeometry.TipLocalPosition(_extension);
                 area.localScale = Vector3.one * PenGeometry.SelectAreaScale(radius);
@@ -112,54 +157,113 @@ namespace DNPDemo.Pen
 
             if (_microphone != null)
             {
-                _microphone.enabled = voice;
                 SetMicActive(voice && isHeld && isTriggerHeld);
             }
+            ApplyRendererVisibility();
         }
 
-        /// <summary>Places the pen at once (the local player's pen).</summary>
-        public void SetPose(Pose pose)
-        {
-            _followsRemoteTarget = false;
-            transform.SetPositionAndRotation(pose.position, pose.rotation);
-        }
+        public void ShowState(in PenState state) => ShowState(state.Mode, state.Radius, state.IsHeld, state.IsTriggerHeld);
 
-        /// <summary>Moves the pen towards a received pose; <paramref name="snap"/> jumps there instead.</summary>
-        public void SetRemoteTarget(Pose pose, bool snap)
-        {
-            _targetPosition = pose.position;
-            _targetRotation = pose.rotation;
-            _followsRemoteTarget = true;
-            if (snap)
-            {
-                transform.SetPositionAndRotation(pose.position, pose.rotation);
-            }
-        }
-
-        public void ShowRemoteState(in PenState state, bool snap)
-        {
-            ShowState(state.Mode, state.Radius, state.IsHeld, state.IsTriggerHeld);
-            SetRemoteTarget(new Pose(state.Position, state.Rotation), snap);
-        }
-
+        /// <summary>
+        /// Shows or hides the pen. The object stays active so its pickup and pose sync keep running; only what can be
+        /// seen and grabbed is switched.
+        /// </summary>
         public void SetVisible(bool visible)
         {
-            if (gameObject.activeSelf != visible)
-            {
-                gameObject.SetActive(visible);
-            }
-        }
-
-        void LateUpdate()
-        {
-            if (!_followsRemoteTarget)
+            if (_visible == visible)
             {
                 return;
             }
-            float t = 1f - Mathf.Exp(-_remoteSharpness * Time.deltaTime);
-            transform.SetPositionAndRotation(
-                Vector3.Lerp(transform.position, _targetPosition, t),
-                Quaternion.Slerp(transform.rotation, _targetRotation, t));
+            _visible = visible;
+            if (!visible)
+            {
+                Drop();
+            }
+            if (_grabCollider != null)
+            {
+                _grabCollider.enabled = visible;
+            }
+            ApplyRendererVisibility();
+        }
+
+        /// <summary>Whether this device may grab the pen (only the device of the pen's role may).</summary>
+        public void SetGrabbableLocally(bool grabbable)
+        {
+            _grabbableLocally = grabbable;
+            if (!grabbable)
+            {
+                Drop();
+            }
+        }
+
+        /// <summary>Lets go of the pen if a hand of this device holds it.</summary>
+        public void Drop()
+        {
+            // Only when held: dropping touches state the pickup sets up in its Start, which may not have run yet.
+            if (_pickup != null && _pickup.Inputs.AnyInteracting())
+            {
+                _pickup.Drop();
+            }
+        }
+
+        bool CanBeGrabbed(BasisInput input) => _grabbableLocally && _visible;
+
+        void ApplyRendererVisibility()
+        {
+            if (_body != null)
+            {
+                _body.enabled = _visible;
+            }
+            if (_selectArea != null)
+            {
+                _selectArea.enabled = _visible && _mode == PenMode.Select;
+            }
+            if (_microphone != null)
+            {
+                _microphone.enabled = _visible && _mode == PenMode.Voice;
+            }
+            if (!_visible)
+            {
+                SetHighlighted(false);
+            }
+        }
+
+        void HandleInteractStart(BasisInput input) => Grabbed?.Invoke(input);
+
+        void HandleInteractEnd(BasisInput input) => Released?.Invoke(input);
+
+        // Basis's own hover highlight only covers MeshRenderers, which would light the tip sphere and the microphone
+        // but not the body (a SkinnedMeshRenderer), so the pickup's highlight is off and the body is lit here instead.
+        void HandleHoverStart(BasisInput input)
+        {
+            _hoveringInputs.Add(input);
+            SetHighlighted(_visible);
+        }
+
+        void HandleHoverEnd(BasisInput input, bool willInteract)
+        {
+            _hoveringInputs.Remove(input);
+            if (_hoveringInputs.Count == 0)
+            {
+                SetHighlighted(false);
+            }
+        }
+
+        void SetHighlighted(bool highlighted)
+        {
+            if (_body == null || _highlighted == highlighted)
+            {
+                return;
+            }
+            _highlighted = highlighted;
+            if (highlighted)
+            {
+                BasisHighlightManager.Highlight(_body);
+            }
+            else
+            {
+                BasisHighlightManager.Unhighlight(_body);
+            }
         }
 
         void SetMicActive(bool active)

@@ -8,17 +8,19 @@ using UnityEngine;
 namespace DNPDemo.Pen
 {
     /// <summary>
-    /// Owns the two pens in the world, one per role, and keeps them in step across devices.
+    /// Owns the two pens in the world, one per role, and keeps what Basis's pickup sync does not carry in step
+    /// across devices: the mode, the selection radius, and the held and trigger flags.
     /// <list type="bullet">
-    /// <item>The pen of the local role goes to <see cref="SpatialPenController"/>; the other one shows what its
-    /// player's device sends. A pen is visible while its role is in the session.</item>
-    /// <item>The local pen's state is sent at up to <see cref="_sendRate"/> per second while it changes (unreliable),
-    /// mode, grip and trigger changes go out at once, and once the pen has been still for <see cref="_settleSeconds"/>
-    /// the exact state follows on the reliable channel, so the last packet is never lost.</item>
+    /// <item>The pen of the local role goes to <see cref="SpatialPenController"/>, which alone may grab it; the other
+    /// one shows what its player's device sends. A pen is visible while its role is in the session.</item>
+    /// <item>The local pen's state is sent at up to <see cref="_sendRate"/> per second while the radius changes
+    /// (unreliable), mode, grip and trigger changes go out at once, and once the state has been still for
+    /// <see cref="_settleSeconds"/> the exact state follows on the reliable channel, so the last packet is never lost.</item>
     /// <item>Joining players get the current state directly. A state that arrives before its sender's role is known is
     /// kept and shown once the role is announced.</item>
     /// </list>
-    /// Until a pen's first state arrives it stays where it was placed in the prefab, which is its starting position.
+    /// The pose of each pen is synced by the <c>BasisPickupSyncNetworking</c> on the pen; until anyone grabs it, a
+    /// pen stays where it was placed in the prefab, which is its starting position.
     /// </summary>
     public sealed class SpatialPenSync : BasisNetworkBehaviour
     {
@@ -31,7 +33,6 @@ namespace DNPDemo.Pen
         [SerializeField, Min(0.05f)] float _settleSeconds = 0.3f;
 
         readonly Dictionary<ushort, PenStateMessage> _latestByPlayer = new();
-        readonly HashSet<SpatialPenView> _shownRemotePens = new();
         readonly ushort[] _singleRecipient = new ushort[1];
 
         PenState _lastSent;
@@ -169,30 +170,19 @@ namespace DNPDemo.Pen
         {
             DemoRole role = _roles.GetRole(playerId);
             SpatialPenView pen = PenFor(role);
-            if (pen == null || role == _roles.LocalRole)
+            if (pen != null && role != _roles.LocalRole)
             {
-                return;
+                pen.ShowState(state);
             }
-            // The first state after the pen appears jumps into place instead of gliding from the starting position.
-            bool snap = _shownRemotePens.Add(pen);
-            pen.ShowRemoteState(state, snap);
         }
 
         void RefreshVisibility()
         {
-            SetVisible(_playerAPen, DemoRole.PlayerA);
-            SetVisible(_playerBPen, DemoRole.PlayerB);
+            _playerAPen.SetVisible(IsPresent(DemoRole.PlayerA));
+            _playerBPen.SetVisible(IsPresent(DemoRole.PlayerB));
         }
 
-        void SetVisible(SpatialPenView pen, DemoRole role)
-        {
-            bool visible = role == _roles.LocalRole || _roles.TryGetPlayerId(role, out _);
-            if (!visible)
-            {
-                _shownRemotePens.Remove(pen);
-            }
-            pen.SetVisible(visible);
-        }
+        bool IsPresent(DemoRole role) => role == _roles.LocalRole || _roles.TryGetPlayerId(role, out _);
 
         SpatialPenView PenFor(DemoRole role) => role switch
         {

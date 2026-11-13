@@ -43,16 +43,6 @@ namespace DNPDemo.Pen
         public static float SelectAreaScale(float radius) => radius / ModelSelectRadius;
 
         /// <summary>
-        /// Distance from a point in pen-local space to the pen's axis segment (butt to tip), used to decide whether a
-        /// hand is close enough to grab the pen.
-        /// </summary>
-        public static float DistanceToAxis(Vector3 localPoint, float length)
-        {
-            var closest = new Vector3(Mathf.Clamp(localPoint.x, 0f, length), 0f, 0f);
-            return Vector3.Distance(localPoint, closest);
-        }
-
-        /// <summary>
         /// Radius after holding the stick at <paramref name="stick"/> (-1..1) for <paramref name="deltaTime"/>.
         /// The change is multiplicative, so small and large spheres resize at the same perceived speed; a full push
         /// covers the whole range in <paramref name="fullRangeSeconds"/>.

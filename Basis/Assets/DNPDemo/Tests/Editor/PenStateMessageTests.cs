@@ -1,7 +1,6 @@
 using DNPDemo.Interaction;
 using DNPDemo.Pen;
 using NUnit.Framework;
-using UnityEngine;
 
 namespace DNPDemo.Tests
 {
@@ -13,8 +12,6 @@ namespace DNPDemo.Tests
             Radius = 0.2f,
             IsHeld = true,
             IsTriggerHeld = true,
-            Position = new Vector3(1.5f, -2f, 3.25f),
-            Rotation = Quaternion.Euler(10f, 20f, 30f),
         };
 
         [Test]
@@ -30,8 +27,15 @@ namespace DNPDemo.Tests
             Assert.AreEqual(state.Radius, parsed.State.Radius);
             Assert.AreEqual(state.IsHeld, parsed.State.IsHeld);
             Assert.AreEqual(state.IsTriggerHeld, parsed.State.IsTriggerHeld);
-            Assert.AreEqual(state.Position, parsed.State.Position);
-            Assert.That(Quaternion.Angle(state.Rotation, parsed.State.Rotation), Is.LessThan(0.01f));
+        }
+
+        [Test]
+        public void ClampsRadiusToTheAllowedRange()
+        {
+            PenState state = SampleState();
+            state.Radius = 5f;
+            Assert.IsTrue(PenStateMessage.TryParse(new PenStateMessage(1, state).Serialize(), out PenStateMessage parsed));
+            Assert.AreEqual(PenGeometry.MaxSelectRadius, parsed.State.Radius);
         }
 
         [Test]
@@ -48,9 +52,9 @@ namespace DNPDemo.Tests
             unknownMode[3] = 200;
             Assert.IsFalse(PenStateMessage.TryParse(unknownMode, out _));
 
-            PenState zeroRotation = SampleState();
-            zeroRotation.Rotation = new Quaternion(0f, 0f, 0f, 0f);
-            Assert.IsFalse(PenStateMessage.TryParse(new PenStateMessage(1, zeroRotation).Serialize(), out _));
+            PenState notANumber = SampleState();
+            notANumber.Radius = float.NaN;
+            Assert.IsFalse(PenStateMessage.TryParse(new PenStateMessage(1, notANumber).Serialize(), out _));
         }
 
         [Test]
@@ -63,17 +67,17 @@ namespace DNPDemo.Tests
         }
 
         [Test]
-        public void SmallChangesAreNotVisibleButFlagsAre()
+        public void SmallRadiusChangesAreNotVisibleButFlagsAre()
         {
             PenState state = SampleState();
             PenState nudged = state;
-            nudged.Position += new Vector3(0.0005f, 0f, 0f);
+            nudged.Radius += 0.0005f;
             Assert.IsFalse(nudged.DiffersVisibly(state));
 
-            PenState moved = state;
-            moved.Position += new Vector3(0.01f, 0f, 0f);
-            Assert.IsTrue(moved.DiffersVisibly(state));
-            Assert.IsFalse(moved.DiffersDiscretely(state));
+            PenState resized = state;
+            resized.Radius += 0.01f;
+            Assert.IsTrue(resized.DiffersVisibly(state));
+            Assert.IsFalse(resized.DiffersDiscretely(state));
 
             PenState released = state;
             released.IsTriggerHeld = false;

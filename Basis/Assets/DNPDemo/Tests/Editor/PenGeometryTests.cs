@@ -49,13 +49,5 @@ namespace DNPDemo.Tests
             }
             Assert.AreEqual(PenGeometry.MaxSelectRadius, radius, 1e-4f);
         }
-
-        [Test]
-        public void DistanceToAxisMeasuresToTheSegment()
-        {
-            Assert.AreEqual(0.1f, PenGeometry.DistanceToAxis(new Vector3(0.15f, 0.1f, 0f), 0.3f), Tolerance);
-            Assert.AreEqual(0.2f, PenGeometry.DistanceToAxis(new Vector3(-0.2f, 0f, 0f), 0.3f), Tolerance);
-            Assert.AreEqual(0.1f, PenGeometry.DistanceToAxis(new Vector3(0.4f, 0f, 0f), 0.3f), Tolerance);
-        }
     }
 }

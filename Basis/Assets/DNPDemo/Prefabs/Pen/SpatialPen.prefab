@@ -59,6 +59,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 13c19e2d9721a054f87565170f8d9413, type: 3}
       insertIndex: -1
       addedObject: {fileID: 675860110398633022}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 13c19e2d9721a054f87565170f8d9413, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2024456039131180972}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 13c19e2d9721a054f87565170f8d9413, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7213604981776616256}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 13c19e2d9721a054f87565170f8d9413, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2742142775656522929}
   m_SourcePrefab: {fileID: 100100000, guid: 13c19e2d9721a054f87565170f8d9413, type: 3}
 --- !u!23 &1840377702804530546 stripped
 MeshRenderer:
@@ -73,6 +82,11 @@ MeshRenderer:
 --- !u!137 &5619625676625715671 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 3332559382920156417, guid: 13c19e2d9721a054f87565170f8d9413, type: 3}
+  m_PrefabInstance: {fileID: 7188671744371684566}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7226574946629325629 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 13c19e2d9721a054f87565170f8d9413, type: 3}
   m_PrefabInstance: {fileID: 7188671744371684566}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &7998994425397397895 stripped
@@ -92,6 +106,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ba21fc3a718f7f459c8b43d674982ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Pen.SpatialPenView
+  _pickup: {fileID: 7213604981776616256}
+  _grabCollider: {fileID: 2024456039131180972}
   _body: {fileID: 5619625676625715671}
   _microphone: {fileID: 1840377702804530546}
   _selectArea: {fileID: 2893202405972041837}
@@ -99,4 +115,246 @@ MonoBehaviour:
   _micIdleColor: {r: 1, g: 0, b: 0, a: 1}
   _micActiveColor: {r: 0, g: 1, b: 0, a: 1}
   _extensionBlendShape: Extend
-  _remoteSharpness: 20
+--- !u!136 &2024456039131180972
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7998994425397397895}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.02
+  m_Height: 0.3
+  m_Direction: 0
+  m_Center: {x: 0.15, y: 0, z: 0}
+--- !u!114 &7213604981776616256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7998994425397397895}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8b7cb57e80a80b46a2f3f927876eb77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Basis Framework::Basis.Scripts.BasisSdk.Interactions.BasisPickupInteractable
+  _colliderRefs: []
+  Inputs:
+    desktopCenterEye:
+      Source: {fileID: 0}
+      State: 0
+    leftHand:
+      Source: {fileID: 0}
+      State: 0
+    rightHand:
+      Source: {fileID: 0}
+      State: 0
+    extras: []
+  interactableEnabled: 1
+  AutoHold: 0
+  InputKey: 0
+  OnInteractStartEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnInteractEndEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  InteractRange: 0.15
+  AllowDirectGrab: 1
+  GrabRadius: 0.15
+  KinematicWhileInteracting: 1
+  CanSelfSteal: 1
+  LerpToHandOnPickup: 0
+  WeldToHand: 1
+  GripPoint: {fileID: 0}
+  ShowHighlightOnHover: 0
+  DesktopRotateSpeed: 0.1
+  DesktopZoopSpeed: 0.2
+  DesktopZoopMinDistance: 0.2
+  DesktopZoopMaxDistance: 2
+  GenerateColliderMesh: 0
+  minLinearVelocity: 0.5
+  interactEndLinearVelocityMultiplier: 1
+  minAngularVelocity: 0.5
+  interactEndAngularVelocityMultiplier: 1
+  throwWindowSeconds: 0.05
+  throwLookbackSeconds: 0.15
+  RigidRef: {fileID: 0}
+  InputConstraint:
+    rid: 1662061649385488658
+  _previousKinematicValue: 1
+  OnPickupUse:
+    m_PersistentCalls:
+      m_Calls: []
+  enableScaleWithGesture: 0
+  minScalePercent: 50
+  maxScalePercent: 200
+  constrainToAxis: 3
+  positiveTravelLimit: 0.2
+  negativeTravelLimit: 0
+  enableGridSnap: 0
+  gridSnapSize: 0.25
+  enableRotationSnap: 0
+  rotationSnapDegrees: 15
+  enableAutoReturn: 0
+  delay: 3
+  duration: 0
+  easing: 0
+  useCustomCurve: 0
+  customCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  references:
+    version: 2
+    RefIds:
+    - rid: 1662061649385488658
+      type: {class: BasisParentConstraint, ns: Basis.Scripts.BasisSdk.Interactions, asm: Basis Framework}
+      data:
+        Enabled: 1
+        GlobalWeight: 1
+        _restPosition: {x: 0, y: 0, z: 0}
+        _restRotation: {x: 0, y: 0, z: 0, w: 0}
+        sources: []
+--- !u!114 &2742142775656522929
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7998994425397397895}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52a9ea38cfa7aca4ebec1aec993bbb64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Basis Framework::BasisPickupSyncNetworking
+  HasNetworkID: 0
+  IsOwnedLocallyOnServer: 0
+  IsOwnedLocallyOnClient: 0
+  CurrentOwnerId: 0
+  SendIntervalSeconds: 0.05
+  KeyframeIntervalSeconds: 0.5
+  ContinuousEpsilon: 0.0001
+  RotationSendThresholdDegrees: 0.5
+  UseDirectP2P: 1
+  ForceP2POnly: 0
+  OverrideP2PRate: 0
+  P2PSendIntervalSeconds: 0.033
+  P2PKeyframeIntervalSeconds: 0.5
+  Delivery: 4
+  KeyframeDelivery: 2
+  Extrapolate: 0
+  MaxExtrapolationSeconds: 0.2
+  JitterBufferDepth: 2
+  UseTeleportThreshold: 0
+  TeleportThreshold: 3
+  DistanceReduction: 1
+  RelevanceCulling: 0
+  RelevanceRadius: 50
+  UseChecksum: 1
+  _serializedVersion: 3
+  Target: {fileID: 7226574946629325629}
+  SyncPosition: 1
+  PositionX: 1
+  PositionY: 1
+  PositionZ: 1
+  SyncRotation: 1
+  RotationMode: 0
+  SmallestThreeBits: 9
+  RotationX: 1
+  RotationY: 1
+  RotationZ: 1
+  SyncScale: 0
+  ScaleUniform: 0
+  ScaleX: 1
+  ScaleY: 1
+  ScaleZ: 1
+  WorldSpace: 0
+  RelativeTo: {fileID: 0}
+  InterpolatePosition: 1
+  InterpolateRotation: 1
+  InterpolateScale: 1
+  PosCompX:
+    Mode: 0
+    Min: -1024
+    Max: 1024
+    Bits: 16
+  PosCompY:
+    Mode: 0
+    Min: -1024
+    Max: 1024
+    Bits: 16
+  PosCompZ:
+    Mode: 0
+    Min: -1024
+    Max: 1024
+    Bits: 16
+  RotCompX:
+    Mode: 0
+    Min: 0
+    Max: 360
+    Bits: 16
+  RotCompY:
+    Mode: 0
+    Min: 0
+    Max: 360
+    Bits: 16
+  RotCompZ:
+    Mode: 0
+    Min: 0
+    Max: 360
+    Bits: 16
+  ScaleCompX:
+    Mode: 0
+    Min: 0
+    Max: 64
+    Bits: 16
+  ScaleCompY:
+    Mode: 0
+    Min: 0
+    Max: 64
+    Bits: 16
+  ScaleCompZ:
+    Mode: 0
+    Min: 0
+    Max: 64
+    Bits: 16
+  BasisPickupInteractable: {fileID: 7213604981776616256}
+  CanNetworkSteal: 1
+  IsStatic: 0
+  pendingStealRequest: {fileID: 0}
+  RemoteDeadReckon: 0
+  AttachToHandOnGrab: 1
+  FullRateWhileHeld: 1

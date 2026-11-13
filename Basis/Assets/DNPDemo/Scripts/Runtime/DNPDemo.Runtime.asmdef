@@ -4,7 +4,6 @@
     "references": [
         "Basis Framework",
         "BasisSDK",
-        "BasisCommon",
         "BasisDebug",
         "BasisNetworkCore",
         "LiteNetLib",
