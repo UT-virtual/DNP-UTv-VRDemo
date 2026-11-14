@@ -41,10 +41,17 @@ namespace DNPDemo.Interaction
 
         InteractionSession _session;
         InteractionTool _currentTool;
+        string _status = string.Empty;
         bool _ready;
 
-        /// <summary>Raised when the current part, the actor flag or the required pen mode may have changed.</summary>
+        /// <summary>Raised when the current part, the actor flag, the required pen mode or the status may have changed.</summary>
         public event Action StateChanged;
+
+        /// <summary>
+        /// The current tool's line about how the operation is going on this device (<see cref="InteractionSession.SetStatus"/>).
+        /// Empty when there is none; cleared whenever the part changes.
+        /// </summary>
+        public string Status => _status;
 
         /// <summary>The step whose parts are running, or null when nothing is waiting (same lifetime as <see cref="CurrentPart"/>).</summary>
         public ScenarioStep CurrentStep => _session?.Step;
@@ -167,6 +174,17 @@ namespace DNPDemo.Interaction
             }
         }
 
+        internal void SetStatus(InteractionSession session, string status)
+        {
+            status ??= string.Empty;
+            if (!IsCurrent(session) || status == _status)
+            {
+                return;
+            }
+            _status = status;
+            RaiseStateChanged();
+        }
+
         /// <summary>Sends the current tool's snapshot (<see cref="InteractionTool.CreateSnapshot"/>) to <paramref name="recipients"/>.</summary>
         void SendSnapshot(ushort[] recipients)
         {
@@ -222,6 +240,7 @@ namespace DNPDemo.Interaction
             }
             _session = null;
             _currentTool = null;
+            _status = string.Empty;
 
             ScenarioStep step = _director.CurrentStep;
             if (!_progress.IsActive || step == null)
@@ -259,6 +278,7 @@ namespace DNPDemo.Interaction
             }
             _session = null;
             _currentTool = null;
+            _status = string.Empty;
             foreach (InteractionTool started in _startedTools)
             {
                 if (started != null)

@@ -50,5 +50,12 @@ namespace DNPDemo.Interaction
         /// for states that must arrive (a confirmed selection, a finished stroke).
         /// </summary>
         public void SendProgress(byte[] payload, DeliveryMethod deliveryMethod) => _runner.SendProgress(this, payload, deliveryMethod);
+
+        /// <summary>
+        /// Sets a short line about how the operation is going on this device (for example "音声入力中…"), shown on the
+        /// task HUD under the part's instructions. It is local only and cleared when the part stops being current.
+        /// An empty string removes it.
+        /// </summary>
+        public void SetStatus(string status) => _runner.SetStatus(this, status);
     }
 }

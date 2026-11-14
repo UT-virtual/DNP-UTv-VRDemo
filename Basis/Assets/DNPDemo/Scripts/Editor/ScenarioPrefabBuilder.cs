@@ -28,6 +28,7 @@ namespace DNPDemo.Editor
         static readonly Color PanelBackground = new(0.12f, 0.06f, 0.06f, 0.95f);
         static readonly Color TaskHudBackground = new(0.05f, 0.07f, 0.1f, 0.85f);
         static readonly Color TaskHudHintColor = new(1f, 0.65f, 0.45f);
+        static readonly Color TaskHudStatusColor = new(0.55f, 0.85f, 1f);
 
         [MenuItem("DNP Demo/Create/Scenario Prefabs")]
         public static void CreateAllIfMissing()
@@ -141,6 +142,7 @@ namespace DNPDemo.Editor
                 task.textWrappingMode = TextWrappingModes.Normal;
                 TMP_Text lines = CreateText("Lines", box.transform, string.Empty, 18, TextAlignmentOptions.Left);
                 lines.textWrappingMode = TextWrappingModes.Normal;
+                TMP_Text status = CreateTaskHudStatusText(box.transform);
                 TMP_Text modeHint = CreateText("ModeHint", box.transform, string.Empty, 16, TextAlignmentOptions.Left);
                 modeHint.textWrappingMode = TextWrappingModes.Normal;
                 modeHint.color = TaskHudHintColor;
@@ -153,8 +155,19 @@ namespace DNPDemo.Editor
                 Assign(view, "_headingText", heading);
                 Assign(view, "_taskText", task);
                 Assign(view, "_linesText", lines);
+                Assign(view, "_statusText", status);
                 Assign(view, "_modeHintText", modeHint);
             });
+
+        /// <summary>The task HUD's line for the running tool's status (<see cref="TaskHudView"/>), hidden while empty.</summary>
+        public static TMP_Text CreateTaskHudStatusText(Transform box)
+        {
+            TMP_Text status = CreateText("Status", box, string.Empty, 18, TextAlignmentOptions.Left);
+            status.textWrappingMode = TextWrappingModes.Normal;
+            status.color = TaskHudStatusColor;
+            status.gameObject.SetActive(false);
+            return status;
+        }
 
         static void BuildSubtitle(GameObject root, float width, float speakerFontSize, float bodyFontSize, float pivotY)
         {

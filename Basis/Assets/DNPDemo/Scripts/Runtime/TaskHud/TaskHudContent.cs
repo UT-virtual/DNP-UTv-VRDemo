@@ -31,21 +31,24 @@ namespace DNPDemo.TaskHud
     /// What the task HUD shows, derived from the running step (<see cref="InteractionRunner"/>). Both players see the
     /// step's task text and its parts in order, marked done / current / pending. The heading tells them apart: the actor
     /// reads "TASK", the other player reads who is operating. Only the actor is told to switch the pen's mode when it
-    /// does not match the current part.
+    /// does not match the current part. The running tool may add a status line (<see cref="InteractionRunner.Status"/>),
+    /// such as "音声入力中…".
     /// </summary>
     public sealed class TaskHudContent
     {
         public const string ActorHeading = "TASK";
 
-        public static readonly TaskHudContent Hidden = new(false, false, string.Empty, string.Empty, new TaskHudLine[0], string.Empty);
+        public static readonly TaskHudContent Hidden = new(false, false, string.Empty, string.Empty, new TaskHudLine[0], string.Empty, string.Empty);
 
-        TaskHudContent(bool isVisible, bool isLocalActor, string heading, string taskText, IReadOnlyList<TaskHudLine> lines, string modeHint)
+        TaskHudContent(bool isVisible, bool isLocalActor, string heading, string taskText, IReadOnlyList<TaskHudLine> lines, string status,
+            string modeHint)
         {
             IsVisible = isVisible;
             IsLocalActor = isLocalActor;
             Heading = heading;
             TaskText = taskText;
             Lines = lines;
+            Status = status;
             ModeHint = modeHint;
         }
 
@@ -64,14 +67,18 @@ namespace DNPDemo.TaskHud
         /// <summary>One line per part of the step, in order.</summary>
         public IReadOnlyList<TaskHudLine> Lines { get; }
 
+        /// <summary>How the current operation is going on this device, from the running tool. Empty when there is none.</summary>
+        public string Status { get; }
+
         /// <summary>Actor only: which mode to pick on the menu, while the pen is in another mode. Empty otherwise.</summary>
         public string ModeHint { get; }
 
         /// <summary>
         /// Builds the content for <paramref name="step"/> with the part at <paramref name="currentPartIndex"/> running.
+        /// <paramref name="status"/> is the running tool's status line (may be null or empty).
         /// Returns <see cref="Hidden"/> when there is no step or the index is outside its parts.
         /// </summary>
-        public static TaskHudContent Build(ScenarioStep step, int currentPartIndex, bool isLocalActor, PenMode penMode)
+        public static TaskHudContent Build(ScenarioStep step, int currentPartIndex, bool isLocalActor, PenMode penMode, string status = null)
         {
             List<InteractionPart> parts = step?.Interaction;
             if (parts == null || currentPartIndex < 0 || currentPartIndex >= parts.Count)
@@ -92,7 +99,7 @@ namespace DNPDemo.TaskHud
                 ? ActorHeading
                 : $"{step.Actor.ToDisplayName()} が操作中";
             string modeHint = isLocalActor ? ModeHintFor(parts[currentPartIndex], penMode) : string.Empty;
-            return new TaskHudContent(true, isLocalActor, heading, step.TaskText ?? string.Empty, lines, modeHint);
+            return new TaskHudContent(true, isLocalActor, heading, step.TaskText ?? string.Empty, lines, status ?? string.Empty, modeHint);
         }
 
         static string LineText(InteractionPart part)
