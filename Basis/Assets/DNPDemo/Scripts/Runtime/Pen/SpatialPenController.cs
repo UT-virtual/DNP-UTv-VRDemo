@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Basis.Scripts.Device_Management.Devices;
+using Basis.Scripts.TransformBinders.BoneControl;
 using DNPDemo.Interaction;
 using UnityEngine;
 
@@ -43,6 +44,15 @@ namespace DNPDemo.Pen
 
         /// <summary>The input holding the pen (the latest grab), or null.</summary>
         public BasisInput Holder => _holders.Count > 0 ? _holders[_holders.Count - 1] : null;
+
+        /// <summary>
+        /// The hand that grabbed the pen most recently. It stays after the pen is released and does not change on
+        /// grabs that are not made with a hand (desktop). Right until the first grab, so the free hand starts as the left.
+        /// </summary>
+        public HandSide LastGrabHand { get; private set; } = HandSide.Right;
+
+        /// <summary>Raised when <see cref="LastGrabHand"/> changes.</summary>
+        public event Action<HandSide> LastGrabHandChanged;
 
         /// <summary>The pen is held and its trigger is down. This is the pen's "press" for every tool.</summary>
         public bool IsTriggerHeld => IsHeld && _triggerDown;
@@ -121,9 +131,19 @@ namespace DNPDemo.Pen
 
         void HandleGrabbed(BasisInput input)
         {
-            if (input != null && !_holders.Contains(input))
+            if (input == null)
+            {
+                return;
+            }
+            if (!_holders.Contains(input))
             {
                 _holders.Add(input);
+            }
+            if (input.TryGetRole(out BasisBoneTrackedRole role) && HandSideExtensions.TryFromRole(role, out HandSide hand)
+                && hand != LastGrabHand)
+            {
+                LastGrabHand = hand;
+                LastGrabHandChanged?.Invoke(hand);
             }
         }
 

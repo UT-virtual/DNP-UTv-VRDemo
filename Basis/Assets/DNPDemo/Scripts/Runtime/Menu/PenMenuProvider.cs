@@ -8,7 +8,10 @@ namespace DNPDemo.Menu
     /// <summary>Menu entry for choosing the pen's mode. Opens a bar with one button per mode above the hotbar.</summary>
     public sealed class PenMenuProvider : DemoBarMenuProvider
     {
-        public override string Title => "空間ペン";
+        /// <summary>Menu title. The task HUD names it when telling the actor which mode to pick.</summary>
+        public const string MenuTitle = "空間ペン";
+
+        public override string Title => MenuTitle;
         public override string IconAddress => AddressableAssets.Sprites.Select;
         public override int Order => 10;
 

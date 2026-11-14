@@ -3,6 +3,7 @@
     "rootNamespace": "DNPDemo",
     "references": [
         "Basis Framework",
+        "BasisCommon",
         "BasisSDK",
         "BasisDebug",
         "BasisNetworkCore",

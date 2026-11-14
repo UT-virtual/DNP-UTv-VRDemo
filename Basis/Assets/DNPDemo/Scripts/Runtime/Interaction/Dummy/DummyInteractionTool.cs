@@ -10,12 +10,11 @@ namespace DNPDemo.Interaction
     /// <summary>
     /// Runs <see cref="DummyInteractionPart"/>: a panel in front of the player. The actor presses its button
     /// (F8 on desktop and in the editor) the required number of times; the other device shows the same count,
-    /// sent as progress.
+    /// sent as progress. The instruction and who is operating are on the task HUD, so the panel shows only the count.
     /// </summary>
     public sealed class DummyInteractionTool : InteractionTool
     {
         [SerializeField] GameObject _content;
-        [SerializeField] TMP_Text _titleText;
         [SerializeField] TMP_Text _statusText;
         [SerializeField] Button _pressButton;
 
@@ -23,9 +22,6 @@ namespace DNPDemo.Interaction
 
         InteractionSession _session;
         DummyInteractionPart _part;
-        int _partIndex;
-        int _partCount;
-        DemoRole _actor;
         bool _isLocalActor;
         int _count;
 
@@ -64,9 +60,6 @@ namespace DNPDemo.Interaction
         {
             _session = session;
             _part = (DummyInteractionPart)session.Part;
-            _partIndex = session.PartIndex;
-            _partCount = session.PartCount;
-            _actor = session.Actor;
             _isLocalActor = session.IsLocalActor;
             _count = 0;
             SetVisible(true);
@@ -121,10 +114,6 @@ namespace DNPDemo.Interaction
             {
                 return;
             }
-            if (_titleText != null)
-            {
-                _titleText.text = $"手順 {_partIndex + 1}/{_partCount}（{_part.Mode.ToDisplayName()}・仮）\n{_part.Instruction}";
-            }
             bool accepting = _session != null && _isLocalActor;
             if (_statusText != null)
             {
@@ -135,11 +124,11 @@ namespace DNPDemo.Interaction
                 }
                 else if (_isLocalActor)
                 {
-                    _statusText.text = $"「完了」を押してください（{count}）";
+                    _statusText.text = $"仮の操作です。「完了」を押してください（{count}）";
                 }
                 else
                 {
-                    _statusText.text = $"{_actor.ToDisplayName()} が操作中（{count}）";
+                    _statusText.text = $"仮の操作（{count}）";
                 }
             }
             if (_pressButton != null)
