@@ -7,6 +7,7 @@
         "Basis Framework",
         "BasisSDK",
         "Unity.TextMeshPro",
+        "UnityEngine.UI",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
