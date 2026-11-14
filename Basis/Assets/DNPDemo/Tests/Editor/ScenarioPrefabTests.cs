@@ -1,5 +1,6 @@
 using Basis.Scripts.UI;
 using DNPDemo.Editor;
+using DNPDemo.Operator;
 using DNPDemo.TaskHud;
 using NUnit.Framework;
 using UnityEditor;
@@ -22,6 +23,28 @@ namespace DNPDemo.Tests
                 Assert.AreEqual(uiLayer, t.gameObject.layer,
                     $"'{t.name}' must be on the {WorldUiBuilder.UILayerName} layer so the Basis laser can hit it.");
             }
+        }
+
+        [Test]
+        public void OperatorPanelHasTheMicrophoneThresholdControl()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioPrefabBuilder.OperatorPanelPath);
+            Assert.IsNotNull(prefab);
+            var control = prefab.GetComponentInChildren<MicrophoneThresholdControl>(true);
+            Assert.IsNotNull(control, "The operator panel needs the voice threshold section.");
+            var so = new SerializedObject(control);
+            foreach (string field in new[] { "_deviceText", "_switchDeviceButton", "_levelText", "_meterFill", "_thresholdMarker", "_lowerButton", "_raiseButton", "_resetButton" })
+            {
+                Assert.IsNotNull(so.FindProperty(field).objectReferenceValue, $"MicrophoneThresholdControl.{field} is not set.");
+            }
+
+            // A long device name must not squeeze the switch button.
+            var button = (Button)so.FindProperty("_switchDeviceButton").objectReferenceValue;
+            var layout = button.GetComponent<LayoutElement>();
+            Assert.IsNotNull(layout);
+            Assert.Greater(layout.minWidth, 0f);
+            Assert.AreEqual(layout.preferredWidth, layout.minWidth, "The switch button has a fixed width.");
+            Assert.LessOrEqual(layout.flexibleWidth, 0f);
         }
 
         [Test]

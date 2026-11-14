@@ -29,6 +29,10 @@ namespace DNPDemo.Editor
         static readonly Color TaskHudBackground = new(0.05f, 0.07f, 0.1f, 0.85f);
         static readonly Color TaskHudHintColor = new(1f, 0.65f, 0.45f);
         static readonly Color TaskHudStatusColor = new(0.55f, 0.85f, 1f);
+        static readonly Color MeterBackground = new(0.05f, 0.05f, 0.07f, 1f);
+        static readonly Color MeterFillColor = new(0.55f, 0.6f, 0.7f);
+        static readonly Color ThresholdMarkerColor = new(1f, 0.8f, 0.3f);
+        const float MicrophoneSwitchButtonWidth = 260;
 
         [MenuItem("DNP Demo/Create/Scenario Prefabs")]
         public static void CreateAllIfMissing()
@@ -77,7 +81,7 @@ namespace DNPDemo.Editor
         public static GameObject CreateOperatorPanel() =>
             CreatePrefabIfMissing(OperatorPanelPath, "OperatorPanel", root =>
             {
-                SetupWorldCanvas(root, new Vector2(800, 640), interactive: true);
+                SetupWorldCanvas(root, new Vector2(800, 940), interactive: true);
                 root.AddComponent<Image>().color = PanelBackground;
 
                 Transform content = CreateVerticalGroup("Content", root.transform, new Vector2(40, 40), new Vector2(-40, -40), 14);
@@ -96,6 +100,7 @@ namespace DNPDemo.Editor
                 Button next = CreateButton("NextButton", row.transform, "次へ ▶", 0, 34);
 
                 Button restart = CreateButton("RestartButton", content, "最初からやり直す", 80, 32);
+                AddMicrophoneThresholdSection(content);
                 Button close = CreateButton("CloseButton", content, "閉じる", 70, 30);
 
                 var panel = root.AddComponent<OperatorPanel>();
@@ -167,6 +172,88 @@ namespace DNPDemo.Editor
             status.color = TaskHudStatusColor;
             status.gameObject.SetActive(false);
             return status;
+        }
+
+        /// <summary>
+        /// Operator panel section for the voice command threshold (<see cref="MicrophoneThresholdControl"/>): a heading,
+        /// the microphone in use with a button to switch it, the live level, a meter with the threshold marked on it, and
+        /// buttons to lower, raise and reset the threshold.
+        /// Added to the panel's vertical <paramref name="content"/>.
+        /// </summary>
+        public static MicrophoneThresholdControl AddMicrophoneThresholdSection(Transform content)
+        {
+            GameObject section = CreateChild("MicrophoneThreshold", content);
+            var sectionLayout = section.AddComponent<VerticalLayoutGroup>();
+            sectionLayout.spacing = 8;
+            sectionLayout.childControlWidth = true;
+            sectionLayout.childControlHeight = true;
+            sectionLayout.childForceExpandWidth = true;
+            sectionLayout.childForceExpandHeight = false;
+
+            CreateText("Heading", section.transform, "音声入力のしきい値", 28, TextAlignmentOptions.Left, 40);
+            CreateMicrophoneDeviceRow(section.transform, out TMP_Text device, out Button switchDevice);
+            TMP_Text level = CreateText("Level", section.transform, string.Empty, 24, TextAlignmentOptions.Left, 34);
+
+            GameObject meter = CreateChild("Meter", section.transform);
+            meter.AddComponent<Image>().color = MeterBackground;
+            meter.AddComponent<LayoutElement>().preferredHeight = 28;
+            GameObject fill = CreateChild("Fill", meter.transform);
+            fill.AddComponent<Image>().color = MeterFillColor;
+            var fillRect = (RectTransform)fill.transform;
+            Anchor(fillRect, Vector2.zero, new Vector2(0f, 1f), Vector2.zero, Vector2.zero);
+            GameObject marker = CreateChild("ThresholdMarker", meter.transform);
+            marker.AddComponent<Image>().color = ThresholdMarkerColor;
+            var markerRect = (RectTransform)marker.transform;
+            Anchor(markerRect, new Vector2(0.5f, 0f), new Vector2(0.5f, 1f), new Vector2(-3f, -4f), new Vector2(3f, 4f));
+
+            GameObject row = CreateChild("Buttons", section.transform);
+            var rowLayout = row.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.spacing = 16;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = true;
+            row.AddComponent<LayoutElement>().preferredHeight = 70;
+            Button lower = CreateButton("LowerButton", row.transform, "下げる", 0, 28);
+            Button raise = CreateButton("RaiseButton", row.transform, "上げる", 0, 28);
+            Button reset = CreateButton("ResetButton", row.transform, "初期値", 0, 28);
+
+            var control = section.AddComponent<MicrophoneThresholdControl>();
+            Assign(control, "_deviceText", device);
+            Assign(control, "_switchDeviceButton", switchDevice);
+            Assign(control, "_levelText", level);
+            Assign(control, "_meterFill", fillRect);
+            Assign(control, "_thresholdMarker", markerRect);
+            Assign(control, "_lowerButton", lower);
+            Assign(control, "_raiseButton", raise);
+            Assign(control, "_resetButton", reset);
+            return control;
+        }
+
+        /// <summary>Row of the threshold section with the microphone in use and the button that switches to the next one.</summary>
+        public static GameObject CreateMicrophoneDeviceRow(Transform section, out TMP_Text device, out Button switchDevice)
+        {
+            GameObject row = CreateChild("Device", section);
+            var rowLayout = row.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.spacing = 16;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = false;
+            row.AddComponent<LayoutElement>().preferredHeight = 60;
+            device = CreateText("Name", row.transform, string.Empty, 22, TextAlignmentOptions.Left);
+            device.textWrappingMode = TextWrappingModes.NoWrap;
+            device.overflowMode = TextOverflowModes.Ellipsis;
+            // The name takes whatever width the button leaves; a long name is cut with an ellipsis instead of squeezing
+            // the button (the row lays children out between their minimum and preferred widths).
+            var nameLayout = device.gameObject.AddComponent<LayoutElement>();
+            nameLayout.minWidth = 0;
+            nameLayout.preferredWidth = 0;
+            nameLayout.flexibleWidth = 1;
+            switchDevice = CreateButton("SwitchButton", row.transform, "マイクを切り替える", 0, 24);
+            var buttonLayout = switchDevice.gameObject.AddComponent<LayoutElement>();
+            buttonLayout.minWidth = MicrophoneSwitchButtonWidth;
+            buttonLayout.preferredWidth = MicrophoneSwitchButtonWidth;
+            buttonLayout.flexibleWidth = 0;
+            return row;
         }
 
         static void BuildSubtitle(GameObject root, float width, float speakerFontSize, float bodyFontSize, float pivotY)
