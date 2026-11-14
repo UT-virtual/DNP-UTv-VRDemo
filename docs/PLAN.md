@@ -99,7 +99,7 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
 - 見た目の状態はすべてステップ番号から決まる。途中参加・運営のジャンプ・通常の進行のどれでも同じ見た目になり、同期は {seq, ステップ番号} だけで済む。途中参加した端末は、現在のステップの台詞を頭から再生する。
 - 操作中の途中経過（選択範囲、ストローク、掴んでいる部位の位置）だけは、相手にも見えるよう別途送る（§2.4 の「同期」列）。ステップが進んだ時点で途中経過は破棄し、ステップ番号から決まる状態に戻す。ペンで動かした部位も、`ScenarioStage` が初期状態に戻したうえで、それまでのステップの永続キューが結果を表示する。
 - 音声クリップが未設定の台詞は、文字数から求めた時間（`LineTiming`）だけ字幕を出す。学者の字幕は頭上（`SubtitleAnchor`）、ナレーターの字幕は視界の下に追従して出す。
-- **運営用デバッグ操作**：左右のスティックを同時に2秒押し込むと、運営パネルが目の前に開く（次へ、戻る、最初から）。どちらの端末からでも操作でき、権限のない端末の操作は権限側へ送られる。エディタとデスクトップでは F9 でパネルの開閉、F10 で戻る、F11 で次へ。
+- **運営用デバッグ操作**：左右のスティックを同時に2秒押し込むと、運営パネルが目の前に開く（次へ、戻る、最初から）。どちらの端末からでも操作でき、権限のない端末の操作は権限側へ送られる。エディタとデスクトップでは F9 でパネルの開閉、F10 で戻る、F11 で次へ。パネルには音声指示のしきい値の調整（§2.4）もある。
 - シナリオ一式は DemoSystems プレハブの `Scenario` に置く。メニュー「DNP Demo/Setup/Install Scenario Into DemoSystems Prefab」で一度だけ組み込む（データと UI プレハブがなければ先に生成する）。以後はプレハブ・データを直接編集する。
 - キューが使う話者とキーがシーンにそろっていることは、Editor テスト（`ScenarioSceneBindingTests`）で確かめる。
 
@@ -109,7 +109,7 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
 
 コードは `Scripts/Runtime/Pen/`。ペンは `Prefabs/Pen/SpatialPen.prefab`（ペンのモデルのバリアント。ピックアップ、同期、掴むためのコライダーを持つ）で、`DemoSystems/Pen` にプレイヤーA・B 用の2本（`Pen_PlayerA` / `Pen_PlayerB`）を置いている。ペンの開始位置は、DemoSystems 内の `Pen_PlayerA` / `Pen_PlayerB` の位置で決まる。
 
-ペン単体の動作確認には `Art/Pen/PenTestScene.unity` を使う。ネットワークへの接続もロールも不要で、再生すると `PenTestHarness`（`Scripts/Runtime/Pen/Testing/`）がシーン内のペンを `SpatialPenController` に渡す。掴む・離す、ホバー時のハイライト、トリガー、半径、モードの切り替えを確認できる。範囲選択も試せる：`SelectionTestHarness`（`Scripts/Runtime/Interaction/Selection/Testing/`）が、範囲選択モードでトリガーを押すたびに選択範囲を記録して表示し、離すと `SelectionTarget`（白い球と同じ大きさの球ゾーン）に対して判定して、結果をコンソールに出す。線画も試せる：`StrokeTestHarness`（`Scripts/Runtime/Interaction/Stroke/Testing/`）が、線画モードで描いた線を表示し、ペン尻の消しゴムで消せるようにする。離すたびに、ガイドなら `StrokeStart` から `StrokeEnd` まで届いたか、線画なら外接サイズを判定して、結果をコンソールと `StrokeTestPanel` に出す。ガイドと線画は、このパネルのボタン（VR ではレーザー、デスクトップではマウスで押す）で再生中に切り替えられる。切り替えると線はすべて消え、始点・終点の球はガイドのときだけ表示する。部位の操作も試せる：`ManipulateTestHarness`（`Scripts/Runtime/Interaction/Manipulate/Testing/`）が、操作モードのペンで右の箱（平行移動）と左の棒（支点まわりの回転）を掴めるようにし、目標の姿勢をゴーストで示す。離すたびに判定して結果をコンソールに出し、成功したら目標へスナップして、1.5 秒後に元の位置へ戻す。端末間の同期とロールごとの表示は対象外で、`DNPDemo_Main` を2台で接続して確認する。
+ペン単体の動作確認には `Art/Pen/PenTestScene.unity` を使う。ネットワークへの接続もロールも不要で、再生すると `PenTestHarness`（`Scripts/Runtime/Pen/Testing/`）がシーン内のペンを `SpatialPenController` に渡す。掴む・離す、ホバー時のハイライト、トリガー、半径、モードの切り替えを確認できる。範囲選択も試せる：`SelectionTestHarness`（`Scripts/Runtime/Interaction/Selection/Testing/`）が、範囲選択モードでトリガーを押すたびに選択範囲を記録して表示し、離すと `SelectionTarget`（白い球と同じ大きさの球ゾーン）に対して判定して、結果をコンソールに出す。線画も試せる：`StrokeTestHarness`（`Scripts/Runtime/Interaction/Stroke/Testing/`）が、線画モードで描いた線を表示し、ペン尻の消しゴムで消せるようにする。離すたびに、ガイドなら `StrokeStart` から `StrokeEnd` まで届いたか、線画なら外接サイズを判定して、結果をコンソールと `StrokeTestPanel` に出す。ガイドと線画は、このパネルのボタン（VR ではレーザー、デスクトップではマウスで押す）で再生中に切り替えられる。切り替えると線はすべて消え、始点・終点の球はガイドのときだけ表示する。部位の操作も試せる：`ManipulateTestHarness`（`Scripts/Runtime/Interaction/Manipulate/Testing/`）が、操作モードのペンで右の箱（平行移動）と左の棒（支点まわりの回転）を掴めるようにし、目標の姿勢をゴーストで示す。離すたびに判定して結果をコンソールに出し、成功したら目標へスナップして、1.5 秒後に元の位置へ戻す。音声指示も試せる：`VoiceTestHarness`（`Scripts/Runtime/Interaction/Voice/Testing/`）が、音声入力モードでトリガーを押している間マイクを取り込み、左手前のテキスト（`VoiceTestStatus`）に音量としきい値を出す。有音が必要な長さに達した時点で認識結果を出し、離すと結果をコンソールに出す。端末間の同期とロールごとの表示は対象外で、`DNPDemo_Main` を2台で接続して確認する。
 
 | 要素 | 仕様 |
 |---|---|
@@ -133,7 +133,7 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
 | `SelectionTool` | トリガーを押している間、スフィアが通った軌跡を半透明の選択範囲としてマークする。離すと1回分の選択が確定する | 指定した部位ゾーン（林檎、左肩〜肘、右手首など）のそれぞれについて、体積の一定割合（初期値 50%）以上を選択範囲が覆い、かつ選択範囲のサンプルのうち一定割合（初期値 90%）以上がいずれかの指定ゾーンに重なっていれば成功。満たさなければ選択範囲をフェードアウトで消して、もう一度やってもらう | 成功して確定した選択範囲のサンプル列（Reliable で1回）。描いている間、相手にはペンの動きだけが見える |
 | `StrokeTool` | トリガーを押している間、空中に線を描く。トリガーを離している間は、ペン尻の消しゴムに触れた線が1本まるごと消える | 線を離すたびに判定する。ガイドモード：その線が始点ゾーンと終点ゾーンの両方に届いていること（向きは問わない）。届かなければ線をフェードアウトで消す。線画：残っている線全体の外接サイズが一定以上であること。足りなければ線を残し、描き足してもらう | 描画中の点（最大 10Hz でまとめて送る）、線の確定、消去。途中参加した端末には、その時点の線をまとめて送る |
 | `ManipulateTool` | 操作モードのペン先を部位に当て、トリガーを押している間だけ掴んで、ステップごとの制約の範囲で動かす。制約は「平行移動（範囲つき）」または「支点まわりの回転（軸と角度範囲つき）」。目標の姿勢を半透明のゴーストで示す | 離すたびに判定する。目標の姿勢から許容範囲内なら、目標へスナップして完了。回転では、しきい値を超えた角度で離したら完了とする指定もできる（ステップ9）。満たさなければ離した位置に残り、もう一度掴める | 操作中は制約パラメータを最大 20Hz（Unreliable）で送り、離したときとスナップを Reliable で送る。途中参加した端末には現在の値を送る |
-| `VoiceCommandTool` | 音声入力モードのペンでトリガーを押している間を「音声入力中」として表示する。その間だけ `BasisLocalMicrophoneDriver.AddCaptureHold()` でマイクを取り込み（ミュートのままなので送信はされない）、`averageRms` がしきい値を超えた時間で発話を検知する。離したら `ReleaseCaptureHold()` | トリガーを押している間に一定時間以上の有音があり、トリガーを離した。台本の文を認識結果として表示してから完了とする | 完了イベントのみ |
+| `VoiceCommandTool` | 音声入力モードのペンでトリガーを押している間、タスク HUD に「音声入力中…」と表示する。その間だけ `BasisLocalMicrophoneDriver.AddCaptureHold()` でマイクを取り込み（ミュートのままなので送信はされない）、`averageRms` がしきい値を超えた時間で発話を検知する。離したら `ReleaseCaptureHold()` | 押している間の有音が一定時間に達した時点で、台本の文を認識結果としてタスク HUD に表示する（「トリガーを離すと決定します」）。その状態でトリガーを離すと完了する。達する前に離したら、やり直すよう表示する | 完了イベントのみ（表示は担当の端末だけ） |
 | `HistoryPanel` | 手元パネルに、これまでに到達した版の一覧を表示する。項目を選ぶと比較台に表示される | ステップで指定した版を選んだ | 選んだ版の ID |
 
 - 各部品は、トリガーなどの入力を `SpatialPenController` から受け取る（§2.3）。グリップはペンの保持に使うので、`ManipulateTool` で部位を掴むのもペンのトリガーで行う。
@@ -158,6 +158,13 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
   - 送信形式は `ManipulateMessage`（20 バイト）。Unreliable と Reliable は到着順が保証されないので、送信カウンタを付け、受信側は古いものを捨てる。受信側はドラッグの値へ補間しながら動かし、スナップは同じ時間（0.25 秒）で吸着させる。
   - ゴーストは `ManipulateGhostView` が、対象の MeshRenderer のメッシュを目標の姿勢に `Graphics.RenderMesh` で描く（`Art/Interaction/Manipulate/ManipulateGhost.mat`、水色の半透明）。両方の端末に出し、部品が終わったら消す。掴める間と掴んでいる間は、対象を Basis のハイライトで強調する（相手の端末では掴んでいる間）。
   - ツールは対象を元の位置へ戻さない。ステップが変わると `ScenarioStage` が初期状態へ戻す。`ScenarioPlayer` は OnEnable、`InteractionRunner` は Start でステップの変化を購読するので、部品の開始時には舞台がそのステップの状態になっている。
+- 音声指示の実装（`Scripts/Runtime/Interaction/Voice/`）
+  - `VoicePart` は、認識結果として表示する台本の文（`Transcript`）と、必要な有音時間（`RequiredSpeechSeconds`、初期値 1 秒）を持つ。有音時間は押している間の合計で、途切れてもよい（`VoiceActivityMeter`）。
+  - トリガーの押下とマイクの取り込みは `VoiceCommandListener` がまとめる。有音時間が必要な長さに達すると、押している途中でも認識済みとしてマイクを解放し、離した時点の結果に認識済みかどうかを載せる。マイクの取り込みは `MicrophoneCapture` が持ち主ごとに1つだけ保持し、解放の漏れを防ぐ。押している途中でメニューからモードを変えると、取り込みをやめて判定しない。
+  - しきい値は `VoiceCommandSettings` が dBFS で持ち（初期値 -40 dB、-70〜-10 dB）、端末ごとに PlayerPrefs に保存する。会場の騒音に合わせて、運営パネルの「音声入力のしきい値」で調整する（`MicrophoneThresholdControl`）。パネルを開いている間はマイクを取り込み（ミュートのまま）、音量メーターにしきい値の位置を重ねて表示する。比べる音量は、Basis がゲイン、ノイズ除去、ノイズゲート、AGC をかけた後の RMS（直近 200ms の平均）。
+  - 同じ欄で、Basis が取り込むマイクを確かめて切り替えられる（`MicrophoneSelection`）。Basis はマイクを名前で開き、モード（デスクトップ、VR）ごとに PlayerPrefs に保存する。初回は Unity のデバイス一覧の先頭を選ぶので、PC では Virtual Desktop などの仮想マイク（配信していないときは無音）になることがある。Windows の既定のデバイスを変えても、この選択は変わらない。
+  - ミュート中に `AddCaptureHold()` でマイクを起動できるよう、Basis 本体を改造している（[BASIS_PATCHES.md](BASIS_PATCHES.md)）。
+  - ツールは状態の文を `InteractionSession.SetStatus()` で渡し、タスク HUD が手順の下に表示する（§2.7）。
 - 1つのステップで複数の部品を順に使う場合（例：範囲選択 → 音声指示）は、操作定義に部品を順番に並べる。HUD は今どの手順にいるかを示す。
 
 #### 部品の共通インターフェース（`Scripts/Runtime/Interaction/`）
@@ -183,7 +190,7 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 - 各ツールは `InteractionPart` のサブクラスと `InteractionTool` のサブクラスを1組で実装し、`InteractionRunner` のツール一覧に登録する。
 - 部品は、パラメータの検証（`Validate`）と、シーンに必要なキーの申告（`CollectRequirements`）を実装できる。`ScenarioData` の検証とキーの収集はこれを呼ぶ。
 - ツールは `ScenarioInstaller`（メニュー「DNP Demo/Setup/Install Scenario Into DemoSystems Prefab」）で DemoSystems に組み込む。インストーラーは足りないツールだけを追加するので、ツールを増やしたら再実行すればよい。
-- 本番のツールができるまでは、`DummyInteractionPart`（予定の部品のペンモードと手順文を持つ）と `DummyInteractionTool`（担当者が「完了」ボタンを規定回数押すと完了。エディタとデスクトップでは F8）で代用する。範囲選択と部位の操作は、対象を像に置いたステップから `SelectionPart` / `ManipulatePart` に置き換える。範囲選択はステップ6（林檎）とステップ9（左肩。仮の像の `Zone_LeftShoulder`）、部位の操作はステップ6 の林檎の平行移動（仮の像の `Apple` から `Goal_AppleUnderHand` へ）にしている。仮の林檎は Ver 1.0 の手のひらの位置にあり、ステップ4 の先頭のキューで表示する。線画はステップ11（ガイド。仮の像の `Zone_LeftShoulder` から `Zone_ChestFront`）とステップ13（線画）を `StrokePart` にしている。
+- 本番のツールができるまでは、`DummyInteractionPart`（予定の部品のペンモードと手順文を持つ）と `DummyInteractionTool`（担当者が「完了」ボタンを規定回数押すと完了。エディタとデスクトップでは F8）で代用する。音声指示（ステップ3・7・13・15・21）はすべて `VoicePart` にしている。範囲選択と部位の操作は、対象を像に置いたステップから `SelectionPart` / `ManipulatePart` に置き換える。範囲選択はステップ6（林檎）とステップ9（左肩。仮の像の `Zone_LeftShoulder`）、部位の操作はステップ6 の林檎の平行移動（仮の像の `Apple` から `Goal_AppleUnderHand` へ）にしている。仮の林檎は Ver 1.0 の手のひらの位置にあり、ステップ4 の先頭のキューで表示する。線画はステップ11（ガイド。仮の像の `Zone_LeftShoulder` から `Zone_ChestFront`）とステップ13（線画）を `StrokePart` にしている。
 
 ### 2.5 像と版の管理
 
@@ -205,10 +212,11 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 操作を待つステップの間、両方の端末で、手元に追従する小さなパネルにステップの内容を表示する。コードは `Scripts/Runtime/TaskHud/`、プレハブは `Prefabs/Scenario/TaskHud.prefab`（DemoSystems の `Scenario/TaskHud`）。
 
 - 見出しは、担当プレイヤーには「TASK」、担当でないプレイヤーには「プレイヤーA が操作中」と出す。その下に、ステップのタスク文（`ScenarioStep.TaskText`）と、操作定義の部品の手順文（`InteractionPart.Instruction`）を順に並べる。済んだ手順に ✓、現在の手順に ▶、残りに ・ を付ける。ペンのメニューで選ぶモードの手順には「（範囲選択モード）」のようにモード名を添える。
+- 手順の下に、実行中のツールが渡した状態の文（`InteractionRunner.Status`）を出す。今は音声指示の「音声入力中…」と認識結果で使う。この文は端末ごとで、相手には送らない。部品が変わると消える。
 - 担当プレイヤーのペンのモードが現在の手順と違うときは、「メニューの「空間ペン」で「操作」を選んでください」と案内する。
 - 相手の選択範囲、ストローク、掴んでいる部位の動きは空間にそのまま見えるので、2人とも同じ変化を見られる。
 - 最後の手順が完了するとステップが進み、HUD はすぐに消える。
-- 表示内容は `TaskHudContent`（純 C#。`TaskHudContentTests` で確かめる）が、`InteractionRunner` の実行中のステップ（`CurrentStep`）、部品番号、担当かどうか、ペンのモードから作る。`TaskHudView` が `InteractionRunner.StateChanged` とペンのモードの変化を受けて描き直す。
+- 表示内容は `TaskHudContent`（純 C#。`TaskHudContentTests` で確かめる）が、`InteractionRunner` の実行中のステップ（`CurrentStep`）、部品番号、担当かどうか、ペンのモード、状態の文から作る。`TaskHudView` が `InteractionRunner.StateChanged` とペンのモードの変化を受けて描き直す。
 - 位置は `HandFollower`（`Scripts/Runtime/Presentation/`）が決める。最後にペンを握った手の逆の手（`SpatialPenController.LastGrabHand` の逆。初期は左手）の IK 後の位置の少し上に置き、向きは常に目の方へ向ける。デスクトップと、その手のコントローラーが追跡されていないときは、視界の下のその手の側に置く。
 - 操作を待つステップでは、一定時間たっても完了しなければヒントを表示する（判定ゾーンの強調、目標位置のガイドなど）。
 
