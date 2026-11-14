@@ -4,6 +4,7 @@ using DNPDemo.Interaction;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
+using DNPDemo.Interaction.Voice;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
 using UnityEditor;
@@ -91,7 +92,7 @@ namespace DNPDemo.Editor
                     A("分かりました。一度、3Dモデルにおこしてみましょう！")),
                 Operation("s1-voice-left-arm", "Scene 1 [A] 左腕を音声生成", DemoRole.PlayerA,
                     "音声生成を起動し、「現在のヴィーナスについて、手のひらに林檎がのった水平に伸びる左手を追加」と出力せよ。",
-                    Voice("「手のひらに林檎がのった水平に伸びる左手を追加」と音声指示する")),
+                    new VoicePart("「手のひらに林檎がのった水平に伸びる左手を追加」と音声指示する", "現在のヴィーナスについて、手のひらに林檎がのった水平に伸びる左手を追加")),
                 Auto("s1-concerns", "Scene 1 構造の懸念",
                     new SetObjectActiveCue(AppleKey, true),
                     A("私が考える、ヴィーナスの左手のイメージはまさにこんな感じですね。"),
@@ -107,7 +108,7 @@ namespace DNPDemo.Editor
                     ManipulatePart.Translate("林檎を手の下へ移動する", AppleKey, AppleGoalKey, AppleMaxDistance)),
                 Operation("s2-regrip-apple", "Scene 2 [B] 林檎の持ち方を修正", DemoRole.PlayerB,
                     "空間ペンで腕を選択し、「選択した範囲について、上からボールを包み込むように林檎を持ち直す形に修正」と入力せよ。",
-                    Select("左手から前腕を範囲選択する"), Voice("「上からボールを包み込むように林檎を持ち直す形に修正」と音声指示する")),
+                    Select("左手から前腕を範囲選択する"), new VoicePart("「上からボールを包み込むように林檎を持ち直す形に修正」と音声指示する", "選択した範囲について、上からボールを包み込むように林檎を持ち直す形に修正")),
                 Auto("s2-natural-curve", "Scene 2 自然なカーブ",
                     B("恐らくこんな感じになるかと思われます。"),
                     A("ありがとうございます。そうですね、、、私の最初の案と比べると、より手の形は自然になりましたね\nただ一点気になる点がありまして。。。腕はもっと身体の輪郭に沿って、肘を曲げて引き寄せるような自然なカーブになっていた方が美しく見えると思うんですよね。ほかの古典彫刻でも、腕の自然な曲線が美しさを生んでいます。"),
@@ -125,13 +126,13 @@ namespace DNPDemo.Editor
                     A("左腕は良い感じですね。それでは次に右腕の話に移行しましょう。古典彫刻においては手鏡が林檎と並ぶ代表的なシンボルとされているので、右腕には手鏡があったと考えられます。一度3Dモデルにしてみますね。")),
                 Operation("s3-draw-mirror", "Scene 3 [A] 手鏡の線画を変換", DemoRole.PlayerA,
                     "空間ペンで空中に手鏡の線画を描け。「線画を西洋のアンティークな手鏡に変換」と音声指示せよ。",
-                    StrokePart.Sketch("空中に手鏡の線画を描く"), Voice("「線画を西洋のアンティークな手鏡に変換」と音声指示する")),
+                    StrokePart.Sketch("空中に手鏡の線画を描く"), new VoicePart("「線画を西洋のアンティークな手鏡に変換」と音声指示する", "線画を西洋のアンティークな手鏡に変換")),
                 Operation("s3-place-mirror", "Scene 3 [A] 手鏡を移動", DemoRole.PlayerA,
                     "生成された手鏡を所定の位置に移動させよ。",
                     Manipulate("手鏡を所定の位置へ移動する")),
                 Operation("s3-grip-mirror", "Scene 3 [A] 鏡を握らせる", DemoRole.PlayerA,
                     "続けて右肩から手鏡まで領域選択し、「鏡を握らせる」と発話せよ。",
-                    Select("右肩から手鏡までを範囲選択する"), Voice("「鏡を握らせる」と音声指示する")),
+                    Select("右肩から手鏡までを範囲選択する"), new VoicePart("「鏡を握らせる」と音声指示する", "鏡を握らせる")),
                 Auto("s3-mirror-angle", "Scene 3 鏡の角度の指摘",
                     B("なるほど...手鏡を持っているのは納得ですが、生成されたモデルを見ると、手鏡の角度がおかしいかもしれませんね。なんというか、もっとヴィーナスの目線の先に手鏡がくる感じの方が良さそうです。"),
                     A("えーと、どんな感じでしょう？ よければBさんに修正をお任せしたいのですが。"),
@@ -151,7 +152,7 @@ namespace DNPDemo.Editor
                     A("最後に復元案のヴィーナスが神殿を背景にしても自然かどうか確かめてみましょう")),
                 Operation("p3-temple", "Phase 3 [A] 背景を神殿に", DemoRole.PlayerA,
                     "復元案のヴィーナス像を領域選択。「選択した像の背景を神殿に変更」と音声指示せよ。",
-                    Select("像全体を範囲選択する"), Voice("「選択した像の背景を神殿に変更」と音声指示する")),
+                    Select("像全体を範囲選択する"), new VoicePart("「選択した像の背景を神殿に変更」と音声指示する", "選択した像の背景を神殿に変更")),
                 new()
                 {
                     Id = "closing",
@@ -191,11 +192,10 @@ namespace DNPDemo.Editor
             Interaction = new List<InteractionPart>(parts),
         };
 
-        // Stand-ins until the real tools (VoiceCommandTool, HistoryPanel) replace them, and for selections and
+        // Stand-ins until the real tool (HistoryPanel) replaces them, and for selections and
         // manipulations whose objects are not placed on the statue yet.
         static InteractionPart Select(string instruction) => new DummyInteractionPart(PenMode.Select, instruction);
         static InteractionPart Manipulate(string instruction) => new DummyInteractionPart(PenMode.Manipulate, instruction);
-        static InteractionPart Voice(string instruction) => new DummyInteractionPart(PenMode.Voice, instruction);
         static InteractionPart Panel(string instruction) => new DummyInteractionPart(PenMode.Panel, instruction);
 
         static LineCue N(string text) => new(ScenarioSpeaker.Narrator, text);

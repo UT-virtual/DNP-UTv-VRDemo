@@ -175,5 +175,26 @@ namespace DNPDemo.Tests
             Assert.IsNotNull(data);
             CollectionAssert.IsEmpty(data.Validate());
         }
+
+        [Test]
+        public void ScenarioAssetRunsVoiceCommandsOnTheVoiceTool()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data);
+            foreach (ScenarioStep step in data.Steps)
+            {
+                if (step?.Interaction == null)
+                {
+                    continue;
+                }
+                foreach (InteractionPart part in step.Interaction)
+                {
+                    if (part != null && part.Mode == PenMode.Voice)
+                    {
+                        Assert.IsInstanceOf<VoicePart>(part, $"{step.Id}: a voice command is still a stand-in.");
+                    }
+                }
+            }
+        }
     }
 }

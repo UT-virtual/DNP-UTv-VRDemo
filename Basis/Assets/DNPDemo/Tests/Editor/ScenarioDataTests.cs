@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.Selection;
+using DNPDemo.Interaction.Voice;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
 using NUnit.Framework;
@@ -103,6 +104,57 @@ namespace DNPDemo.Tests
             List<string> problems = ScenarioData.Validate(steps);
             // no target zone, empty key, duplicate key
             Assert.AreEqual(3, problems.Count, string.Join("\n", problems));
+        }
+
+        [Test]
+        public void ValidateChecksVoiceParts()
+        {
+            var steps = new List<ScenarioStep>
+            {
+                new()
+                {
+                    Id = "no-transcript", Completion = StepCompletion.Interaction, Actor = DemoRole.PlayerA,
+                    Interaction = new List<InteractionPart> { new VoicePart("x", " ") },
+                },
+                new()
+                {
+                    Id = "no-time", Completion = StepCompletion.Interaction, Actor = DemoRole.PlayerA,
+                    Interaction = new List<InteractionPart> { new VoicePart("x", "鏡を握らせる", 0f) },
+                },
+                new()
+                {
+                    Id = "ok", Completion = StepCompletion.Interaction, Actor = DemoRole.PlayerB,
+                    Interaction = new List<InteractionPart> { new VoicePart("x", "鏡を握らせる") },
+                },
+            };
+            List<string> problems = ScenarioData.Validate(steps);
+            // empty transcript, required time not positive
+            Assert.AreEqual(2, problems.Count, string.Join("\n", problems));
+        }
+
+        [Test]
+        public void DefaultVoiceOperationsAreVoicePartsWithTranscripts()
+        {
+            int voiceParts = 0;
+            foreach (ScenarioStep step in DefaultSteps)
+            {
+                if (step.Interaction == null)
+                {
+                    continue;
+                }
+                foreach (InteractionPart part in step.Interaction)
+                {
+                    if (part.Mode != PenMode.Voice)
+                    {
+                        continue;
+                    }
+                    voiceParts++;
+                    Assert.IsInstanceOf<VoicePart>(part, $"{step.Id}: voice commands run on VoiceCommandTool.");
+                    StringAssert.Contains(((VoicePart)part).Transcript, step.TaskText,
+                        $"{step.Id}: the recognised sentence should be the one the task asks for.");
+                }
+            }
+            Assert.AreEqual(5, voiceParts, "Steps 3, 7, 13, 15 and 21 end with a voice command.");
         }
 
         [Test]
