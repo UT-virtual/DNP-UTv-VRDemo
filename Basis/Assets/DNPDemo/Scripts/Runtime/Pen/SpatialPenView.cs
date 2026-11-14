@@ -18,7 +18,8 @@ namespace DNPDemo.Pen
     /// <item>Voice: the microphone head (<c>PenMicrophone</c>); its indicator ring turns from idle to active colour
     /// while the pen is held with the trigger down.</item>
     /// <item>Draw: the eraser sphere (<c>PenEraser</c>, radius <see cref="PenGeometry.EraserRadius"/>) at the butt.</item>
-    /// <item>Manipulate: the tip sphere at <see cref="PenGeometry.GrabRadius"/>, the point that grabs.</item>
+    /// <item>Manipulate: the arrow gizmo at the tip (<c>PenManipulator</c>). What it grabs is the sphere of
+    /// <see cref="PenGeometry.GrabRadius"/> around the tip.</item>
     /// </list>
     /// The local player's pen is driven by <see cref="SpatialPenController"/>, the other player's by
     /// <see cref="SpatialPenSync"/>.
@@ -35,6 +36,8 @@ namespace DNPDemo.Pen
         [SerializeField] Renderer _microphone;
         [SerializeField] Renderer _selectArea;
         [SerializeField] Renderer _eraser;
+        [Tooltip("The arrow gizmo at the tip (PenManipulator), shown in manipulate mode.")]
+        [SerializeField] Renderer _manipulator;
 
         [Tooltip("Material of the indicator ring on the microphone head. Its colour is overridden per renderer, the asset is left untouched.")]
         [SerializeField] Material _micIndicatorMaterial;
@@ -162,8 +165,7 @@ namespace DNPDemo.Pen
             {
                 Transform area = _selectArea.transform;
                 area.localPosition = PenGeometry.TipLocalPosition(_extension);
-                float shownRadius = mode == PenMode.Manipulate ? PenGeometry.GrabRadius : radius;
-                area.localScale = Vector3.one * PenGeometry.SelectAreaScale(shownRadius);
+                area.localScale = Vector3.one * PenGeometry.SelectAreaScale(radius);
             }
 
             if (_microphone != null)
@@ -227,7 +229,11 @@ namespace DNPDemo.Pen
             }
             if (_selectArea != null)
             {
-                _selectArea.enabled = _visible && (_mode == PenMode.Select || _mode == PenMode.Manipulate);
+                _selectArea.enabled = _visible && _mode == PenMode.Select;
+            }
+            if (_manipulator != null)
+            {
+                _manipulator.enabled = _visible && _mode == PenMode.Manipulate;
             }
             if (_microphone != null)
             {

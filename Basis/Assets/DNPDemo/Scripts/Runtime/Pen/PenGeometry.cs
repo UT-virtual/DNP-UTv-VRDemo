@@ -32,10 +32,11 @@ namespace DNPDemo.Pen
         public const float EraserRadius = 0.025f;
 
         /// <summary>
-        /// Radius of the tip sphere in manipulate mode. An object is grabbed when this sphere touches its grab zone; the
-        /// sphere is drawn at this size so the player sees the point that grabs.
+        /// Radius of the sphere around the tip that grabs in manipulate mode: an object is grabbed when this sphere touches
+        /// its grab zone. The sphere is not drawn; the arrow gizmo (<c>PenManipulator</c>, 0.2m across) marks the spot and
+        /// reaches farther than the grab does.
         /// </summary>
-        public const float GrabRadius = 0.025f;
+        public const float GrabRadius = 0.05f;
 
         public static float ClampRadius(float radius) => Mathf.Clamp(radius, MinSelectRadius, MaxSelectRadius);
 

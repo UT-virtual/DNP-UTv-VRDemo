@@ -141,7 +141,7 @@ namespace DNPDemo.Tests
             var view = prefab.GetComponent<SpatialPenView>();
             Assert.IsNotNull(view);
             var so = new SerializedObject(view);
-            foreach (string field in new[] { "_body", "_microphone", "_selectArea", "_eraser" })
+            foreach (string field in new[] { "_body", "_microphone", "_selectArea", "_eraser", "_manipulator" })
             {
                 Assert.IsNotNull(so.FindProperty(field).objectReferenceValue, $"SpatialPenView.{field} is not set.");
             }
