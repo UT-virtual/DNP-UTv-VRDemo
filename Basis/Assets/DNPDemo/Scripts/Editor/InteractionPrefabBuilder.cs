@@ -257,12 +257,10 @@ namespace DNPDemo.Editor
             CreatePrefabIfMissing(DummyToolPath, "DummyTool", root =>
             {
                 GameObject panel = CreateChild("Panel", root.transform);
-                SetupWorldCanvas(panel, new Vector2(800, 420), interactive: true);
+                SetupWorldCanvas(panel, new Vector2(800, 300), interactive: true);
                 panel.AddComponent<Image>().color = PanelBackground;
 
                 Transform content = CreateVerticalGroup("Content", panel.transform, new Vector2(40, 36), new Vector2(-40, -36), 16);
-                TMP_Text title = CreateText("Title", content, string.Empty, 30, TextAlignmentOptions.TopLeft, 110);
-                title.textWrappingMode = TextWrappingModes.Normal;
                 TMP_Text status = CreateText("Status", content, string.Empty, 34, TextAlignmentOptions.Center);
                 status.gameObject.AddComponent<LayoutElement>().flexibleHeight = 1;
                 Button press = CreateButton("PressButton", content, "完了", 100, 40);
@@ -271,7 +269,6 @@ namespace DNPDemo.Editor
 
                 var tool = root.AddComponent<DummyInteractionTool>();
                 Assign(tool, "_content", panel);
-                Assign(tool, "_titleText", title);
                 Assign(tool, "_statusText", status);
                 Assign(tool, "_pressButton", press);
 
