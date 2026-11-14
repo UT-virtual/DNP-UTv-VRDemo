@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using DNPDemo.Editor;
+using DNPDemo.TaskHud;
 using NUnit.Framework;
 using TMPro;
 using UnityEditor;
@@ -28,6 +29,16 @@ namespace DNPDemo.Tests
 
             Assert.IsEmpty(missing,
                 $"{FontAssetPath} に文字セットの文字がありません（{new string(missing.ToArray())}）。SDF を作り直してください。");
+        }
+
+        [Test]
+        public void TaskHudMarksAreInTheCharacterSet()
+        {
+            string characters = File.ReadAllText(CharacterSetPath);
+            foreach (string mark in new[] { TaskHudView.DoneMark, TaskHudView.CurrentMark, TaskHudView.PendingMark })
+            {
+                StringAssert.Contains(mark, characters);
+            }
         }
     }
 }
