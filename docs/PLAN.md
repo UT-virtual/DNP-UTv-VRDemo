@@ -202,8 +202,14 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 
 ### 2.7 タスク HUD
 
-- 担当プレイヤーには、手元に追従するパネルで「🔔 TASK」、手順、達成したときのチェックを表示する。
-- 担当でないプレイヤーには「プレイヤーA が操作中」と表示する。相手の選択範囲、ストローク、掴んでいる部位の動きは空間にそのまま見えるので、2人とも同じ変化を見られる。
+操作を待つステップの間、両方の端末で、手元に追従する小さなパネルにステップの内容を表示する。コードは `Scripts/Runtime/TaskHud/`、プレハブは `Prefabs/Scenario/TaskHud.prefab`（DemoSystems の `Scenario/TaskHud`）。
+
+- 見出しは、担当プレイヤーには「TASK」、担当でないプレイヤーには「プレイヤーA が操作中」と出す。その下に、ステップのタスク文（`ScenarioStep.TaskText`）と、操作定義の部品の手順文（`InteractionPart.Instruction`）を順に並べる。済んだ手順に ✓、現在の手順に ▶、残りに ・ を付ける。ペンのメニューで選ぶモードの手順には「（範囲選択モード）」のようにモード名を添える。
+- 担当プレイヤーのペンのモードが現在の手順と違うときは、「メニューの「空間ペン」で「操作」を選んでください」と案内する。
+- 相手の選択範囲、ストローク、掴んでいる部位の動きは空間にそのまま見えるので、2人とも同じ変化を見られる。
+- 最後の手順が完了するとステップが進み、HUD はすぐに消える。
+- 表示内容は `TaskHudContent`（純 C#。`TaskHudContentTests` で確かめる）が、`InteractionRunner` の実行中のステップ（`CurrentStep`）、部品番号、担当かどうか、ペンのモードから作る。`TaskHudView` が `InteractionRunner.StateChanged` とペンのモードの変化を受けて描き直す。
+- 位置は `HandFollower`（`Scripts/Runtime/Presentation/`）が決める。最後にペンを握った手の逆の手（`SpatialPenController.LastGrabHand` の逆。初期は左手）の IK 後の位置の少し上に置き、向きは常に目の方へ向ける。デスクトップと、その手のコントローラーが追跡されていないときは、視界の下のその手の側に置く。
 - 操作を待つステップでは、一定時間たっても完了しなければヒントを表示する（判定ゾーンの強調、目標位置のガイドなど）。
 
 ### 2.8 学者 NPC・ナレーター
