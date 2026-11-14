@@ -46,6 +46,9 @@ namespace DNPDemo.Interaction
         /// <summary>Raised when the current part, the actor flag or the required pen mode may have changed.</summary>
         public event Action StateChanged;
 
+        /// <summary>The step whose parts are running, or null when nothing is waiting (same lifetime as <see cref="CurrentPart"/>).</summary>
+        public ScenarioStep CurrentStep => _session?.Step;
+
         /// <summary>The current part, or null when nothing is waiting (no interaction step, or every part is done).</summary>
         public InteractionPart CurrentPart => _session?.Part;
 
@@ -227,7 +230,7 @@ namespace DNPDemo.Interaction
                 return;
             }
             InteractionPart part = step.Interaction[_progress.PartIndex];
-            _session = new InteractionSession(this, part, _progress.PartIndex, _progress.PartCount, step.Actor, IsActorForCurrentStep());
+            _session = new InteractionSession(this, step, part, _progress.PartIndex, _progress.PartCount, step.Actor, IsActorForCurrentStep());
             _currentTool = FindTool(part);
             if (_currentTool == null)
             {
