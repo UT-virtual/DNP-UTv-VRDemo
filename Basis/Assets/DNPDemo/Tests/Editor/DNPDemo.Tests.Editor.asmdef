@@ -6,6 +6,7 @@
         "DNPDemo.Editor",
         "Basis Framework",
         "BasisSDK",
+        "Unity.TextMeshPro",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
