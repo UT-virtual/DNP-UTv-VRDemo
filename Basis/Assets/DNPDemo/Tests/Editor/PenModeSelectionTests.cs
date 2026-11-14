@@ -13,9 +13,9 @@ namespace DNPDemo.Tests
         public void TearDown() => PenModeSelection.ResetToDefault();
 
         [Test]
-        public void MenuOffersSelectVoiceAndDraw()
+        public void MenuOffersSelectVoiceDrawAndManipulate()
         {
-            CollectionAssert.AreEqual(new[] { PenMode.Select, PenMode.Voice, PenMode.Draw }, PenModeSelection.Selectable);
+            CollectionAssert.AreEqual(new[] { PenMode.Select, PenMode.Voice, PenMode.Draw, PenMode.Manipulate }, PenModeSelection.Selectable);
             Assert.IsTrue(PenModeSelection.IsSelectable(PenModeSelection.Default));
         }
 
@@ -33,7 +33,7 @@ namespace DNPDemo.Tests
         [Test]
         public void ModesNotOnTheMenuAreIgnored()
         {
-            PenModeSelection.Select(PenMode.Manipulate);
+            PenModeSelection.Select(PenMode.Panel);
             PenModeSelection.Select(PenMode.None);
             Assert.AreEqual(PenModeSelection.Default, PenModeSelection.Current);
         }

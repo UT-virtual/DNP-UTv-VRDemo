@@ -11,7 +11,7 @@ namespace DNPDemo.Pen
     public static class PenModeSelection
     {
         /// <summary>Modes offered on the menu, left to right.</summary>
-        public static readonly PenMode[] Selectable = { PenMode.Select, PenMode.Voice, PenMode.Draw };
+        public static readonly PenMode[] Selectable = { PenMode.Select, PenMode.Voice, PenMode.Draw, PenMode.Manipulate };
 
         public const PenMode Default = PenMode.Select;
 

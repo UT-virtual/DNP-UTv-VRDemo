@@ -10,9 +10,10 @@ namespace DNPDemo.Scenario
     /// (<see cref="ScenarioSpeakerBinding"/>, <see cref="ScenarioObjectBinding"/>). The stage collects them from its
     /// scene once, when the scene has finished loading (the first call after that, or Start), inactive objects included; each binding lives in the prefab of the object it describes.
     /// <para>
-    /// It also owns everything a cue can leave behind: <see cref="StopTransient"/> silences lines and effects when
-    /// playback is cut, and <see cref="ResetToBaseline"/> returns every bound object to its state at scene load
-    /// before the lasting effects of earlier steps are re-applied.
+    /// It also owns everything a cue or an interaction tool can leave behind: <see cref="StopTransient"/> silences lines
+    /// and effects when playback is cut, and <see cref="ResetToBaseline"/> returns every bound object to its state at
+    /// scene load (shown or hidden, local position and rotation) before the lasting effects of earlier steps are
+    /// re-applied. An object moved by the pen therefore goes back when the step changes.
     /// </para>
     /// </summary>
     public sealed class ScenarioStage : MonoBehaviour
@@ -22,7 +23,20 @@ namespace DNPDemo.Scenario
 
         [SerializeField] BannerView _banner;
 
-        readonly Dictionary<GameObject, bool> _baselineActive = new();
+        readonly struct Baseline
+        {
+            public readonly bool Active;
+            public readonly Vector3 LocalPosition;
+            public readonly Quaternion LocalRotation;
+
+            public Baseline(GameObject target)
+            {
+                Active = target.activeSelf;
+                target.transform.GetLocalPositionAndRotation(out LocalPosition, out LocalRotation);
+            }
+        }
+
+        readonly Dictionary<GameObject, Baseline> _baselines = new();
         readonly HashSet<string> _reportedMissing = new();
         ScenarioBindingSet _bindings;
 
@@ -125,16 +139,18 @@ namespace DNPDemo.Scenario
             }
         }
 
-        /// <summary>Returns every bound object to its state at scene load.</summary>
+        /// <summary>Returns every bound object to its state at scene load: shown or hidden, local position and rotation.</summary>
         public void ResetToBaseline()
         {
             EnsureBindings();
-            foreach (KeyValuePair<GameObject, bool> pair in _baselineActive)
+            foreach (KeyValuePair<GameObject, Baseline> pair in _baselines)
             {
-                if (pair.Key != null)
+                if (pair.Key == null)
                 {
-                    pair.Key.SetActive(pair.Value);
+                    continue;
                 }
+                pair.Key.transform.SetLocalPositionAndRotation(pair.Value.LocalPosition, pair.Value.LocalRotation);
+                pair.Key.SetActive(pair.Value.Active);
             }
             if (_banner != null)
             {
@@ -162,9 +178,9 @@ namespace DNPDemo.Scenario
             }
             foreach (GameObject target in _bindings.Objects.Values)
             {
-                if (target != null && !_baselineActive.ContainsKey(target))
+                if (target != null && !_baselines.ContainsKey(target))
                 {
-                    _baselineActive.Add(target, target.activeSelf);
+                    _baselines.Add(target, new Baseline(target));
                 }
             }
         }

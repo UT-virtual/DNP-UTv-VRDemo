@@ -1,5 +1,6 @@
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
 using DNPDemo.Pen;
@@ -105,6 +106,34 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void DemoSystemsManipulateToolIsWired()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioInstaller.DemoSystemsPrefabPath);
+            Assert.IsNotNull(prefab);
+            var runner = prefab.GetComponentInChildren<InteractionRunner>(true);
+            Assert.IsNotNull(runner);
+            var manipulate = runner.GetComponentInChildren<ManipulateTool>(true);
+            Assert.IsNotNull(manipulate, "Install it from DNP Demo/Setup/Install Scenario Into DemoSystems Prefab.");
+
+            var tool = new SerializedObject(manipulate);
+            Assert.IsNotNull(tool.FindProperty("_pen").objectReferenceValue, "ManipulateTool needs the pen controller.");
+            Assert.IsNotNull(tool.FindProperty("_stage").objectReferenceValue, "ManipulateTool needs the scenario stage.");
+            var ghost = (ManipulateGhostView)tool.FindProperty("_ghost").objectReferenceValue;
+            Assert.IsNotNull(ghost, "ManipulateTool needs its ghost view.");
+            var material = (Material)new SerializedObject(ghost).FindProperty("_material").objectReferenceValue;
+            Assert.IsNotNull(material, "ManipulateGhostView needs its material.");
+            Assert.GreaterOrEqual(material.renderQueue, (int)UnityEngine.Rendering.RenderQueue.Transparent, "The ghost is drawn translucent.");
+
+            SerializedProperty tools = new SerializedObject(runner).FindProperty("_tools");
+            bool registered = false;
+            for (int i = 0; i < tools.arraySize; i++)
+            {
+                registered |= tools.GetArrayElementAtIndex(i).objectReferenceValue == manipulate;
+            }
+            Assert.IsTrue(registered, "ManipulateTool is not registered with the runner.");
+        }
+
+        [Test]
         public void SpatialPenShowsEveryModePart()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(SpatialPenPrefabPath);
@@ -112,7 +141,7 @@ namespace DNPDemo.Tests
             var view = prefab.GetComponent<SpatialPenView>();
             Assert.IsNotNull(view);
             var so = new SerializedObject(view);
-            foreach (string field in new[] { "_body", "_microphone", "_selectArea", "_eraser" })
+            foreach (string field in new[] { "_body", "_microphone", "_selectArea", "_eraser", "_manipulator" })
             {
                 Assert.IsNotNull(so.FindProperty(field).objectReferenceValue, $"SpatialPenView.{field} is not set.");
             }

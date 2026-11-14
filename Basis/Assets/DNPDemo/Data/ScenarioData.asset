@@ -61,6 +61,7 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
+    - rid: 1662061592158404929
     - rid: 1662061592158404882
     - rid: 1662061592158404883
     - rid: 1662061592158404884
@@ -281,6 +282,11 @@ MonoBehaviour:
         Speaker: 1
         Text: "\u5206\u304B\u308A\u307E\u3057\u305F\u3002\u4E00\u5EA6\u30013D\u30E2\u30C7\u30EB\u306B\u304A\u3053\u3057\u3066\u307F\u307E\u3057\u3087\u3046\uFF01"
         Voice: {fileID: 0}
+    - rid: 1662061592158404929
+      type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Key: Apple
+        Active: 1
     - rid: 1662061592158404882
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
@@ -459,17 +465,31 @@ MonoBehaviour:
         SimulatedMode: 4
         RequiredPresses: 3
     - rid: 1662061592158404912
-      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      type: {class: SelectionPart, ns: DNPDemo.Interaction.Selection, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u6797\u6A8E\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
-        SimulatedMode: 1
-        RequiredPresses: 3
+        TargetZoneKeys:
+        - Apple
+        RequiredInsideRatio: 0.9
+        RequiredCoverage: 0.5
     - rid: 1662061592158404913
-      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      type: {class: ManipulatePart, ns: DNPDemo.Interaction.Manipulate, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u6797\u6A8E\u3092\u624B\u306E\u4E0B\u3078\u79FB\u52D5\u3059\u308B"
-        SimulatedMode: 3
-        RequiredPresses: 3
+        TargetKey: Apple
+        GrabZoneKey: 
+        Constraint: 0
+        GoalKey: Goal_AppleUnderHand
+        MaxDistance: 0.4
+        SnapDistance: 0.05
+        PivotKey: 
+        Axis: {x: 0, y: 1, z: 0}
+        MinAngle: -90
+        MaxAngle: 90
+        Completion: 0
+        TargetAngle: 45
+        SnapAngle: 10
+        ThresholdAngle: 30
     - rid: 1662061592158404914
       type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
       data:
