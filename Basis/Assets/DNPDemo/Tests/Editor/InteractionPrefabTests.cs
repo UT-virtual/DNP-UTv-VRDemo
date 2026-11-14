@@ -3,6 +3,7 @@ using DNPDemo.Interaction;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
+using DNPDemo.Interaction.Voice;
 using DNPDemo.Pen;
 using DNPDemo.Scenario;
 using NUnit.Framework;
@@ -131,6 +132,26 @@ namespace DNPDemo.Tests
                 registered |= tools.GetArrayElementAtIndex(i).objectReferenceValue == manipulate;
             }
             Assert.IsTrue(registered, "ManipulateTool is not registered with the runner.");
+        }
+
+        [Test]
+        public void DemoSystemsVoiceCommandToolIsWired()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioInstaller.DemoSystemsPrefabPath);
+            Assert.IsNotNull(prefab);
+            var runner = prefab.GetComponentInChildren<InteractionRunner>(true);
+            Assert.IsNotNull(runner);
+            var voice = runner.GetComponentInChildren<VoiceCommandTool>(true);
+            Assert.IsNotNull(voice, "Install it from DNP Demo/Setup/Install Scenario Into DemoSystems Prefab.");
+            Assert.IsNotNull(new SerializedObject(voice).FindProperty("_pen").objectReferenceValue, "VoiceCommandTool needs the pen controller.");
+
+            SerializedProperty tools = new SerializedObject(runner).FindProperty("_tools");
+            bool registered = false;
+            for (int i = 0; i < tools.arraySize; i++)
+            {
+                registered |= tools.GetArrayElementAtIndex(i).objectReferenceValue == voice;
+            }
+            Assert.IsTrue(registered, "VoiceCommandTool is not registered with the runner.");
         }
 
         [Test]
