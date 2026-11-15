@@ -1,6 +1,10 @@
 using System.Collections.Generic;
 using System.IO;
 using DNPDemo.Editor;
+using DNPDemo.Interaction;
+using DNPDemo.Interaction.Voice;
+using DNPDemo.Operator;
+using DNPDemo.Scenario;
 using DNPDemo.TaskHud;
 using NUnit.Framework;
 using TMPro;
@@ -39,6 +43,45 @@ namespace DNPDemo.Tests
             {
                 StringAssert.Contains(mark, characters);
             }
+        }
+
+        [Test]
+        public void VoiceCommandTextsAreInTheCharacterSet()
+        {
+            var texts = new List<string>
+            {
+                VoiceCommandTool.ListeningStatus,
+                VoiceCommandTool.RetryStatus,
+                VoiceCommandTool.FormatResult(string.Empty),
+                MicrophoneThresholdControl.FormatLevelLine(0f),
+                MicrophoneThresholdControl.FormatLevelLine(0.01f),
+                MicrophoneThresholdControl.FormatDeviceLine(string.Empty),
+                "マイクを切り替える",
+            };
+            foreach (ScenarioStep step in ScenarioDataBuilder.CreateDefaultSteps())
+            {
+                foreach (InteractionPart part in step.Interaction ?? new List<InteractionPart>())
+                {
+                    if (part is VoicePart voice)
+                    {
+                        texts.Add(voice.Transcript);
+                    }
+                }
+            }
+
+            string characters = File.ReadAllText(CharacterSetPath);
+            var missing = new HashSet<char>();
+            foreach (string text in texts)
+            {
+                foreach (char c in text)
+                {
+                    if (!char.IsWhiteSpace(c) && characters.IndexOf(c) < 0)
+                    {
+                        missing.Add(c);
+                    }
+                }
+            }
+            Assert.IsEmpty(missing, $"文字セットにない文字があります（{string.Concat(missing)}）。文字セットに加えて SDF を作り直してください。");
         }
     }
 }

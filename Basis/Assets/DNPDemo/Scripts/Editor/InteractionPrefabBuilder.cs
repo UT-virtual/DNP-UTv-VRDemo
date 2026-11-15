@@ -5,6 +5,7 @@ using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
 using DNPDemo.Interaction.Stroke.Testing;
+using DNPDemo.Interaction.Voice;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -25,6 +26,7 @@ namespace DNPDemo.Editor
         public const string SelectionToolPath = Folder + "/SelectionTool.prefab";
         public const string StrokeToolPath = Folder + "/StrokeTool.prefab";
         public const string ManipulateToolPath = Folder + "/ManipulateTool.prefab";
+        public const string VoiceCommandToolPath = Folder + "/VoiceCommandTool.prefab";
         public const string StrokeTestPanelPath = Folder + "/Testing/StrokeTestPanel.prefab";
 
         public const string SelectionVolumeShaderName = "DNPDemo/SelectionVolume";
@@ -51,6 +53,7 @@ namespace DNPDemo.Editor
             CreateSelectionTool();
             CreateStrokeTool();
             CreateManipulateTool();
+            CreateVoiceCommandTool();
         }
 
         /// <summary>
@@ -177,6 +180,32 @@ namespace DNPDemo.Editor
                 Directory.CreateDirectory(Path.GetDirectoryName(ManipulateToolPath));
                 GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, ManipulateToolPath);
                 Debug.Log($"[DNPDemo] Created {ManipulateToolPath}");
+                return prefab;
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        /// <summary>
+        /// Tool for <see cref="VoicePart"/>. It shows its state on the task HUD, so it has no view of its own. The pen
+        /// lives in DemoSystems, so <see cref="ScenarioInstaller"/> wires it when it places the tool there.
+        /// </summary>
+        public static GameObject CreateVoiceCommandTool()
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(VoiceCommandToolPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+            var root = new GameObject("VoiceCommandTool");
+            try
+            {
+                root.AddComponent<VoiceCommandTool>();
+                Directory.CreateDirectory(Path.GetDirectoryName(VoiceCommandToolPath));
+                GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, VoiceCommandToolPath);
+                Debug.Log($"[DNPDemo] Created {VoiceCommandToolPath}");
                 return prefab;
             }
             finally

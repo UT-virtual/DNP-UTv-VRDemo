@@ -106,6 +106,17 @@ namespace DNPDemo.Tests
             Assert.AreEqual(string.Empty, content.TaskText);
         }
 
+        [Test]
+        public void StatusOfTheRunningToolIsPassedThrough()
+        {
+            TaskHudContent withStatus = TaskHudContent.Build(SelectThenManipulate(), 0, isLocalActor: true, PenMode.Select, "音声入力中…");
+            TaskHudContent withoutStatus = TaskHudContent.Build(SelectThenManipulate(), 0, isLocalActor: true, PenMode.Select, null);
+
+            Assert.AreEqual("音声入力中…", withStatus.Status);
+            Assert.AreEqual(string.Empty, withoutStatus.Status);
+            Assert.AreEqual(string.Empty, TaskHudContent.Hidden.Status);
+        }
+
         [TestCase(-1)]
         [TestCase(2)]
         public void HiddenWhenThePartIndexIsOutsideTheStep(int partIndex)

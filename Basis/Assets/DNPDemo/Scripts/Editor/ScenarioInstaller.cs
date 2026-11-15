@@ -2,6 +2,7 @@ using DNPDemo.Interaction;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
+using DNPDemo.Interaction.Voice;
 using DNPDemo.Operator;
 using DNPDemo.Pen;
 using DNPDemo.Presentation;
@@ -146,6 +147,13 @@ namespace DNPDemo.Editor
                 InstallPenTool<ManipulateTool>(InteractionPrefabBuilder.ManipulateToolPath, root, scenario, interaction, runner);
                 changed = true;
             }
+            if (interaction.GetComponentInChildren<VoiceCommandTool>(true) == null)
+            {
+                var voice = InstantiatePrefab<VoiceCommandTool>(InteractionPrefabBuilder.VoiceCommandToolPath, interaction);
+                WorldUiBuilder.Assign(voice, "_pen", FindPen(root, nameof(VoiceCommandTool)));
+                RegisterTool(runner, voice);
+                changed = true;
+            }
             if (interaction.GetComponentInChildren<DummyInteractionTool>(true) == null)
             {
                 var dummy = InstantiatePrefab<DummyInteractionTool>(InteractionPrefabBuilder.DummyToolPath, interaction);
@@ -183,13 +191,19 @@ namespace DNPDemo.Editor
         {
             var tool = InstantiatePrefab<T>(prefabPath, interaction);
             WorldUiBuilder.Assign(tool, "_stage", scenario.GetComponent<ScenarioStage>());
+            WorldUiBuilder.Assign(tool, "_pen", FindPen(root, typeof(T).Name));
+            RegisterTool(runner, tool);
+        }
+
+        /// <summary>The pen controller in DemoSystems for <paramref name="toolName"/>. Warns when there is none.</summary>
+        static SpatialPenController FindPen(Transform root, string toolName)
+        {
             var pen = root.GetComponentInChildren<SpatialPenController>(true);
             if (pen == null)
             {
-                Debug.LogWarning($"[DNPDemo] {DemoSystemsPrefabPath} に SpatialPenController がないため、{typeof(T).Name} のペンを手動で設定してください。");
+                Debug.LogWarning($"[DNPDemo] {DemoSystemsPrefabPath} に SpatialPenController がないため、{toolName} のペンを手動で設定してください。");
             }
-            WorldUiBuilder.Assign(tool, "_pen", pen);
-            RegisterTool(runner, tool);
+            return pen;
         }
 
         static void RegisterTool(InteractionRunner runner, InteractionTool tool)
