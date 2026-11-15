@@ -15,7 +15,7 @@ namespace DNPDemo.Interaction
     /// ・ゾーンが0個の場合、判定は常にfalse。
     /// ・無効化されたゾーン（isActiveAndEnabled == false）は判定時に無視する。
     /// </summary>
-    public class DetectionZoneGroup : MonoBehaviour
+    public class DetectionZoneGroup : MonoBehaviour, IDetectionVolume
     {
         [Header("グループ設定")]
         [SerializeField]
@@ -116,6 +116,39 @@ namespace DNPDemo.Interaction
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 有効なゾーンすべてを囲むワールド座標の軸平行ボックス。
+        /// 有効なゾーンがない場合は、Group の位置にある大きさ 0 のボックス。
+        /// </summary>
+        public Bounds WorldBounds
+        {
+            get
+            {
+                EnsureInitialized();
+
+                bool any = false;
+                Bounds bounds = new Bounds(transform.position, Vector3.zero);
+
+                foreach (DetectionZone zone in _zones)
+                {
+                    if (zone == null || !zone.isActiveAndEnabled)
+                        continue;
+
+                    if (any)
+                    {
+                        bounds.Encapsulate(zone.WorldBounds);
+                    }
+                    else
+                    {
+                        bounds = zone.WorldBounds;
+                        any = true;
+                    }
+                }
+
+                return bounds;
+            }
         }
 
         /// <summary>

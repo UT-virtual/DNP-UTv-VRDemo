@@ -18,7 +18,7 @@ namespace DNPDemo.Interaction
     /// 非均一スケールは扱いが難しくメリットが小さいため禁止する。
     /// （IsScaleHierarchyUniform で検査し、OnValidate と Editor テストで検出する）
     /// </summary>
-    public class DetectionZone : MonoBehaviour
+    public class DetectionZone : MonoBehaviour, IDetectionVolume
     {
         [Header("ゾーン形状設定")]
         [SerializeField]
@@ -219,9 +219,78 @@ namespace DNPDemo.Interaction
             );
         }
 
+        /// <summary>
+        /// ゾーン形状を囲むワールド座標の軸平行ボックス。
+        /// 回転している場合は形状より大きくなる。
+        /// </summary>
+        public Bounds WorldBounds
+        {
+            get
+            {
+                Vector3 localExtents = GetLocalExtents(
+                    _shapeType,
+                    _radius,
+                    _height,
+                    _boxSize
+                );
+
+                // ローカルの箱を変換したときの各ワールド軸の半幅は、
+                // 変換行列の各行の絶対値とローカル半幅の内積になる
+                Matrix4x4 m = transform.localToWorldMatrix;
+
+                Vector3 worldExtents = new Vector3(
+                    Mathf.Abs(m.m00) * localExtents.x
+                        + Mathf.Abs(m.m01) * localExtents.y
+                        + Mathf.Abs(m.m02) * localExtents.z,
+                    Mathf.Abs(m.m10) * localExtents.x
+                        + Mathf.Abs(m.m11) * localExtents.y
+                        + Mathf.Abs(m.m12) * localExtents.z,
+                    Mathf.Abs(m.m20) * localExtents.x
+                        + Mathf.Abs(m.m21) * localExtents.y
+                        + Mathf.Abs(m.m22) * localExtents.z
+                );
+
+                return new Bounds(transform.position, worldExtents * 2f);
+            }
+        }
+
         // --------------------------------------------------
         // Geometry calculation
         // --------------------------------------------------
+
+        /// <summary>
+        /// ローカル座標系での形状の半幅（軸平行ボックス）。
+        /// </summary>
+        private static Vector3 GetLocalExtents(
+            ZoneShapeType shape,
+            float radius,
+            float height,
+            Vector3 boxSize)
+        {
+            radius = Mathf.Max(0f, radius);
+
+            switch (shape)
+            {
+                case ZoneShapeType.Sphere:
+                    return new Vector3(radius, radius, radius);
+
+                case ZoneShapeType.Capsule:
+                    return new Vector3(
+                        radius,
+                        Mathf.Max(height * 0.5f, radius),
+                        radius
+                    );
+
+                case ZoneShapeType.Box:
+                    return new Vector3(
+                        Mathf.Max(0f, boxSize.x),
+                        Mathf.Max(0f, boxSize.y),
+                        Mathf.Max(0f, boxSize.z)
+                    ) * 0.5f;
+            }
+
+            return Vector3.zero;
+        }
 
         /// <summary>
         /// ローカル座標系で形状との距離を計算する。

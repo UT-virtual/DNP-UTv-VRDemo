@@ -463,5 +463,76 @@ namespace DNPDemo.Tests
 
             Assert.AreEqual(1, group.Zones.Count);
         }
+
+        // --------------------------------------------------
+        // WorldBounds
+        // --------------------------------------------------
+
+        private static void AssertVector(Vector3 expected, Vector3 actual, string label)
+        {
+            Assert.AreEqual(expected.x, actual.x, 1e-4f, $"{label}.x");
+            Assert.AreEqual(expected.y, actual.y, 1e-4f, $"{label}.y");
+            Assert.AreEqual(expected.z, actual.z, 1e-4f, $"{label}.z");
+        }
+
+        [Test]
+        public void Sphere_WorldBounds_FollowsPositionAndScale()
+        {
+            var zone = NewSphere(0.5f);
+            zone.transform.position = new Vector3(1f, 2f, 3f);
+            zone.transform.localScale = Vector3.one * 2f;
+
+            Bounds bounds = zone.WorldBounds;
+            AssertVector(new Vector3(1f, 2f, 3f), bounds.center, "center");
+            AssertVector(Vector3.one * 2f, bounds.size, "size");
+        }
+
+        [Test]
+        public void Capsule_WorldBounds_FollowsRotation()
+        {
+            var zone = NewCapsule(0.1f, 0.6f);
+            zone.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
+
+            AssertVector(new Vector3(0.6f, 0.2f, 0.2f), zone.WorldBounds.size, "size");
+        }
+
+        [Test]
+        public void Box_WorldBounds_EnclosesTheRotatedBox()
+        {
+            var zone = NewBox(new Vector3(1f, 2f, 1f));
+            zone.transform.rotation = Quaternion.Euler(0f, 45f, 0f);
+
+            // The 1 x 1 footprint turned by 45 degrees spans its diagonal.
+            float diagonal = Mathf.Sqrt(2f);
+            AssertVector(new Vector3(diagonal, 2f, diagonal), zone.WorldBounds.size, "size");
+        }
+
+        [Test]
+        public void Group_WorldBounds_EnclosesActiveZones()
+        {
+            var group = NewGroup();
+            var a = NewSphere(0.5f, group.transform);
+            var b = NewSphere(0.5f, group.transform);
+            var inactive = NewSphere(0.5f, group.transform);
+            b.transform.localPosition = new Vector3(3f, 0f, 0f);
+            inactive.transform.localPosition = new Vector3(-10f, 0f, 0f);
+            inactive.gameObject.SetActive(false);
+            group.RefreshZones();
+
+            Bounds bounds = group.WorldBounds;
+            AssertVector(new Vector3(-0.5f, -0.5f, -0.5f), bounds.min, "min");
+            AssertVector(new Vector3(3.5f, 0.5f, 0.5f), bounds.max, "max");
+        }
+
+        [Test]
+        public void Group_WorldBounds_Empty_IsAPointAtTheGroup()
+        {
+            var group = NewGroup();
+            group.transform.position = new Vector3(1f, 2f, 3f);
+
+            Bounds bounds = group.WorldBounds;
+            AssertVector(new Vector3(1f, 2f, 3f), bounds.center, "center");
+            AssertVector(Vector3.zero, bounds.size, "size");
+        }
     }
 }

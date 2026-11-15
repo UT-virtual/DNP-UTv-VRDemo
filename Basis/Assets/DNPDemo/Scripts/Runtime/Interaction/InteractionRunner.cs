@@ -12,13 +12,14 @@ namespace DNPDemo.Interaction
     /// Runs the interaction parts of the current step (<see cref="ScenarioStep.Interaction"/>) on every device.
     /// <para>
     /// It hands each part to the tool that can run it (<see cref="InteractionTool"/>), tells the tool whether this device
-    /// is the actor, and decides the local pen mode. On the actor's device a completed part moves on to the next one,
+    /// is the actor, and states the pen mode the part needs. On the actor's device a completed part moves on to the next one,
     /// and the last one reports the step done through <see cref="ScenarioDirector.ReportInteractionComplete"/>.
     /// </para>
     /// <para>
     /// It also carries all tool traffic: every message is pinned to (sequence, step, part) and dropped when that is no
     /// longer current, so tools never see progress from another step. Part changes come from the actor; a device that
-    /// enters the step asks the actor where it is, which covers late joins and reconnects.
+    /// enters the step asks the actor where it is, which covers late joins and reconnects. The actor answers with the part
+    /// index and the current tool's snapshot (<see cref="InteractionTool.CreateSnapshot"/>).
     /// </para>
     /// <para>
     /// In-progress state is discarded when the step changes; what remains visible afterwards derives from the step
@@ -42,8 +43,11 @@ namespace DNPDemo.Interaction
         InteractionTool _currentTool;
         bool _ready;
 
-        /// <summary>Raised when the current part, the actor flag or the pen mode may have changed.</summary>
+        /// <summary>Raised when the current part, the actor flag or the required pen mode may have changed.</summary>
         public event Action StateChanged;
+
+        /// <summary>The step whose parts are running, or null when nothing is waiting (same lifetime as <see cref="CurrentPart"/>).</summary>
+        public ScenarioStep CurrentStep => _session?.Step;
 
         /// <summary>The current part, or null when nothing is waiting (no interaction step, or every part is done).</summary>
         public InteractionPart CurrentPart => _session?.Part;
@@ -57,8 +61,11 @@ namespace DNPDemo.Interaction
         /// <summary>Role that performs the current step, or None.</summary>
         public DemoRole Actor => _session?.Actor ?? DemoRole.None;
 
-        /// <summary>What the local pen does now: the current part's mode on the actor's device, otherwise None.</summary>
-        public PenMode LocalPenMode => IsLocalActor ? _session.Part.Mode : PenMode.None;
+        /// <summary>
+        /// The pen mode the local player needs for the current part: its mode on the actor's device, otherwise None.
+        /// Tools take pen input only while the player's chosen mode (<see cref="Pen.PenModeSelection"/>) matches it.
+        /// </summary>
+        public PenMode RequiredPenMode => IsLocalActor ? _session.Part.Mode : PenMode.None;
 
         public override void Start()
         {
@@ -119,11 +126,16 @@ namespace DNPDemo.Interaction
                     }
                     break;
                 case InteractionMessageType.RequestPartState:
-                    if (IsActorForCurrentStep() && _progress.PartIndex > 0)
+                    if (IsActorForCurrentStep())
                     {
                         _singleRecipient[0] = playerId;
-                        Send(new InteractionMessage(InteractionMessageType.PartAdvanced, _progress.Sequence, _progress.StepIndex, _progress.PartIndex),
-                            null, DeliveryMethod.ReliableOrdered, _singleRecipient);
+                        if (_progress.PartIndex > 0)
+                        {
+                            Send(new InteractionMessage(InteractionMessageType.PartAdvanced, _progress.Sequence, _progress.StepIndex, _progress.PartIndex),
+                                null, DeliveryMethod.ReliableOrdered, _singleRecipient);
+                        }
+                        // After the part index, on the same ordered channel, so the device has begun this part when it arrives.
+                        SendSnapshot(_singleRecipient);
                     }
                     break;
             }
@@ -152,6 +164,23 @@ namespace DNPDemo.Interaction
             {
                 Send(new InteractionMessage(InteractionMessageType.Progress, _progress.Sequence, _progress.StepIndex, session.PartIndex),
                     payload, deliveryMethod, null);
+            }
+        }
+
+        /// <summary>Sends the current tool's snapshot (<see cref="InteractionTool.CreateSnapshot"/>) to <paramref name="recipients"/>.</summary>
+        void SendSnapshot(ushort[] recipients)
+        {
+            if (_session == null || !_session.IsLocalActor || _currentTool == null)
+            {
+                return;
+            }
+            byte[] snapshot = null;
+            InteractionSession session = _session;
+            Invoke(_currentTool, tool => snapshot = tool.CreateSnapshot(session));
+            if (snapshot != null)
+            {
+                Send(new InteractionMessage(InteractionMessageType.Progress, _progress.Sequence, _progress.StepIndex, session.PartIndex),
+                    snapshot, DeliveryMethod.ReliableOrdered, recipients);
             }
         }
 
@@ -201,7 +230,7 @@ namespace DNPDemo.Interaction
                 return;
             }
             InteractionPart part = step.Interaction[_progress.PartIndex];
-            _session = new InteractionSession(this, part, _progress.PartIndex, _progress.PartCount, step.Actor, IsActorForCurrentStep());
+            _session = new InteractionSession(this, step, part, _progress.PartIndex, _progress.PartCount, step.Actor, IsActorForCurrentStep());
             _currentTool = FindTool(part);
             if (_currentTool == null)
             {

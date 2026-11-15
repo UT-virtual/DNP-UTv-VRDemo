@@ -17,6 +17,8 @@ namespace DNPDemo.Interaction
     /// <item><see cref="Discard"/> when the scenario moves to another step. Everything the tool shows or holds is removed;
     /// the lasting result is shown by the step's cues instead.</item>
     /// </list>
+    /// A device that enters a step late asks the actor for the current part; the actor's tool answers with
+    /// <see cref="CreateSnapshot"/>, so a part with lasting in-progress state (strokes) shows up there too.
     /// </summary>
     public abstract class InteractionTool : MonoBehaviour
     {
@@ -38,5 +40,12 @@ namespace DNPDemo.Interaction
         public virtual void OnRemoteProgress(InteractionSession session, ArraySegment<byte> payload)
         {
         }
+
+        /// <summary>
+        /// Actor only: the whole in-progress state of the current part, for a device that entered the step late or
+        /// reconnected. It is delivered to that device through <see cref="OnRemoteProgress"/>, so it must be a payload
+        /// the tool reads there. Null when there is nothing to show.
+        /// </summary>
+        public virtual byte[] CreateSnapshot(InteractionSession session) => null;
     }
 }

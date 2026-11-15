@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using System.IO;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Manipulate;
+using DNPDemo.Interaction.Selection;
+using DNPDemo.Interaction.Stroke;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
 using UnityEditor;
@@ -18,6 +21,24 @@ namespace DNPDemo.Editor
 
         /// <summary>Key of the statue spotlight (<see cref="ScenarioObjectBinding"/> on Lighting/Spot_Statue).</summary>
         public const string SpotlightKey = "Spotlight";
+
+        /// <summary>Key of the left shoulder zone on the placeholder statue (<see cref="ScenarioObjectBinding"/> on Statue_Original/Zone_LeftShoulder).</summary>
+        public const string LeftShoulderZoneKey = "Zone_LeftShoulder";
+
+        /// <summary>Key of the zone in front of the chest on the placeholder statue (<see cref="ScenarioObjectBinding"/> on Statue_Original/Zone_ChestFront).</summary>
+        public const string ChestFrontZoneKey = "Zone_ChestFront";
+
+        /// <summary>
+        /// Key of the placeholder apple of Ver 1.0 (<see cref="ScenarioObjectBinding"/> on Statue_Original/Apple). Hidden at
+        /// scene load and shown once the left arm has been generated. It carries the zone that is selected and grabbed.
+        /// </summary>
+        public const string AppleKey = "Apple";
+
+        /// <summary>Key of the marker the apple is moved to, under the hand (<see cref="ScenarioObjectBinding"/> on Statue_Original/Goal_AppleUnderHand).</summary>
+        public const string AppleGoalKey = "Goal_AppleUnderHand";
+
+        /// <summary>The apple may move this far from where it starts, in metres.</summary>
+        public const float AppleMaxDistance = 0.4f;
 
         public const string CompletionBannerText = "WORKSHOP COMPLETE";
 
@@ -72,6 +93,7 @@ namespace DNPDemo.Editor
                     "音声生成を起動し、「現在のヴィーナスについて、手のひらに林檎がのった水平に伸びる左手を追加」と出力せよ。",
                     Voice("「手のひらに林檎がのった水平に伸びる左手を追加」と音声指示する")),
                 Auto("s1-concerns", "Scene 1 構造の懸念",
+                    new SetObjectActiveCue(AppleKey, true),
                     A("私が考える、ヴィーナスの左手のイメージはまさにこんな感じですね。"),
                     B("ありがとうございます。うーむ...私の専門の構造力学的な観点からすると、腕をここまで水平に伸ばすことは付け根への大きな負担に繋がりそうです。ヴィーナスのような大事な像を昔の職人が、不安定な構造で作るとはとても思えないんですよね..."),
                     A("なるほど。他に懸念点などはございませんか？"),
@@ -81,7 +103,8 @@ namespace DNPDemo.Editor
                     B("そうですね、一度私の考えもモデル化してみましょう。")),
                 Operation("s2-move-apple", "Scene 2 [B] 林檎を手の下へ", DemoRole.PlayerB,
                     "空間ペンで林檎の領域を選択し、林檎の位置を調整せよ。（手の下に持ってくる）",
-                    Select("林檎を範囲選択する"), Manipulate("林檎を手の下へ移動する")),
+                    new SelectionPart("林檎を範囲選択する", AppleKey),
+                    ManipulatePart.Translate("林檎を手の下へ移動する", AppleKey, AppleGoalKey, AppleMaxDistance)),
                 Operation("s2-regrip-apple", "Scene 2 [B] 林檎の持ち方を修正", DemoRole.PlayerB,
                     "空間ペンで腕を選択し、「選択した範囲について、上からボールを包み込むように林檎を持ち直す形に修正」と入力せよ。",
                     Select("左手から前腕を範囲選択する"), Voice("「上からボールを包み込むように林檎を持ち直す形に修正」と音声指示する")),
@@ -91,18 +114,18 @@ namespace DNPDemo.Editor
                     B("なるほど。自然なカーブですか...うーん少しイメージが難しいですね。モデルで表現するとこんな感じでしょうか。")),
                 Operation("s2-slide-arm", "Scene 2 [B] 腕を内側へ", DemoRole.PlayerB,
                     "空間ペンで左肩から肘の領域を選択し、腕の角度を内側へスライド修正せよ。",
-                    Select("左肩から肘を範囲選択する"), Manipulate("腕を内側へスライドする")),
+                    new SelectionPart("左肩から肘を範囲選択する", LeftShoulderZoneKey), Manipulate("腕を内側へスライドする")),
                 Auto("s2-mismatch", "Scene 2 イメージのズレ",
                     A("うーん私のイメージとズレていますね。私のイメージだとこんな感じなんです。")),
                 Operation("s2-guide-curve", "Scene 2 [A] ガイドでカーブを描く", DemoRole.PlayerA,
                     "空間ペン（ガイドモード）を使用し、左肩から胸の前へ「緩やかなカーブを描く軌跡」をなぞるように描け。",
-                    Guide("左肩から胸の前へ緩やかなカーブを描く")),
+                    StrokePart.Guide("左肩から胸の前へ緩やかなカーブを描く", LeftShoulderZoneKey, ChestFrontZoneKey)),
                 Auto("s3-hand-mirror", "Scene 3 右腕と手鏡",
                     B("あーなるほど。確かにこれは凄く綺麗ですね。力学的にも矛盾点がなさそうです。"),
                     A("左腕は良い感じですね。それでは次に右腕の話に移行しましょう。古典彫刻においては手鏡が林檎と並ぶ代表的なシンボルとされているので、右腕には手鏡があったと考えられます。一度3Dモデルにしてみますね。")),
                 Operation("s3-draw-mirror", "Scene 3 [A] 手鏡の線画を変換", DemoRole.PlayerA,
                     "空間ペンで空中に手鏡の線画を描け。「線画を西洋のアンティークな手鏡に変換」と音声指示せよ。",
-                    Guide("空中に手鏡の線画を描く"), Voice("「線画を西洋のアンティークな手鏡に変換」と音声指示する")),
+                    StrokePart.Sketch("空中に手鏡の線画を描く"), Voice("「線画を西洋のアンティークな手鏡に変換」と音声指示する")),
                 Operation("s3-place-mirror", "Scene 3 [A] 手鏡を移動", DemoRole.PlayerA,
                     "生成された手鏡を所定の位置に移動させよ。",
                     Manipulate("手鏡を所定の位置へ移動する")),
@@ -168,9 +191,9 @@ namespace DNPDemo.Editor
             Interaction = new List<InteractionPart>(parts),
         };
 
-        // Stand-ins until the real tools (SelectionTool, StrokeTool, ManipulateTool, VoiceCommandTool, HistoryPanel) replace them.
+        // Stand-ins until the real tools (VoiceCommandTool, HistoryPanel) replace them, and for selections and
+        // manipulations whose objects are not placed on the statue yet.
         static InteractionPart Select(string instruction) => new DummyInteractionPart(PenMode.Select, instruction);
-        static InteractionPart Guide(string instruction) => new DummyInteractionPart(PenMode.Guide, instruction);
         static InteractionPart Manipulate(string instruction) => new DummyInteractionPart(PenMode.Manipulate, instruction);
         static InteractionPart Voice(string instruction) => new DummyInteractionPart(PenMode.Voice, instruction);
         static InteractionPart Panel(string instruction) => new DummyInteractionPart(PenMode.Panel, instruction);

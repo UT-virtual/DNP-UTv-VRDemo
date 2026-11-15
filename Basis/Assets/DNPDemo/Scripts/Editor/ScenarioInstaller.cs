@@ -1,8 +1,13 @@
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Manipulate;
+using DNPDemo.Interaction.Selection;
+using DNPDemo.Interaction.Stroke;
 using DNPDemo.Operator;
+using DNPDemo.Pen;
 using DNPDemo.Presentation;
 using DNPDemo.Roles;
 using DNPDemo.Scenario;
+using DNPDemo.TaskHud;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,8 +15,8 @@ namespace DNPDemo.Editor
 {
     /// <summary>
     /// Builds the scenario engine into the DemoSystems prefab and wires every reference inside it: director, stage,
-    /// player, operator input and panel, narrator voice and subtitle, effects and banner, and the interaction runner
-    /// with its tools. Only what is missing is added, so running it again after an update installs the new parts and
+    /// player, operator input and panel, narrator voice and subtitle, effects and banner, the interaction runner
+    /// with its tools, and the task HUD. Only what is missing is added, so running it again after an update installs the new parts and
     /// leaves hand edits alone. Afterwards the prefab is the source of truth and is edited by hand.
     /// Scholars and keyed objects are not wired here; they declare themselves with
     /// <see cref="ScenarioSpeakerBinding"/> / <see cref="ScenarioObjectBinding"/> in their own prefabs.
@@ -46,11 +51,14 @@ namespace DNPDemo.Editor
                     scenario = BuildScenario(root.transform, roles);
                     changed = true;
                 }
-                if (scenario.Find(InteractionObjectName) == null)
+                Transform interaction = scenario.Find(InteractionObjectName);
+                if (interaction == null)
                 {
-                    BuildInteraction(scenario, roles);
+                    interaction = BuildInteraction(scenario, roles);
                     changed = true;
                 }
+                changed |= InstallMissingTools(root.transform, scenario, interaction);
+                changed |= InstallMissingTaskHud(root.transform, scenario, interaction);
                 if (changed)
                 {
                     PrefabUtility.SaveAsPrefabAsset(root, DemoSystemsPrefabPath);
@@ -102,22 +110,95 @@ namespace DNPDemo.Editor
             return scenario.transform;
         }
 
-        /// <summary>Adds the interaction runner and the tools it can hand parts to.</summary>
-        static void BuildInteraction(Transform scenario, DemoRoleService roles)
+        /// <summary>Adds the interaction runner. Its tools are added by <see cref="InstallMissingTools"/>.</summary>
+        static Transform BuildInteraction(Transform scenario, DemoRoleService roles)
         {
-            InteractionPrefabBuilder.CreateAllIfMissing();
-
             var interaction = new GameObject(InteractionObjectName);
             interaction.transform.SetParent(scenario, false);
             var runner = interaction.AddComponent<InteractionRunner>();
-            var dummy = InstantiatePrefab<DummyInteractionTool>(InteractionPrefabBuilder.DummyToolPath, interaction.transform);
-
             WorldUiBuilder.Assign(runner, "_director", scenario.GetComponent<ScenarioDirector>());
             WorldUiBuilder.Assign(runner, "_roles", roles);
+            return interaction.transform;
+        }
+
+        /// <summary>
+        /// Places every tool that is not under <paramref name="interaction"/> yet and registers it with the runner.
+        /// Returns true when anything was added.
+        /// </summary>
+        static bool InstallMissingTools(Transform root, Transform scenario, Transform interaction)
+        {
+            InteractionPrefabBuilder.CreateAllIfMissing();
+            var runner = interaction.GetComponent<InteractionRunner>();
+            bool changed = false;
+
+            if (interaction.GetComponentInChildren<SelectionTool>(true) == null)
+            {
+                InstallPenTool<SelectionTool>(InteractionPrefabBuilder.SelectionToolPath, root, scenario, interaction, runner);
+                changed = true;
+            }
+            if (interaction.GetComponentInChildren<StrokeTool>(true) == null)
+            {
+                InstallPenTool<StrokeTool>(InteractionPrefabBuilder.StrokeToolPath, root, scenario, interaction, runner);
+                changed = true;
+            }
+            if (interaction.GetComponentInChildren<ManipulateTool>(true) == null)
+            {
+                InstallPenTool<ManipulateTool>(InteractionPrefabBuilder.ManipulateToolPath, root, scenario, interaction, runner);
+                changed = true;
+            }
+            if (interaction.GetComponentInChildren<DummyInteractionTool>(true) == null)
+            {
+                var dummy = InstantiatePrefab<DummyInteractionTool>(InteractionPrefabBuilder.DummyToolPath, interaction);
+                RegisterTool(runner, dummy);
+                changed = true;
+            }
+            return changed;
+        }
+
+        /// <summary>
+        /// Places the task HUD under <paramref name="scenario"/> unless it is there, and wires its runner and pen.
+        /// Returns true when it was added.
+        /// </summary>
+        static bool InstallMissingTaskHud(Transform root, Transform scenario, Transform interaction)
+        {
+            if (scenario.GetComponentInChildren<TaskHudView>(true) != null)
+            {
+                return false;
+            }
+            ScenarioPrefabBuilder.CreateTaskHud();
+            var hud = InstantiatePrefab<TaskHudView>(ScenarioPrefabBuilder.TaskHudPath, scenario);
+            WorldUiBuilder.Assign(hud, "_runner", interaction.GetComponent<InteractionRunner>());
+            var pen = root.GetComponentInChildren<SpatialPenController>(true);
+            if (pen == null)
+            {
+                Debug.LogWarning($"[DNPDemo] {DemoSystemsPrefabPath} に SpatialPenController がないため、TaskHud は左手に固定されます。ペンを手動で設定してください。");
+            }
+            WorldUiBuilder.Assign(hud, "_pen", pen);
+            return true;
+        }
+
+        /// <summary>Places a tool that reads the pen and resolves zone keys, and wires its <c>_pen</c> and <c>_stage</c>.</summary>
+        static void InstallPenTool<T>(string prefabPath, Transform root, Transform scenario, Transform interaction, InteractionRunner runner)
+            where T : InteractionTool
+        {
+            var tool = InstantiatePrefab<T>(prefabPath, interaction);
+            WorldUiBuilder.Assign(tool, "_stage", scenario.GetComponent<ScenarioStage>());
+            var pen = root.GetComponentInChildren<SpatialPenController>(true);
+            if (pen == null)
+            {
+                Debug.LogWarning($"[DNPDemo] {DemoSystemsPrefabPath} に SpatialPenController がないため、{typeof(T).Name} のペンを手動で設定してください。");
+            }
+            WorldUiBuilder.Assign(tool, "_pen", pen);
+            RegisterTool(runner, tool);
+        }
+
+        static void RegisterTool(InteractionRunner runner, InteractionTool tool)
+        {
             var so = new SerializedObject(runner);
             SerializedProperty tools = so.FindProperty("_tools");
-            tools.arraySize = 1;
-            tools.GetArrayElementAtIndex(0).objectReferenceValue = dummy;
+            int index = tools.arraySize;
+            tools.InsertArrayElementAtIndex(index);
+            tools.GetArrayElementAtIndex(index).objectReferenceValue = tool;
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 

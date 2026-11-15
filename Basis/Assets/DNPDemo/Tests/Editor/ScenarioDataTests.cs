@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Selection;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
 using NUnit.Framework;
@@ -79,6 +80,54 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void ValidateChecksPartParameters()
+        {
+            var steps = new List<ScenarioStep>
+            {
+                new()
+                {
+                    Id = "no-zone", Completion = StepCompletion.Interaction, Actor = DemoRole.PlayerA,
+                    Interaction = new List<InteractionPart> { new SelectionPart("x") },
+                },
+                new()
+                {
+                    Id = "bad-keys", Completion = StepCompletion.Interaction, Actor = DemoRole.PlayerA,
+                    Interaction = new List<InteractionPart> { new SelectionPart("x", "Zone_A", "", "Zone_A") },
+                },
+                new()
+                {
+                    Id = "ok", Completion = StepCompletion.Interaction, Actor = DemoRole.PlayerB,
+                    Interaction = new List<InteractionPart> { new SelectionPart("x", "Zone_A", "Zone_B") },
+                },
+            };
+            List<string> problems = ScenarioData.Validate(steps);
+            // no target zone, empty key, duplicate key
+            Assert.AreEqual(3, problems.Count, string.Join("\n", problems));
+        }
+
+        [Test]
+        public void RequirementsIncludeTheZonesOfInteractionParts()
+        {
+            var data = UnityEngine.ScriptableObject.CreateInstance<ScenarioData>();
+            try
+            {
+                data.SetSteps(new List<ScenarioStep>
+                {
+                    new()
+                    {
+                        Id = "select", Completion = StepCompletion.Interaction, Actor = DemoRole.PlayerA,
+                        Interaction = new List<InteractionPart> { new SelectionPart("x", "Zone_A", "Zone_B") },
+                    },
+                });
+                CollectionAssert.AreEquivalent(new[] { "Zone_A", "Zone_B" }, data.CollectRequirements().ObjectKeys);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(data);
+            }
+        }
+
+        [Test]
         public void DefaultInteractionPartsFollowThePlan()
         {
             var expected = new Dictionary<string, PenMode[]>
@@ -87,8 +136,8 @@ namespace DNPDemo.Tests
                 ["s2-move-apple"] = new[] { PenMode.Select, PenMode.Manipulate },
                 ["s2-regrip-apple"] = new[] { PenMode.Select, PenMode.Voice },
                 ["s2-slide-arm"] = new[] { PenMode.Select, PenMode.Manipulate },
-                ["s2-guide-curve"] = new[] { PenMode.Guide },
-                ["s3-draw-mirror"] = new[] { PenMode.Guide, PenMode.Voice },
+                ["s2-guide-curve"] = new[] { PenMode.Draw },
+                ["s3-draw-mirror"] = new[] { PenMode.Draw, PenMode.Voice },
                 ["s3-place-mirror"] = new[] { PenMode.Manipulate },
                 ["s3-grip-mirror"] = new[] { PenMode.Select, PenMode.Voice },
                 ["s3-adjust-wrist"] = new[] { PenMode.Select, PenMode.Manipulate },

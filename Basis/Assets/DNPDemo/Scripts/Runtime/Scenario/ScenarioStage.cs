@@ -8,11 +8,12 @@ namespace DNPDemo.Scenario
     /// The scene side of the scenario. <see cref="ScenarioData"/> is an asset and cannot reference scene objects,
     /// so cues address speakers and objects through the bindings declared on those objects
     /// (<see cref="ScenarioSpeakerBinding"/>, <see cref="ScenarioObjectBinding"/>). The stage collects them from its
-    /// scene once, on Awake, inactive objects included; each binding lives in the prefab of the object it describes.
+    /// scene once, when the scene has finished loading (the first call after that, or Start), inactive objects included; each binding lives in the prefab of the object it describes.
     /// <para>
-    /// It also owns everything a cue can leave behind: <see cref="StopTransient"/> silences lines and effects when
-    /// playback is cut, and <see cref="ResetToBaseline"/> returns every bound object to its state at scene load
-    /// before the lasting effects of earlier steps are re-applied.
+    /// It also owns everything a cue or an interaction tool can leave behind: <see cref="StopTransient"/> silences lines
+    /// and effects when playback is cut, and <see cref="ResetToBaseline"/> returns every bound object to its state at
+    /// scene load (shown or hidden, local position and rotation) before the lasting effects of earlier steps are
+    /// re-applied. An object moved by the pen therefore goes back when the step changes.
     /// </para>
     /// </summary>
     public sealed class ScenarioStage : MonoBehaviour
@@ -22,11 +23,28 @@ namespace DNPDemo.Scenario
 
         [SerializeField] BannerView _banner;
 
-        readonly Dictionary<GameObject, bool> _baselineActive = new();
+        readonly struct Baseline
+        {
+            public readonly bool Active;
+            public readonly Vector3 LocalPosition;
+            public readonly Quaternion LocalRotation;
+
+            public Baseline(GameObject target)
+            {
+                Active = target.activeSelf;
+                target.transform.GetLocalPositionAndRotation(out LocalPosition, out LocalRotation);
+            }
+        }
+
+        readonly Dictionary<GameObject, Baseline> _baselines = new();
         readonly HashSet<string> _reportedMissing = new();
         ScenarioBindingSet _bindings;
 
-        void Awake()
+        /// <summary>
+        /// Collects the bindings before any cue runs, so the baseline is the state at scene load. Awake is too early:
+        /// the scene still counts as loading there and has no bindings to find.
+        /// </summary>
+        void Start()
         {
             EnsureBindings();
         }
@@ -67,13 +85,25 @@ namespace DNPDemo.Scenario
 
         public void SetObjectActive(string key, bool active)
         {
-            EnsureBindings();
-            if (!_bindings.TryGetObject(key, out GameObject target) || target == null)
+            if (TryGetObject(key, out GameObject target))
             {
-                ReportMissing("object:" + key, $"キー「{key}」のオブジェクト（ScenarioObjectBinding）がシーンにありません。");
-                return;
+                target.SetActive(active);
             }
-            target.SetActive(active);
+        }
+
+        /// <summary>
+        /// The scene object bound to <paramref name="key"/>, for cues and interaction tools. A missing key is reported
+        /// once as a warning.
+        /// </summary>
+        public bool TryGetObject(string key, out GameObject target)
+        {
+            EnsureBindings();
+            if (Bindings.TryGetObject(key, out target) && target != null)
+            {
+                return true;
+            }
+            ReportMissing("object:" + key, $"キー「{key}」のオブジェクト（ScenarioObjectBinding）がシーンにありません。");
+            return false;
         }
 
         public void SetBanner(bool visible, string text, float fadeSeconds)
@@ -97,7 +127,7 @@ namespace DNPDemo.Scenario
         public void StopTransient()
         {
             EnsureBindings();
-            foreach (ScenarioSpeakerBinding binding in _bindings.Speakers.Values)
+            foreach (ScenarioSpeakerBinding binding in Bindings.Speakers.Values)
             {
                 if (binding == null) continue;
                 if (binding.Voice != null) binding.Voice.Stop();
@@ -109,16 +139,18 @@ namespace DNPDemo.Scenario
             }
         }
 
-        /// <summary>Returns every bound object to its state at scene load.</summary>
+        /// <summary>Returns every bound object to its state at scene load: shown or hidden, local position and rotation.</summary>
         public void ResetToBaseline()
         {
             EnsureBindings();
-            foreach (KeyValuePair<GameObject, bool> pair in _baselineActive)
+            foreach (KeyValuePair<GameObject, Baseline> pair in _baselines)
             {
-                if (pair.Key != null)
+                if (pair.Key == null)
                 {
-                    pair.Key.SetActive(pair.Value);
+                    continue;
                 }
+                pair.Key.transform.SetLocalPositionAndRotation(pair.Value.LocalPosition, pair.Value.LocalRotation);
+                pair.Key.SetActive(pair.Value.Active);
             }
             if (_banner != null)
             {
@@ -126,10 +158,16 @@ namespace DNPDemo.Scenario
             }
         }
 
-        /// <summary>Collects the bindings and records the baseline the first time anything needs them.</summary>
+        /// <summary>The collected bindings; empty until the scene has finished loading.</summary>
+        ScenarioBindingSet Bindings => _bindings ?? ScenarioBindingSet.Empty;
+
+        /// <summary>
+        /// Collects the bindings and records the baseline the first time the scene is loaded and anything needs them.
+        /// While the scene is still loading nothing is kept, so a later call collects them.
+        /// </summary>
         void EnsureBindings()
         {
-            if (_bindings != null)
+            if (_bindings != null || !gameObject.scene.isLoaded)
             {
                 return;
             }
@@ -140,9 +178,9 @@ namespace DNPDemo.Scenario
             }
             foreach (GameObject target in _bindings.Objects.Values)
             {
-                if (target != null && !_baselineActive.ContainsKey(target))
+                if (target != null && !_baselines.ContainsKey(target))
                 {
-                    _baselineActive.Add(target, target.activeSelf);
+                    _baselines.Add(target, new Baseline(target));
                 }
             }
         }
@@ -150,7 +188,7 @@ namespace DNPDemo.Scenario
         bool TryGetSpeaker(ScenarioSpeaker speaker, out ScenarioSpeakerBinding binding)
         {
             EnsureBindings();
-            if (_bindings.TryGetSpeaker(speaker, out binding) && binding != null)
+            if (Bindings.TryGetSpeaker(speaker, out binding) && binding != null)
             {
                 return true;
             }

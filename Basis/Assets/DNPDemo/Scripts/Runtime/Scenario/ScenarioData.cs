@@ -25,19 +25,29 @@ namespace DNPDemo.Scenario
             _steps = new List<ScenarioStep>(steps);
         }
 
-        /// <summary>The speakers and object keys the cues of every step address.</summary>
+        /// <summary>The speakers and object keys the cues and interaction parts of every step address.</summary>
         public ScenarioRequirements CollectRequirements()
         {
             var requirements = new ScenarioRequirements();
             foreach (ScenarioStep step in _steps)
             {
-                if (step?.Cues == null)
+                if (step == null)
                 {
                     continue;
                 }
-                foreach (Cues.ScenarioCue cue in step.Cues)
+                if (step.Cues != null)
                 {
-                    cue?.CollectRequirements(requirements);
+                    foreach (Cues.ScenarioCue cue in step.Cues)
+                    {
+                        cue?.CollectRequirements(requirements);
+                    }
+                }
+                if (step.Interaction != null)
+                {
+                    foreach (InteractionPart part in step.Interaction)
+                    {
+                        part?.CollectRequirements(requirements);
+                    }
                 }
             }
             return requirements;
@@ -59,6 +69,7 @@ namespace DNPDemo.Scenario
                 problems.Add($"ステップ数が上限（{MaxStepCount}）を超えています。");
             }
             var ids = new HashSet<string>();
+            var partProblems = new List<string>();
             for (int i = 0; i < steps.Count; i++)
             {
                 ScenarioStep step = steps[i];
@@ -98,9 +109,17 @@ namespace DNPDemo.Scenario
                 }
                 for (int p = 0; p < partCount; p++)
                 {
-                    if (step.Interaction[p] == null)
+                    InteractionPart part = step.Interaction[p];
+                    if (part == null)
                     {
                         problems.Add($"{label}（{step.Id}）の操作の部品 {p} の種類が未設定です。");
+                        continue;
+                    }
+                    partProblems.Clear();
+                    part.Validate(partProblems);
+                    foreach (string problem in partProblems)
+                    {
+                        problems.Add($"{label}（{step.Id}）の操作の部品 {p}：{problem}");
                     }
                 }
                 if (step.Cues != null)

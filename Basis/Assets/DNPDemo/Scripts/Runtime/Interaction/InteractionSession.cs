@@ -11,15 +11,20 @@ namespace DNPDemo.Interaction
     {
         readonly InteractionRunner _runner;
 
-        internal InteractionSession(InteractionRunner runner, InteractionPart part, int partIndex, int partCount, DemoRole actor, bool isLocalActor)
+        internal InteractionSession(InteractionRunner runner, Scenario.ScenarioStep step, InteractionPart part, int partIndex, int partCount,
+            DemoRole actor, bool isLocalActor)
         {
             _runner = runner;
+            Step = step;
             Part = part;
             PartIndex = partIndex;
             PartCount = partCount;
             Actor = actor;
             IsLocalActor = isLocalActor;
         }
+
+        /// <summary>The step <see cref="Part"/> belongs to.</summary>
+        public Scenario.ScenarioStep Step { get; }
 
         public InteractionPart Part { get; }
 

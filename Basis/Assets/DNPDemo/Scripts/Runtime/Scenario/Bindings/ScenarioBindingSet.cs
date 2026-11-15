@@ -10,6 +10,9 @@ namespace DNPDemo.Scenario
     /// </summary>
     public sealed class ScenarioBindingSet
     {
+        /// <summary>A set with no bindings, for before a scene has been collected. Never modified.</summary>
+        public static readonly ScenarioBindingSet Empty = new();
+
         readonly Dictionary<ScenarioSpeaker, ScenarioSpeakerBinding> _speakers = new();
         readonly Dictionary<string, GameObject> _objects = new();
         readonly List<string> _problems = new();

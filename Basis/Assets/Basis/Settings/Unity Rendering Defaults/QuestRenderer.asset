@@ -77,7 +77,7 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 0
-  m_TileOnlyMode: 1
+  m_TileOnlyMode: 0
 --- !u!114 &1494910481316490538
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -128,5 +128,6 @@ MonoBehaviour:
   bakeVoxelSize: 1
   bakeMaxResolution: 256
   bakedAPVVolumeAsset: {fileID: 0}
+  bakeUseAsyncCompute: 0
   froxelComputeShader: {fileID: 7200000, guid: e00244de118fd544e9d0c7dff913e49b, type: 3}
   froxelColumnComputeShader: {fileID: 7200000, guid: 1688d4f4b3ab4787b0581e351d96b57b, type: 3}
