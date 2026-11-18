@@ -75,6 +75,41 @@
 
 結果は `Logs/editmode-results.xml` に出力されます（`Logs/` は git の追跡対象外です）。
 
+## 起動時のダイアログの確認
+
+Basis を更新したときや、権限を使う機能を足したときは、新規インストールした Quest で、起動からロビーまでに体験者が操作するダイアログが出ないことを確かめてください。
+
+Development Build の APK では、`DialogProbe`（`Basis/Assets/DNPDemo/Scripts/Runtime/Diagnostics/`）が、Basis のパネルの開閉、通知一覧に回されたポップアップ、フォーカスの出入り、権限の状態をログに出します。Android の権限ダイアログは Unity からは見えないので、フォーカスを失った時刻と、権限の状態の変化から読み取ります。
+
+PowerShell で、リポジトリのルートから実行します。
+
+1. Build Profiles で Development Build にチェックを入れて、APK をビルドする。
+2. アプリをアンインストールしてから（権限の許可も消えます）、`-g` を付けずにインストールする。
+
+   ```powershell
+   adb uninstall com.dnputv.vrdemo
+   adb install <APK のパス>
+   ```
+
+3. ログを消してから記録を始める。1 行目は、日本語の文字化けを防ぐ設定です。
+
+   ```powershell
+   [Console]::OutputEncoding = [Text.Encoding]::UTF8
+   adb logcat -c
+   adb logcat -s Unity | Select-String DialogProbe | Tee-Object -FilePath Logs\dialogprobe.txt
+   ```
+
+4. Quest でアプリを起動し、ロビーが出るまで何も操作しない。そのあと、出たダイアログに一つずつ応え、ロビーが出てから 30 秒ほど記録してから Ctrl+C で止める。
+
+ログの読み方:
+
+- `panel opened`：Basis のパネル（ダイアログを含む）が開いた。
+- `notification`：ポップアップが画面に出ず、通知一覧に回された。
+- `focus lost` から `focus regained` まで：システムのダイアログや画面が前に出ていた。その間に `permission granted` が出ていれば、権限ダイアログで許可された。
+- `lobby visible`：ロビーが表示された。
+
+今わかっているダイアログは、マイクの権限ダイアログだけです（[docs/PLAN.md](docs/PLAN.md) §2.1）。ほかのダイアログが見つかったら、Issue を作って対処してください。
+
 ## シーンとプレハブの構成
 
 `DNPDemo_Main.unity` は、機能ごとのプレハブを並べただけの構成です。普段の作業では、シーンではなく該当するプレハブを編集してください（プレハブをダブルクリックして開くか、シーン上のインスタンスで編集して Overrides から Apply する）。
