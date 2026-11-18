@@ -9,8 +9,9 @@ namespace DNPDemo.TaskHud
 {
     /// <summary>
     /// The task HUD: a small panel above the player's free hand that shows the running step (<see cref="TaskHudContent"/>)
-    /// while it waits for an operation, on both devices. It redraws when the runner's state, the pen's mode or the hand
-    /// that last grabbed the pen changes, and follows the other hand (<see cref="HandFollower"/>).
+    /// while it waits for an operation, on both devices. It redraws when the runner's state (including the running tool's
+    /// status line), the pen's mode or the hand that last grabbed the pen changes, and follows the other hand
+    /// (<see cref="HandFollower"/>).
     /// </summary>
     public sealed class TaskHudView : MonoBehaviour
     {
@@ -30,6 +31,10 @@ namespace DNPDemo.TaskHud
         [SerializeField] TMP_Text _headingText;
         [SerializeField] TMP_Text _taskText;
         [SerializeField] TMP_Text _linesText;
+
+        [Tooltip("The running tool's status line, such as \"音声入力中…\". Hidden while empty.")]
+        [SerializeField] TMP_Text _statusText;
+
         [SerializeField] TMP_Text _modeHintText;
 
         [SerializeField] Color _actorHeadingColor = new(1f, 0.8f, 0.3f);
@@ -86,7 +91,7 @@ namespace DNPDemo.TaskHud
         void Refresh()
         {
             TaskHudContent content = _runner != null
-                ? TaskHudContent.Build(_runner.CurrentStep, _runner.PartIndex, _runner.IsLocalActor, PenModeSelection.Current)
+                ? TaskHudContent.Build(_runner.CurrentStep, _runner.PartIndex, _runner.IsLocalActor, PenModeSelection.Current, _runner.Status)
                 : TaskHudContent.Hidden;
             SetVisible(content.IsVisible);
             if (!content.IsVisible)
@@ -107,6 +112,11 @@ namespace DNPDemo.TaskHud
             if (_linesText != null)
             {
                 _linesText.text = FormatLines(content);
+            }
+            if (_statusText != null)
+            {
+                _statusText.text = content.Status;
+                _statusText.gameObject.SetActive(content.Status.Length > 0);
             }
             if (_modeHintText != null)
             {

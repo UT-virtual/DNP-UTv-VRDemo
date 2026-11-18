@@ -419,7 +419,9 @@ public static class BasisLocalMicrophoneDriver
 
             StopSelectedMicrophone_Internal();
 
-            if (IsPaused)
+            // A capture hold (or the keep-open mute mode) records while muted; nothing is sent, because OnHasAudio
+            // only fires while unmuted.
+            if (IsPaused && !KeepCaptureWhilePaused)
             {
                 BasisDebug.Log("Microphone Is Paused");
                 ClearStateAfterStop();

@@ -3,6 +3,7 @@ using DNPDemo.Interaction;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
+using DNPDemo.Interaction.Voice;
 using DNPDemo.Pen;
 using DNPDemo.Scenario;
 using NUnit.Framework;
@@ -134,6 +135,26 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void DemoSystemsVoiceCommandToolIsWired()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioInstaller.DemoSystemsPrefabPath);
+            Assert.IsNotNull(prefab);
+            var runner = prefab.GetComponentInChildren<InteractionRunner>(true);
+            Assert.IsNotNull(runner);
+            var voice = runner.GetComponentInChildren<VoiceCommandTool>(true);
+            Assert.IsNotNull(voice, "Install it from DNP Demo/Setup/Install Scenario Into DemoSystems Prefab.");
+            Assert.IsNotNull(new SerializedObject(voice).FindProperty("_pen").objectReferenceValue, "VoiceCommandTool needs the pen controller.");
+
+            SerializedProperty tools = new SerializedObject(runner).FindProperty("_tools");
+            bool registered = false;
+            for (int i = 0; i < tools.arraySize; i++)
+            {
+                registered |= tools.GetArrayElementAtIndex(i).objectReferenceValue == voice;
+            }
+            Assert.IsTrue(registered, "VoiceCommandTool is not registered with the runner.");
+        }
+
+        [Test]
         public void SpatialPenShowsEveryModePart()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(SpatialPenPrefabPath);
@@ -153,6 +174,27 @@ namespace DNPDemo.Tests
             var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
             Assert.IsNotNull(data);
             CollectionAssert.IsEmpty(data.Validate());
+        }
+
+        [Test]
+        public void ScenarioAssetRunsVoiceCommandsOnTheVoiceTool()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data);
+            foreach (ScenarioStep step in data.Steps)
+            {
+                if (step?.Interaction == null)
+                {
+                    continue;
+                }
+                foreach (InteractionPart part in step.Interaction)
+                {
+                    if (part != null && part.Mode == PenMode.Voice)
+                    {
+                        Assert.IsInstanceOf<VoicePart>(part, $"{step.Id}: a voice command is still a stand-in.");
+                    }
+                }
+            }
         }
     }
 }

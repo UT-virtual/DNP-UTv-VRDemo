@@ -1,5 +1,6 @@
 using Basis.Scripts.UI;
 using DNPDemo.Editor;
+using DNPDemo.Operator;
 using DNPDemo.TaskHud;
 using NUnit.Framework;
 using UnityEditor;
@@ -25,6 +26,28 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void OperatorPanelHasTheMicrophoneThresholdControl()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioPrefabBuilder.OperatorPanelPath);
+            Assert.IsNotNull(prefab);
+            var control = prefab.GetComponentInChildren<MicrophoneThresholdControl>(true);
+            Assert.IsNotNull(control, "The operator panel needs the voice threshold section.");
+            var so = new SerializedObject(control);
+            foreach (string field in new[] { "_deviceText", "_switchDeviceButton", "_levelText", "_meterFill", "_thresholdMarker", "_lowerButton", "_raiseButton", "_resetButton" })
+            {
+                Assert.IsNotNull(so.FindProperty(field).objectReferenceValue, $"MicrophoneThresholdControl.{field} is not set.");
+            }
+
+            // A long device name must not squeeze the switch button.
+            var button = (Button)so.FindProperty("_switchDeviceButton").objectReferenceValue;
+            var layout = button.GetComponent<LayoutElement>();
+            Assert.IsNotNull(layout);
+            Assert.Greater(layout.minWidth, 0f);
+            Assert.AreEqual(layout.preferredWidth, layout.minWidth, "The switch button has a fixed width.");
+            Assert.LessOrEqual(layout.flexibleWidth, 0f);
+        }
+
+        [Test]
         public void TaskHudIsWiredAndIsNoLaserTarget()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioPrefabBuilder.TaskHudPath);
@@ -33,7 +56,7 @@ namespace DNPDemo.Tests
             var view = prefab.GetComponent<TaskHudView>();
             Assert.IsNotNull(view);
             var so = new SerializedObject(view);
-            foreach (string field in new[] { "_content", "_follower", "_headingText", "_taskText", "_linesText", "_modeHintText" })
+            foreach (string field in new[] { "_content", "_follower", "_headingText", "_taskText", "_linesText", "_statusText", "_modeHintText" })
             {
                 Assert.IsNotNull(so.FindProperty(field).objectReferenceValue, $"TaskHudView.{field} is not set.");
             }
