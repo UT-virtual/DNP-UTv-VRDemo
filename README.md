@@ -19,9 +19,36 @@ Built with [Basis](https://github.com/BasisVR/basis)
 2. リポジトリのルートで `sh tools/setup-git.sh` を実行する（Git LFS と UnityYAMLMerge の設定。詳しくは [CONTRIBUTING.md](CONTRIBUTING.md)）。
 3. Unity Hub で `Basis/` フォルダをプロジェクトとして開く（Unity 6000.5.10f1）。
 4. メニュー `DNP Demo > Setup > Run All` を実行する。Player Settings（アプリ名、Android のパッケージ名 `com.dnputv.vrdemo`）とビルドシーンの順序が設定されます。
-5. Build Profiles でプラットフォームを Android に切り替え、APK をビルドして Quest にインストールする。
+5. Build Profiles でプラットフォームを Android に切り替え、APK をビルドする。
+6. 次の節の手順で Quest にインストールする。
 
 ビルドの先頭シーンは `Assets/DNPDemo/Scenes/DNPDemo_Main.unity` です。
+
+## Quest へのインストール
+
+アプリはマイクを使います（音声指示）。インストールしたあとにマイクの権限を許可しておかないと、初めて起動したときに、ロビーの上に権限のダイアログが出ます。体験者が操作しなくて済むよう、インストールのたびに次の手順で許可しておいてください。
+
+PC と Quest を USB でつなぎ、PowerShell で実行します。
+
+1. APK をインストールする。
+
+   ```powershell
+   adb install -r <APK のパス>
+   ```
+
+2. マイクの権限を許可する。
+
+   ```powershell
+   adb shell pm grant com.dnputv.vrdemo android.permission.RECORD_AUDIO
+   ```
+
+3. 許可されたことを確かめる。`granted=true` と表示されれば完了です。
+
+   ```powershell
+   adb shell dumpsys package com.dnputv.vrdemo | Select-String "RECORD_AUDIO"
+   ```
+
+アンインストールすると許可も消えます。入れ直したときは、もう一度 2 から実行してください。
 
 ## 体験の流れ
 
