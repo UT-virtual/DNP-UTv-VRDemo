@@ -7,6 +7,7 @@ using DNPDemo.Interaction.Stroke;
 using DNPDemo.Interaction.Voice;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
+using DNPDemo.Venus;
 using UnityEditor;
 using UnityEngine;
 
@@ -38,6 +39,12 @@ namespace DNPDemo.Editor
         /// <summary>Key of the marker the apple is moved to, under the hand (<see cref="ScenarioObjectBinding"/> on Statue_Original/Goal_AppleUnderHand).</summary>
         public const string AppleGoalKey = "Goal_AppleUnderHand";
 
+        /// <summary>
+        /// Key of the comparison table (<see cref="ScenarioObjectBinding"/> on the ComparisonTable root). Hidden at scene load
+        /// and shown when step 19 asks for the comparison; the statue on it is <see cref="VenusStatueKeys.Comparison"/>.
+        /// </summary>
+        public const string ComparisonTableKey = "ComparisonTable";
+
         /// <summary>The apple may move this far from where it starts, in metres.</summary>
         public const float AppleMaxDistance = 0.4f;
 
@@ -61,6 +68,8 @@ namespace DNPDemo.Editor
             {
                 return existing;
             }
+            // The version cues refer to the version assets.
+            VenusAssetBuilder.CreateIfMissing();
             var data = ScriptableObject.CreateInstance<ScenarioData>();
             data.SetSteps(CreateDefaultSteps());
             Directory.CreateDirectory(Path.GetDirectoryName(AssetPath));
@@ -70,6 +79,11 @@ namespace DNPDemo.Editor
             return data;
         }
 
+        /// <summary>
+        /// The steps of docs/PLAN.md §3. A version reached by an operation is shown by a cue at the head of the next step,
+        /// so it appears as the step completes and every later step applies it instantly. The version assets are loaded
+        /// from <see cref="VenusAssetBuilder.CatalogPath"/>.
+        /// </summary>
         public static List<ScenarioStep> CreateDefaultSteps()
         {
             return new List<ScenarioStep>
@@ -79,6 +93,7 @@ namespace DNPDemo.Editor
                     Id = "lobby",
                     Title = "ロビー（接続待ち）",
                     Completion = StepCompletion.PlayersReady,
+                    Cues = new List<ScenarioCue> { Version(VenusAssetBuilder.ArmlessId) },
                 },
                 Auto("opening", "Opening ナレーター導入",
                     new SetObjectActiveCue(SpotlightKey, true),
@@ -94,6 +109,7 @@ namespace DNPDemo.Editor
                     "音声生成を起動し、「現在のヴィーナスについて、手のひらに林檎がのった水平に伸びる左手を追加」と出力せよ。",
                     new VoicePart("「手のひらに林檎がのった水平に伸びる左手を追加」と音声指示する", "現在のヴィーナスについて、手のひらに林檎がのった水平に伸びる左手を追加")),
                 Auto("s1-concerns", "Scene 1 構造の懸念",
+                    Version(VenusAssetBuilder.Ver10Id),
                     new SetObjectActiveCue(AppleKey, true),
                     A("私が考える、ヴィーナスの左手のイメージはまさにこんな感じですね。"),
                     B("ありがとうございます。うーむ...私の専門の構造力学的な観点からすると、腕をここまで水平に伸ばすことは付け根への大きな負担に繋がりそうです。ヴィーナスのような大事な像を昔の職人が、不安定な構造で作るとはとても思えないんですよね..."),
@@ -110,6 +126,9 @@ namespace DNPDemo.Editor
                     "空間ペンで腕を選択し、「選択した範囲について、上からボールを包み込むように林檎を持ち直す形に修正」と入力せよ。",
                     Select("左手から前腕を範囲選択する"), new VoicePart("「上からボールを包み込むように林檎を持ち直す形に修正」と音声指示する", "選択した範囲について、上からボールを包み込むように林檎を持ち直す形に修正")),
                 Auto("s2-natural-curve", "Scene 2 自然なカーブ",
+                    // From Ver 1.1 on the apple is part of the model.
+                    new SetObjectActiveCue(AppleKey, false),
+                    Version(VenusAssetBuilder.Ver11Id),
                     B("恐らくこんな感じになるかと思われます。"),
                     A("ありがとうございます。そうですね、、、私の最初の案と比べると、より手の形は自然になりましたね\nただ一点気になる点がありまして。。。腕はもっと身体の輪郭に沿って、肘を曲げて引き寄せるような自然なカーブになっていた方が美しく見えると思うんですよね。ほかの古典彫刻でも、腕の自然な曲線が美しさを生んでいます。"),
                     B("なるほど。自然なカーブですか...うーん少しイメージが難しいですね。モデルで表現するとこんな感じでしょうか。")),
@@ -117,11 +136,13 @@ namespace DNPDemo.Editor
                     "空間ペンで左肩から肘の領域を選択し、腕の角度を内側へスライド修正せよ。",
                     new SelectionPart("左肩から肘を範囲選択する", LeftShoulderZoneKey), Manipulate("腕を内側へスライドする")),
                 Auto("s2-mismatch", "Scene 2 イメージのズレ",
+                    Version(VenusAssetBuilder.Ver12Id),
                     A("うーん私のイメージとズレていますね。私のイメージだとこんな感じなんです。")),
                 Operation("s2-guide-curve", "Scene 2 [A] ガイドでカーブを描く", DemoRole.PlayerA,
                     "空間ペン（ガイドモード）を使用し、左肩から胸の前へ「緩やかなカーブを描く軌跡」をなぞるように描け。",
                     StrokePart.Guide("左肩から胸の前へ緩やかなカーブを描く", LeftShoulderZoneKey, ChestFrontZoneKey)),
                 Auto("s3-hand-mirror", "Scene 3 右腕と手鏡",
+                    Version(VenusAssetBuilder.Ver20Id),
                     B("あーなるほど。確かにこれは凄く綺麗ですね。力学的にも矛盾点がなさそうです。"),
                     A("左腕は良い感じですね。それでは次に右腕の話に移行しましょう。古典彫刻においては手鏡が林檎と並ぶ代表的なシンボルとされているので、右腕には手鏡があったと考えられます。一度3Dモデルにしてみますね。")),
                 Operation("s3-draw-mirror", "Scene 3 [A] 手鏡の線画を変換", DemoRole.PlayerA,
@@ -134,6 +155,7 @@ namespace DNPDemo.Editor
                     "続けて右肩から手鏡まで領域選択し、「鏡を握らせる」と発話せよ。",
                     Select("右肩から手鏡までを範囲選択する"), new VoicePart("「鏡を握らせる」と音声指示する", "鏡を握らせる")),
                 Auto("s3-mirror-angle", "Scene 3 鏡の角度の指摘",
+                    Version(VenusAssetBuilder.Ver30Id),
                     B("なるほど...手鏡を持っているのは納得ですが、生成されたモデルを見ると、手鏡の角度がおかしいかもしれませんね。なんというか、もっとヴィーナスの目線の先に手鏡がくる感じの方が良さそうです。"),
                     A("えーと、どんな感じでしょう？ よければBさんに修正をお任せしたいのですが。"),
                     B("承知しました。一旦、手首のひねりを少し調整してみましょう。")),
@@ -141,12 +163,15 @@ namespace DNPDemo.Editor
                     "空間ペンで右手首と手鏡を領域選択し、空間ペンを用いながらヴィーナスの目線に合わせて鏡の角度を修正せよ。",
                     Select("右手首と手鏡を範囲選択する"), Manipulate("目線に合わせて鏡の角度を修正する")),
                 Auto("p2-review", "Phase 2 振り返りの提案",
+                    Version(VenusAssetBuilder.Ver31Id),
                     A("あー、いいですね！ 視線と所作がぴったり合いました。"),
                     B("では、これまでの過程を振り返ってみましょう。最初の案と、今の案を並べてみてください。")),
-                Operation("p2-compare", "Phase 2 [B] Ver 1.0 と比較", DemoRole.PlayerB,
-                    "履歴一覧からVer 1.0を呼び出し、完成案の隣に並べよ。",
-                    Panel("履歴一覧から Ver 1.0 を呼び出す")),
+                WithCues(Operation("p2-compare", "Phase 2 [B] Ver 1.0 と比較", DemoRole.PlayerB,
+                        "履歴一覧からVer 1.0を呼び出し、完成案の隣に並べよ。",
+                        Panel("履歴一覧から Ver 1.0 を呼び出す")),
+                    new SetObjectActiveCue(ComparisonTableKey, true)),
                 Auto("p3-temple-proposal", "Phase 3 神殿での確認",
+                    new StatueVersionCue(VenusStatueKeys.Comparison, VenusAssetBuilder.LoadVersion(VenusAssetBuilder.Ver10Id)),
                     A("うーん、やはりこうしてみると現在の案が一番美しく見えますね。"),
                     B("ええ、とてもいいかんじです。"),
                     A("最後に復元案のヴィーナスが神殿を背景にしても自然かどうか確かめてみましょう")),
@@ -191,6 +216,14 @@ namespace DNPDemo.Editor
             TaskText = taskText,
             Interaction = new List<InteractionPart>(parts),
         };
+
+        static ScenarioStep WithCues(ScenarioStep step, params ScenarioCue[] cues)
+        {
+            step.Cues = new List<ScenarioCue>(cues);
+            return step;
+        }
+
+        static StatueVersionCue Version(string id) => new(VenusStatueKeys.Main, VenusAssetBuilder.LoadVersion(id));
 
         // Stand-ins until the real tool (HistoryPanel) replaces them, and for selections and
         // manipulations whose objects are not placed on the statue yet.

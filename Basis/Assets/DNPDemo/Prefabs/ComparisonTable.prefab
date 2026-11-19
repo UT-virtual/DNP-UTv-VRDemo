@@ -121,6 +121,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3163314402540603546}
+  - component: {fileID: 541818003196042747}
+  - component: {fileID: 4518572166421839395}
   m_Layer: 0
   m_Name: ModelAnchor
   m_TagString: Untagged
@@ -143,6 +145,35 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5381630912744673313}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &541818003196042747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6431570984551129127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 998c79d74c621ac4593d08c949a4e71a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Scenario.ScenarioObjectBinding
+  _key: ComparisonStatue
+--- !u!114 &4518572166421839395
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6431570984551129127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a77f630d4667c24d8a1c99d036c12f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Venus.VenusStatue
+  _catalog: {fileID: 11400000, guid: 9c2a980c0d65f3a48ac8a004af509a1e, type: 2}
+  _baseline: {fileID: 0}
+  _modelRoot: {fileID: 0}
+  _editorPreview: {fileID: 11400000, guid: 6d031f87170b0de49add3e8d8fbb887e, type: 2}
 --- !u!1 &7098436868201401207
 GameObject:
   m_ObjectHideFlags: 0
@@ -152,6 +183,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5381630912744673313}
+  - component: {fileID: 4196552526076833466}
   m_Layer: 0
   m_Name: ComparisonTable
   m_TagString: Untagged
@@ -176,3 +208,16 @@ Transform:
   - {fileID: 3163314402540603546}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4196552526076833466
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7098436868201401207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 998c79d74c621ac4593d08c949a4e71a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Scenario.ScenarioObjectBinding
+  _key: ComparisonTable

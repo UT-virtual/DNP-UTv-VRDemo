@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f21c035136bfa0b45a3ef88bf526f273, type: 3}
+  m_Name: VenusVersions
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Venus.VenusVersionCatalog
+  _versions:
+  - {fileID: 11400000, guid: 087eaacacc066274594bede7571779a4, type: 2}
+  - {fileID: 11400000, guid: 6d031f87170b0de49add3e8d8fbb887e, type: 2}
+  - {fileID: 11400000, guid: 7b8787aa72e06194599d5e96c05c8730, type: 2}
+  - {fileID: 11400000, guid: 09a3782d0f528ad4f8521989edd0f76b, type: 2}
+  - {fileID: 11400000, guid: 36ea82750fe37a347a04858e9169f2d8, type: 2}
+  - {fileID: 11400000, guid: 4940cd742af61164eaa5972faf79652e, type: 2}
+  - {fileID: 11400000, guid: 4b48775c74d494f4d8111dfaeaae1a4f, type: 2}
