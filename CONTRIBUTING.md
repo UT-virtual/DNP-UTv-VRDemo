@@ -117,7 +117,7 @@ PowerShell で、リポジトリのルートから実行します。
 | シーンのルート | プレハブ（`Basis/Assets/DNPDemo/Prefabs/`） | 内容 |
 |---|---|---|
 | BasisScene | （シーンに直接置く） | Basis のシーン定義、初期スポーン位置、カメラ |
-| Env_ExhibitionRoom | `Env_ExhibitionRoom.prefab` | 展示室 |
+| Env_ExhibitionRoom | `Env_ExhibitionRoom.prefab` | 展示室。見た目は `Model`、床と壁の当たり判定は `Colliders` に分けてある。モデルを差し替えたら `Colliders` を見た目に合わせる |
 | Env_Temple | `Env_Temple.prefab` | 神殿（最初は非表示） |
 | Lighting | `Lighting.prefab` | ライト。像のスポットライトはロビー中は消えている |
 | Statue_Original | `Statue_Original.prefab` | 台座と像 |
