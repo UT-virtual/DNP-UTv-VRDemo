@@ -4,6 +4,8 @@ using DNPDemo.Interaction;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Scenario;
+using DNPDemo.Scenario.Cues;
+using DNPDemo.Venus;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -116,6 +118,36 @@ namespace DNPDemo.Tests
                 }
             }
             Assert.Greater(checkedParts, 0, "The scenario should have a manipulate part to check.");
+        }
+
+        [Test]
+        public void StatueVersionCuesAddressStatuesThatPrebuildTheirVersions()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data);
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            var statueKeys = new HashSet<string>();
+            foreach (ScenarioStep step in data.Steps)
+            {
+                foreach (ScenarioCue cue in step.Cues)
+                {
+                    if (cue is not StatueVersionCue versionCue)
+                    {
+                        continue;
+                    }
+                    Assert.IsTrue(bindings.TryGetObject(versionCue.StatueKey, out UnityEngine.GameObject target), $"{step.Id}: key '{versionCue.StatueKey}' is not bound.");
+                    Assert.IsTrue(target.TryGetComponent(out VenusStatue statue), $"{step.Id}: '{versionCue.StatueKey}' has no VenusStatue.");
+                    Assert.IsNotNull(versionCue.Version, $"{step.Id}: the cue for '{versionCue.StatueKey}' has no version.");
+                    Assert.IsNotNull(statue.Catalog, $"'{versionCue.StatueKey}' has no catalog.");
+                    Assert.IsTrue(statue.Baseline == null || statue.Catalog.Contains(statue.Baseline),
+                        $"The baseline of '{versionCue.StatueKey}' is not in its catalog.");
+                    Assert.IsTrue(statue.Catalog.Contains(versionCue.Version),
+                        $"{step.Id}: {versionCue.Version.name} is not in the catalog of '{versionCue.StatueKey}', so it would be built during the demo.");
+                    statueKeys.Add(versionCue.StatueKey);
+                }
+            }
+            CollectionAssert.AreEquivalent(new[] { VenusStatueKeys.Main, VenusStatueKeys.Comparison }, statueKeys,
+                "Both the main statue and the comparison table show versions.");
         }
 
         [Test]

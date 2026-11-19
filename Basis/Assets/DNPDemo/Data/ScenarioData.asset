@@ -23,7 +23,8 @@ MonoBehaviour:
     Completion: 1
     TaskText: 
     Interaction: []
-    Cues: []
+    Cues:
+    - rid: 1662061797466701972
   - Id: opening
     Title: "Opening \u30CA\u30EC\u30FC\u30BF\u30FC\u5C0E\u5165"
     Actor: 0
@@ -61,6 +62,7 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
+    - rid: 1662061797466701973
     - rid: 1662061592158404929
     - rid: 1662061592158404882
     - rid: 1662061592158404883
@@ -100,6 +102,8 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
+    - rid: 1662061797466701974
+    - rid: 1662061797466701975
     - rid: 1662061592158404888
     - rid: 1662061592158404889
     - rid: 1662061592158404890
@@ -119,6 +123,7 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
+    - rid: 1662061797466701976
     - rid: 1662061592158404891
   - Id: s2-guide-curve
     Title: "Scene 2 [A] \u30AC\u30A4\u30C9\u3067\u30AB\u30FC\u30D6\u3092\u63CF\u304F"
@@ -135,6 +140,7 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
+    - rid: 1662061797466701977
     - rid: 1662061592158404892
     - rid: 1662061592158404893
   - Id: s3-draw-mirror
@@ -170,6 +176,7 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
+    - rid: 1662061797466701978
     - rid: 1662061592158404894
     - rid: 1662061592158404895
     - rid: 1662061592158404896
@@ -189,6 +196,7 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
+    - rid: 1662061797466701979
     - rid: 1662061592158404897
     - rid: 1662061592158404898
   - Id: p2-compare
@@ -198,7 +206,8 @@ MonoBehaviour:
     TaskText: "\u5C65\u6B74\u4E00\u89A7\u304B\u3089Ver 1.0\u3092\u547C\u3073\u51FA\u3057\u3001\u5B8C\u6210\u6848\u306E\u96A3\u306B\u4E26\u3079\u3088\u3002"
     Interaction:
     - rid: 1662061592158404926
-    Cues: []
+    Cues:
+    - rid: 1662061797466701980
   - Id: p3-temple-proposal
     Title: "Phase 3 \u795E\u6BBF\u3067\u306E\u78BA\u8A8D"
     Actor: 0
@@ -206,6 +215,7 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
+    - rid: 1662061797466701981
     - rid: 1662061592158404899
     - rid: 1662061592158404900
     - rid: 1662061592158404901
@@ -586,3 +596,53 @@ MonoBehaviour:
         Instruction: "\u300C\u9078\u629E\u3057\u305F\u50CF\u306E\u80CC\u666F\u3092\u795E\u6BBF\u306B\u5909\u66F4\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
         Transcript: "\u9078\u629E\u3057\u305F\u50CF\u306E\u80CC\u666F\u3092\u795E\u6BBF\u306B\u5909\u66F4"
         RequiredSpeechSeconds: 1
+    - rid: 1662061797466701972
+      type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        StatueKey: Statue
+        Version: {fileID: 11400000, guid: 087eaacacc066274594bede7571779a4, type: 2}
+    - rid: 1662061797466701973
+      type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        StatueKey: Statue
+        Version: {fileID: 11400000, guid: 6d031f87170b0de49add3e8d8fbb887e, type: 2}
+    - rid: 1662061797466701974
+      type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Key: Apple
+        Active: 0
+    - rid: 1662061797466701975
+      type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        StatueKey: Statue
+        Version: {fileID: 11400000, guid: 7b8787aa72e06194599d5e96c05c8730, type: 2}
+    - rid: 1662061797466701976
+      type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        StatueKey: Statue
+        Version: {fileID: 11400000, guid: 09a3782d0f528ad4f8521989edd0f76b, type: 2}
+    - rid: 1662061797466701977
+      type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        StatueKey: Statue
+        Version: {fileID: 11400000, guid: 36ea82750fe37a347a04858e9169f2d8, type: 2}
+    - rid: 1662061797466701978
+      type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        StatueKey: Statue
+        Version: {fileID: 11400000, guid: 4940cd742af61164eaa5972faf79652e, type: 2}
+    - rid: 1662061797466701979
+      type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        StatueKey: Statue
+        Version: {fileID: 11400000, guid: 4b48775c74d494f4d8111dfaeaae1a4f, type: 2}
+    - rid: 1662061797466701980
+      type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Key: ComparisonTable
+        Active: 1
+    - rid: 1662061797466701981
+      type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        StatueKey: ComparisonStatue
+        Version: {fileID: 11400000, guid: 6d031f87170b0de49add3e8d8fbb887e, type: 2}
