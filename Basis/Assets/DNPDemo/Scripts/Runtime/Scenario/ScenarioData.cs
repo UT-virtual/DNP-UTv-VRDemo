@@ -69,7 +69,7 @@ namespace DNPDemo.Scenario
                 problems.Add($"ステップ数が上限（{MaxStepCount}）を超えています。");
             }
             var ids = new HashSet<string>();
-            var partProblems = new List<string>();
+            var itemProblems = new List<string>();
             for (int i = 0; i < steps.Count; i++)
             {
                 ScenarioStep step = steps[i];
@@ -115,9 +115,9 @@ namespace DNPDemo.Scenario
                         problems.Add($"{label}（{step.Id}）の操作の部品 {p} の種類が未設定です。");
                         continue;
                     }
-                    partProblems.Clear();
-                    part.Validate(partProblems);
-                    foreach (string problem in partProblems)
+                    itemProblems.Clear();
+                    part.Validate(itemProblems);
+                    foreach (string problem in itemProblems)
                     {
                         problems.Add($"{label}（{step.Id}）の操作の部品 {p}：{problem}");
                     }
@@ -126,9 +126,17 @@ namespace DNPDemo.Scenario
                 {
                     for (int c = 0; c < step.Cues.Count; c++)
                     {
-                        if (step.Cues[c] == null)
+                        Cues.ScenarioCue cue = step.Cues[c];
+                        if (cue == null)
                         {
                             problems.Add($"{label}（{step.Id}）のキュー {c} の種類が未設定です。");
+                            continue;
+                        }
+                        itemProblems.Clear();
+                        cue.Validate(itemProblems);
+                        foreach (string problem in itemProblems)
+                        {
+                            problems.Add($"{label}（{step.Id}）のキュー {c}：{problem}");
                         }
                     }
                 }

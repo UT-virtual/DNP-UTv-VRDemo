@@ -37,6 +37,7 @@ namespace DNPDemo.Scenario
         }
 
         readonly Dictionary<GameObject, Baseline> _baselines = new();
+        readonly List<IStageResettable> _resettables = new();
         readonly HashSet<string> _reportedMissing = new();
         ScenarioBindingSet _bindings;
 
@@ -139,7 +140,10 @@ namespace DNPDemo.Scenario
             }
         }
 
-        /// <summary>Returns every bound object to its state at scene load: shown or hidden, local position and rotation.</summary>
+        /// <summary>
+        /// Returns every bound object to its state at scene load: shown or hidden, local position and rotation, then the
+        /// state its <see cref="IStageResettable"/> components keep (such as a statue's version).
+        /// </summary>
         public void ResetToBaseline()
         {
             EnsureBindings();
@@ -151,6 +155,21 @@ namespace DNPDemo.Scenario
                 }
                 pair.Key.transform.SetLocalPositionAndRotation(pair.Value.LocalPosition, pair.Value.LocalRotation);
                 pair.Key.SetActive(pair.Value.Active);
+            }
+            foreach (IStageResettable resettable in _resettables)
+            {
+                if (resettable is Object unityObject && unityObject == null)
+                {
+                    continue;
+                }
+                try
+                {
+                    resettable.ResetToBaseline();
+                }
+                catch (System.Exception exception)
+                {
+                    Debug.LogException(exception, this);
+                }
             }
             if (_banner != null)
             {
@@ -181,6 +200,7 @@ namespace DNPDemo.Scenario
                 if (target != null && !_baselines.ContainsKey(target))
                 {
                     _baselines.Add(target, new Baseline(target));
+                    _resettables.AddRange(target.GetComponents<IStageResettable>());
                 }
             }
         }

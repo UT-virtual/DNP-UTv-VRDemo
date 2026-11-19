@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace DNPDemo.Scenario.Cues
 {
@@ -29,6 +30,11 @@ namespace DNPDemo.Scenario.Cues
 
         /// <summary>Adds the scene bindings (speakers, object keys) this cue addresses through <see cref="ScenarioStage"/>.</summary>
         public virtual void CollectRequirements(ScenarioRequirements requirements)
+        {
+        }
+
+        /// <summary>Adds problems with this cue's parameters to <paramref name="problems"/> (<see cref="ScenarioData.Validate()"/>).</summary>
+        public virtual void Validate(List<string> problems)
         {
         }
 
