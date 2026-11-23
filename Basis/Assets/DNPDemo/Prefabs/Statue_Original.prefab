@@ -452,6 +452,7 @@ GameObject:
   - component: {fileID: 5640052831538789854}
   - component: {fileID: 3106630107439197209}
   - component: {fileID: 7468074679915290557}
+  - component: {fileID: 6295203608204623434}
   m_Layer: 0
   m_Name: Venus
   m_TagString: Untagged
@@ -503,6 +504,19 @@ MonoBehaviour:
   _baseline: {fileID: 11400000, guid: 087eaacacc066274594bede7571779a4, type: 2}
   _modelRoot: {fileID: 0}
   _editorPreview: {fileID: 11400000, guid: 087eaacacc066274594bede7571779a4, type: 2}
+--- !u!114 &6295203608204623434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4481918603939981612}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66bebe4b03b11bd4fa50dd37811d6e57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Venus.ModelTransition
+  _profile: {fileID: 11400000, guid: 0b836ad806ea00d4d96694c429640e6b, type: 2}
 --- !u!1 &5647372988456511376
 GameObject:
   m_ObjectHideFlags: 0

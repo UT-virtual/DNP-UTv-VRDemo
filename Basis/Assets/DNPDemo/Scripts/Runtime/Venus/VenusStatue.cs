@@ -39,7 +39,7 @@ namespace DNPDemo.Venus
         /// <summary>The version shown now; null when the statue shows nothing.</summary>
         public VenusVersion Current { get; private set; }
 
-        /// <summary>Raised after <see cref="Current"/> has changed.</summary>
+        /// <summary>Raised after <see cref="Show"/> has changed <see cref="Current"/>, and after every stage reset even when the baseline was already shown.</summary>
         public event Action<VenusVersionChange> VersionChanged;
 
         Transform ModelRoot => _modelRoot != null ? _modelRoot : transform;
@@ -67,6 +67,20 @@ namespace DNPDemo.Venus
             {
                 return;
             }
+            Switch(version, animate);
+        }
+
+        /// <summary>The instance of <paramref name="version"/>'s model under this statue, or null when it has no model.</summary>
+        public GameObject GetModel(VenusVersion version) =>
+            version != null && _models.TryGetValue(version, out GameObject model) ? model : null;
+
+        // Unlike Show, a reset raises VersionChanged even when the baseline is already Current, so that a
+        // listener still playing a transition into the baseline finishes it.
+        void IStageResettable.ResetToBaseline() => Switch(_baseline, false);
+
+        /// <summary>Activates only <paramref name="version"/>'s model, updates <see cref="Current"/> and raises <see cref="VersionChanged"/>.</summary>
+        void Switch(VenusVersion version, bool animate)
+        {
             VenusVersion previous = Current;
             GameObject next = version != null ? GetOrCreateModel(version) : null;
             foreach (KeyValuePair<VenusVersion, GameObject> pair in _models)
@@ -79,12 +93,6 @@ namespace DNPDemo.Venus
             Current = version;
             VersionChanged?.Invoke(new VenusVersionChange(previous, version, animate));
         }
-
-        /// <summary>The instance of <paramref name="version"/>'s model under this statue, or null when it has no model.</summary>
-        public GameObject GetModel(VenusVersion version) =>
-            version != null && _models.TryGetValue(version, out GameObject model) ? model : null;
-
-        void IStageResettable.ResetToBaseline() => Show(_baseline, false);
 
         GameObject GetOrCreateModel(VenusVersion version)
         {

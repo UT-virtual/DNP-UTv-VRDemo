@@ -27,6 +27,11 @@ namespace DNPDemo.Editor
         public const string MarbleMaterialPath = MaterialFolder + "/M_MarblePlaceholder.mat";
         public const string AppleMaterialPath = MaterialFolder + "/M_ApplePlaceholder.mat";
         public const string MirrorMaterialPath = MaterialFolder + "/M_MirrorPlaceholder.mat";
+        public const string TransitionShaderPath = MaterialFolder + "/ModelTransition.shader";
+        public const string TransitionMaterialPath = MaterialFolder + "/M_ModelTransition.mat";
+        public const string TransitionProfilePath = DNPDemoProjectSetup.Root + "/Data/Venus/ModelTransitionProfile.asset";
+        public const string StatuePrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Statue_Original.prefab";
+        public const string ComparisonTablePrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/ComparisonTable.prefab";
 
         public const string ArmlessId = "armless";
         public const string Ver10Id = "v1.0";
@@ -124,6 +129,8 @@ namespace DNPDemo.Editor
             var catalog = AssetDatabase.LoadAssetAtPath<VenusVersionCatalog>(CatalogPath);
             if (catalog != null)
             {
+                EnsureModelTransitionAssets();
+                EnsureModelTransitionComponents();
                 return catalog;
             }
             var versions = new List<VenusVersion>();
@@ -137,7 +144,83 @@ namespace DNPDemo.Editor
             AssetDatabase.CreateAsset(catalog, CatalogPath);
             AssetDatabase.SaveAssets();
             Debug.Log($"[DNPDemo] Created {CatalogPath}");
+            EnsureModelTransitionAssets();
+            EnsureModelTransitionComponents();
             return catalog;
+        }
+
+        static void EnsureModelTransitionAssets()
+        {
+            Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(TransitionShaderPath);
+            if (shader == null)
+            {
+                Debug.LogWarning($"[DNPDemo] {TransitionShaderPath} を読み込めません。", null);
+                return;
+            }
+
+            var transitionMaterial = AssetDatabase.LoadAssetAtPath<Material>(TransitionMaterialPath);
+            if (transitionMaterial == null)
+            {
+                transitionMaterial = new Material(shader);
+                transitionMaterial.name = "M_ModelTransition";
+                AssetDatabase.CreateAsset(transitionMaterial, TransitionMaterialPath);
+            }
+
+            var profile = AssetDatabase.LoadAssetAtPath<ModelTransitionProfile>(TransitionProfilePath);
+            if (profile == null)
+            {
+                profile = ScriptableObject.CreateInstance<ModelTransitionProfile>();
+                profile.name = "ModelTransitionProfile";
+                profile.Initialize(transitionMaterial, null, 1f);
+                AssetDatabase.CreateAsset(profile, TransitionProfilePath);
+                AssetDatabase.SaveAssets();
+            }
+        }
+
+        static void EnsureModelTransitionComponents()
+        {
+            ModelTransitionProfile profile = AssetDatabase.LoadAssetAtPath<ModelTransitionProfile>(TransitionProfilePath);
+            EnsureModelTransitionComponents(StatuePrefabPath, profile);
+            EnsureModelTransitionComponents(ComparisonTablePrefabPath, profile);
+        }
+
+        static void EnsureModelTransitionComponents(string prefabPath, ModelTransitionProfile profile)
+        {
+            if (!File.Exists(prefabPath))
+            {
+                return;
+            }
+            GameObject contents = PrefabUtility.LoadPrefabContents(prefabPath);
+            try
+            {
+                bool changed = false;
+                foreach (VenusStatue statue in contents.GetComponentsInChildren<VenusStatue>(true))
+                {
+                    ModelTransition transition = statue.GetComponent<ModelTransition>();
+                    if (transition == null)
+                    {
+                        transition = statue.gameObject.AddComponent<ModelTransition>();
+                        changed = true;
+                    }
+
+                    var transitionSo = new SerializedObject(transition);
+                    SerializedProperty profileProperty = transitionSo.FindProperty("_profile");
+                    if (profileProperty != null && profileProperty.objectReferenceValue != profile)
+                    {
+                        profileProperty.objectReferenceValue = profile;
+                        transitionSo.ApplyModifiedPropertiesWithoutUndo();
+                        changed = true;
+                    }
+                }
+                if (changed)
+                {
+                    PrefabUtility.SaveAsPrefabAsset(contents, prefabPath);
+                }
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(contents);
+            }
         }
 
         /// <summary>The version asset with <paramref name="id"/> in the catalog, or null when the catalog has not been created.</summary>

@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06487f55f85bf494b837d576171f20c0, type: 3}
+  m_Name: ModelTransitionProfile
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Venus.ModelTransitionProfile
+  _transitionMaterial: {fileID: 2100000, guid: 62f9bd06f89d7384a8c74c6af83cf93f, type: 2}
+  _particlePrefab: {fileID: 0}
+  _duration: 1
+  _dissolvePropertyName: _Dissolve
+  _scanLinePropertyName: _ScanLine
+  _boundsMinPropertyName: _BoundsMin
+  _boundsMaxPropertyName: _BoundsMax
+  _baseMapPropertyName: _BaseMap
+  _baseColorPropertyName: _BaseColor
