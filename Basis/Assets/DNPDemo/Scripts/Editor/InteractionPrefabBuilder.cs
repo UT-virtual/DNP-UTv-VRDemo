@@ -43,6 +43,11 @@ namespace DNPDemo.Editor
         public const string StrokeLineMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/Stroke/StrokeLine.mat";
 
         public const string ManipulateGhostShaderName = "Universal Render Pipeline/Unlit";
+
+        public const string HistoryPanelBackgroundShaderName = "UI/Default";
+        public const string HistoryPanelBackgroundMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/History/HistoryPanelBackground.mat";
+        public const string HistoryPanelDepthShaderName = "DNPDemo/HistoryPanelDepth";
+        public const string HistoryPanelDepthMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/History/HistoryPanelDepth.mat";
         public const string ManipulateGhostMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/Manipulate/ManipulateGhost.mat";
 
         static readonly Color PanelBackground = new(0.06f, 0.08f, 0.14f, 0.92f);
@@ -258,6 +263,39 @@ namespace DNPDemo.Editor
         }
 
         /// <summary>
+        /// Material of the history panel's background: the default UI shader drawn in
+        /// <see cref="HistoryRenderQueues.PanelBackground"/>, before the preview model.
+        /// </summary>
+        public static Material CreateHistoryPanelBackgroundMaterial() =>
+            CreateMaterialIfMissing(HistoryPanelBackgroundMaterialPath, HistoryPanelBackgroundShaderName, HistoryRenderQueues.PanelBackground);
+
+        /// <summary>
+        /// Material writing the history panel's shape to depth only, in <see cref="HistoryRenderQueues.PanelDepth"/>,
+        /// after the preview model.
+        /// </summary>
+        public static Material CreateHistoryPanelDepthMaterial() =>
+            CreateMaterialIfMissing(HistoryPanelDepthMaterialPath, HistoryPanelDepthShaderName, HistoryRenderQueues.PanelDepth);
+
+        static Material CreateMaterialIfMissing(string path, string shaderName, int renderQueue)
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (existing != null)
+            {
+                return existing;
+            }
+            Shader shader = Shader.Find(shaderName);
+            if (shader == null)
+            {
+                throw new InvalidOperationException($"Shader {shaderName} was not found.");
+            }
+            var material = new Material(shader) { renderQueue = renderQueue };
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            AssetDatabase.CreateAsset(material, path);
+            Debug.Log($"[DNPDemo] Created {path}");
+            return material;
+        }
+
+        /// <summary>
         /// Panel of the pen test scene that switches <see cref="StrokeTestHarness"/> between the guide and the sketch
         /// and shows the last verdict. Its harness is a scene object, so it is wired where the panel is placed.
         /// </summary>
@@ -293,12 +331,14 @@ namespace DNPDemo.Editor
         /// version models at scene load. The director and the stage live in DemoSystems, so <see cref="ScenarioInstaller"/>
         /// wires them when it places the tool there.
         /// <para>
-        /// The preview stands between the background and the viewer, so the background, drawn with the depth test, never
-        /// covers it; the labels and buttons draw over everything, so they stay readable in front of it.
+        /// The preview stands behind the canvas. The background and a depth-only copy of its shape are drawn in the queues
+        /// of <see cref="HistoryRenderQueues"/>, around the preview, so the background colour never covers the model while
+        /// the labels and buttons, in front of it, draw over it as ordinary UI.
         /// </para>
         /// </summary>
-        public static GameObject CreateHistoryTool() =>
-            CreatePrefabIfMissing(HistoryToolPath, "HistoryTool", root =>
+        /// <param name="path">Where to save the prefab; another path builds a fresh copy to compare with or replace it.</param>
+        public static GameObject CreateHistoryTool(string path = HistoryToolPath) =>
+            CreatePrefabIfMissing(path, "HistoryTool", root =>
             {
                 var panelObject = new GameObject(HistoryPanelObjectName);
                 panelObject.transform.SetParent(root.transform, false);
@@ -306,19 +346,32 @@ namespace DNPDemo.Editor
                 GameObject canvas = CreateChild("Canvas", panelObject.transform);
                 SetupWorldCanvas(canvas, new Vector2(720, 620), interactive: true);
                 Transform ui = canvas.transform;
-                BasisUiStyle.CreatePanelBackground(ui, cornerRadius: 28);
+                const float panelRadius = 28f;
+                BasisUiStyle.CreatePanelImage("Background", ui, BasisUiStyle.PanelColor, panelRadius, CreateHistoryPanelBackgroundMaterial());
+                // The depth-only pass is a plain quad renderer rather than a canvas graphic: Prefab Mode draws canvases
+                // through a path that ignores its colour mask. Its square corners stick out of the rounded background by
+                // a few millimetres, where they only hide transparent objects behind the panel. Under the canvas, it is
+                // shown and hidden with the panel; 2 mm behind it, so the labels and buttons do not fight it for depth.
+                GameObject depth = CreateChild("Depth", ui);
+                depth.transform.localPosition = new Vector3(0f, 0f, 2f);
+                depth.transform.localScale = new Vector3(720f, 620f, 1f);
+                depth.AddComponent<MeshFilter>().sharedMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
+                var depthRenderer = depth.AddComponent<MeshRenderer>();
+                depthRenderer.sharedMaterial = CreateHistoryPanelDepthMaterial();
+                depthRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                depthRenderer.receiveShadows = false;
 
-                TMP_Text title = BasisUiStyle.CreateOverlayText("Title", ui, HistoryMenuProvider.MenuTitle, 34, TextAlignmentOptions.MidlineLeft);
+                TMP_Text title = CreateText("Title", ui, HistoryMenuProvider.MenuTitle, 34, TextAlignmentOptions.MidlineLeft);
                 Anchor(title.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(32, -84), new Vector2(-120, -24));
                 Button close = BasisUiStyle.CreateButton("CloseButton", ui, BasisUiStyle.SecondaryButtonColor, cornerRadius: 32);
                 Anchor((RectTransform)close.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-88, -88), new Vector2(-24, -24));
                 BasisUiStyle.AddIcon(close, BasisUiStyle.CloseIconPath, inset: 18);
 
-                TMP_Text version = BasisUiStyle.CreateOverlayText("VersionName", ui, string.Empty, 40, TextAlignmentOptions.Center);
+                TMP_Text version = CreateText("VersionName", ui, string.Empty, 40, TextAlignmentOptions.Center);
                 Anchor(version.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(120, -150), new Vector2(-120, -90));
-                TMP_Text page = BasisUiStyle.CreateOverlayText("Page", ui, string.Empty, 24, TextAlignmentOptions.Center);
+                TMP_Text page = CreateText("Page", ui, string.Empty, 24, TextAlignmentOptions.Center);
                 Anchor(page.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(120, -190), new Vector2(-120, -150));
-                TMP_Text empty = BasisUiStyle.CreateOverlayText("Empty", ui, HistoryPanel.EmptyMessage, 30, TextAlignmentOptions.Center);
+                TMP_Text empty = CreateText("Empty", ui, HistoryPanel.EmptyMessage, 30, TextAlignmentOptions.Center);
                 Anchor(empty.rectTransform, Vector2.zero, Vector2.one, new Vector2(120, 170), new Vector2(-120, -190));
 
                 // Foldout Arrow points down; turned a quarter to point left or right.
@@ -332,16 +385,16 @@ namespace DNPDemo.Editor
                 Button restore = BasisUiStyle.CreateButton("RestoreButton", ui, BasisUiStyle.PrimaryButtonColor, cornerRadius: 40);
                 Anchor((RectTransform)restore.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(-170, 70), new Vector2(170, 150));
                 BasisUiStyle.AddLabel(restore, HistoryPanel.RestoreLabel, 32);
-                TMP_Text status = BasisUiStyle.CreateOverlayText("Status", ui, string.Empty, 22, TextAlignmentOptions.Center);
+                TMP_Text status = CreateText("Status", ui, string.Empty, 22, TextAlignmentOptions.Center);
                 Anchor(status.rectTransform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(30, 20), new Vector2(-30, 64));
 
                 SetLayerRecursively(canvas.transform, LayerMask.NameToLayer(UILayerName));
 
-                // Between the page number and the restore button. Its centre sits far enough in front of the canvas (the
-                // viewer is on its -Z side) that the turning model, arms included, never reaches behind the background.
+                // Between the page number and the restore button, behind the canvas (the viewer is on its -Z side). Its
+                // centre sits far enough back that the turning model, arms included, never reaches in front of the canvas.
                 var previewObject = new GameObject("Preview");
                 previewObject.transform.SetParent(panelObject.transform, false);
-                previewObject.transform.localPosition = new Vector3(0f, -0.02f, -0.09f);
+                previewObject.transform.localPosition = new Vector3(0f, -0.02f, 0.09f);
                 var modelObject = new GameObject("Model");
                 modelObject.transform.SetParent(previewObject.transform, false);
                 var statue = modelObject.AddComponent<VenusStatue>();
@@ -363,7 +416,7 @@ namespace DNPDemo.Editor
 
                 var tool = root.AddComponent<HistoryTool>();
                 Assign(tool, "_panel", panel);
-            });
+            }, rectTransformRoot: false);
 
         /// <summary>
         /// Tool for <see cref="DummyInteractionPart"/>. The tool sits on the root; the panel is a child canvas that is

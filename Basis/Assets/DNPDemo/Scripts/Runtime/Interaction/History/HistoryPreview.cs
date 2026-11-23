@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using DNPDemo.Venus;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DNPDemo.Interaction.History
 {
@@ -10,6 +12,11 @@ namespace DNPDemo.Interaction.History
     /// <para>
     /// Every version shares the body's origin and scale (<see cref="VenusVersion"/>), so one scale and offset, taken from
     /// the first version of the catalog, fit all of them and the body keeps its size while stepping through the history.
+    /// </para>
+    /// <para>
+    /// The model stands behind the panel. Its renderers draw with copies of their materials moved to
+    /// <see cref="HistoryRenderQueues.Preview"/>, after the panel background, so the background colour never covers it
+    /// (see <see cref="HistoryRenderQueues"/>). They cast no shadows, so the miniature does not shade the room.
     /// </para>
     /// </summary>
     public sealed class HistoryPreview : MonoBehaviour
@@ -23,11 +30,24 @@ namespace DNPDemo.Interaction.History
         [Tooltip("Turning speed about the vertical axis, in degrees per second. 0 keeps the model still.")]
         [SerializeField] float _spinDegreesPerSecond = 30f;
 
-        bool _fitted;
+        readonly Dictionary<Material, Material> _previewMaterials = new();
+        bool _prepared;
 
         void Awake()
         {
             enabled = false;
+        }
+
+        // The statue builds its models in its Awake, which has run for every object of the scene by now.
+        void Start() => Prepare();
+
+        void OnDestroy()
+        {
+            foreach (Material material in _previewMaterials.Values)
+            {
+                Destroy(material);
+            }
+            _previewMaterials.Clear();
         }
 
         void Update()
@@ -45,9 +65,10 @@ namespace DNPDemo.Interaction.History
             {
                 return;
             }
-            if (version != null && !_fitted)
+            // The panel hides the preview from its own Awake, possibly before the statue has built the models.
+            if (version != null)
             {
-                Fit();
+                Prepare();
             }
             if (version != null && _statue.Current == null)
             {
@@ -58,9 +79,43 @@ namespace DNPDemo.Interaction.History
             enabled = version != null;
         }
 
+        void Prepare()
+        {
+            if (_prepared || _statue == null)
+            {
+                return;
+            }
+            _prepared = true;
+            foreach (Renderer renderer in _statue.GetComponentsInChildren<Renderer>(true))
+            {
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                Material[] materials = renderer.sharedMaterials;
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    materials[i] = GetPreviewMaterial(materials[i]);
+                }
+                renderer.sharedMaterials = materials;
+            }
+            Fit();
+        }
+
+        /// <summary>A copy of <paramref name="source"/> drawn in the preview's queue, one per source material.</summary>
+        Material GetPreviewMaterial(Material source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+            if (!_previewMaterials.TryGetValue(source, out Material copy))
+            {
+                copy = new Material(source) { name = source.name + " (History Preview)", renderQueue = HistoryRenderQueues.Preview };
+                _previewMaterials.Add(source, copy);
+            }
+            return copy;
+        }
+
         void Fit()
         {
-            _fitted = true;
             VenusVersionCatalog catalog = _statue.Catalog;
             if (catalog == null)
             {

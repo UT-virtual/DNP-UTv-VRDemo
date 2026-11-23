@@ -74,6 +74,33 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void HistoryPanelDrawsPreviewBetweenBackgroundAndDepth()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(InteractionPrefabBuilder.HistoryToolPath);
+            Assert.IsNotNull(prefab);
+            var so = new SerializedObject(prefab.GetComponentInChildren<HistoryPanel>(true));
+            var content = (GameObject)so.FindProperty("_content").objectReferenceValue;
+            var preview = (HistoryPreview)so.FindProperty("_preview").objectReferenceValue;
+
+            Assert.Greater(content.transform.InverseTransformPoint(preview.transform.position).z, 0f,
+                "The preview stands behind the canvas (the viewer is on its -Z side).");
+
+            Transform background = content.transform.Find("Background");
+            Assert.IsNotNull(background);
+            Material backgroundMaterial = background.GetComponent<UnityEngine.UI.Image>().material;
+            Assert.AreEqual(HistoryRenderQueues.PanelBackground, backgroundMaterial.renderQueue,
+                "The background must be drawn before the preview so its colour never covers the model.");
+
+            Transform depth = content.transform.Find("Depth");
+            Assert.IsNotNull(depth);
+            var depthRenderer = depth.GetComponent<MeshRenderer>();
+            Assert.IsTrue(depthRenderer.enabled);
+            Assert.AreEqual(HistoryRenderQueues.PanelDepth, depthRenderer.sharedMaterial.renderQueue,
+                "The depth-only panel shape must be drawn after the preview so later transparents behind the panel stay hidden.");
+            Assert.Greater(depth.localPosition.z, 0f, "The depth shape sits just behind the labels so it does not hide them.");
+        }
+
+        [Test]
         public void DemoSystemsHistoryToolIsWired()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioInstaller.DemoSystemsPrefabPath);

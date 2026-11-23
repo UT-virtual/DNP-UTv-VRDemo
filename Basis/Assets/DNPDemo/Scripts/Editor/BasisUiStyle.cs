@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -9,13 +8,12 @@ using static DNPDemo.Editor.WorldUiBuilder;
 namespace DNPDemo.Editor
 {
     /// <summary>
-    /// Builds world-space uGUI parts that look like the Basis menus, from the sprites, materials and colours of the
-    /// Basis SDK (Packages/com.basis.sdk: Menu Panel, PE Button, Close Button).
+    /// Builds world-space uGUI parts that look like the Basis menus, from the sprites, icons and colours of the Basis SDK
+    /// (Packages/com.basis.sdk: Menu Panel, PE Button, Close Button).
     /// <para>
-    /// The Basis UI materials and the overlay font material draw in the Overlay queue without depth testing, so the
-    /// buttons and labels built here always draw over the world, like the Basis menus. The panel background
-    /// (<see cref="CreatePanelBackground"/>) keeps the default UI material and the depth test instead: a 3D object placed
-    /// between it and the viewer is not covered by it, while the labels and buttons still draw over that object.
+    /// The parts use the default UI material, not the Basis UI materials: those draw in the Overlay queue without the
+    /// depth test (the Basis menus always draw over the world), which would put the demo's panels in front of hands and
+    /// pens and break the ordering with objects shown on a panel.
     /// </para>
     /// </summary>
     public static class BasisUiStyle
@@ -24,11 +22,6 @@ namespace DNPDemo.Editor
         public const string RoundedSpritePath = BasisSdk + "/Sprites/Circle 512.png";
         public const string CloseIconPath = BasisSdk + "/Textures/Runtime/xWhite.png";
         public const string ArrowIconPath = BasisSdk + "/Sprites/Icons/Foldout Arrow.png";
-        public const string ButtonMaterialPath = BasisSdk + "/Materials/BasisUI_main.mat";
-
-        public const string UiFontPath = DNPDemoProjectSetup.Root + "/UI/Fonts/NotoSansJP-Regular SDF.asset";
-        public const string OverlayFontMaterialPath = DNPDemoProjectSetup.Root + "/UI/Fonts/NotoSansJP-Regular SDF Overlay.mat";
-        public const string OverlayFontShaderName = "TextMeshPro/Distance Field Overlay";
 
         /// <summary>Close, arrows and other secondary buttons (Basis PE Button / Close Button).</summary>
         public static readonly Color SecondaryButtonColor = new(0.42573604f, 0.41214734f, 0.57232696f, 1f);
@@ -37,8 +30,8 @@ namespace DNPDemo.Editor
         public static readonly Color PrimaryButtonColor = new(0.47413066f, 0.49170873f, 0.8238993f, 1f);
 
         /// <summary>
-        /// Dark violet close to the Basis menu background. Basis draws that background with an animated gradient shader
-        /// that ignores the depth test, so a plain colour stands in for it.
+        /// Dark violet close to the Basis menu background, which Basis draws with an animated gradient shader in the
+        /// Overlay queue (see the class summary).
         /// </summary>
         public static readonly Color PanelColor = new(0.09f, 0.075f, 0.16f, 0.94f);
 
@@ -58,14 +51,15 @@ namespace DNPDemo.Editor
         // a multiplier of 1 rounds corners with a 50 px radius.
         const float RoundedSpriteRadius = 50f;
 
-        /// <summary>Rounded background filling <paramref name="parent"/>, drawn with the depth test (see the class summary).</summary>
-        public static Image CreatePanelBackground(Transform parent, float cornerRadius)
+        /// <summary>
+        /// Rounded image named <paramref name="name"/> filling <paramref name="parent"/>, in <paramref name="color"/>.
+        /// <paramref name="material"/> null uses the default UI material.
+        /// </summary>
+        public static Image CreatePanelImage(string name, Transform parent, Color color, float cornerRadius, Material material = null)
         {
-            GameObject go = CreateChild("Background", parent);
+            GameObject go = CreateChild(name, parent);
             Anchor((RectTransform)go.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            Image image = CreateRoundedImage(go, PanelColor, cornerRadius, null);
-            image.raycastTarget = true;
-            return image;
+            return CreateRoundedImage(go, color, cornerRadius, material);
         }
 
         /// <summary>
@@ -75,7 +69,7 @@ namespace DNPDemo.Editor
         public static Button CreateButton(string name, Transform parent, Color color, float cornerRadius)
         {
             GameObject go = CreateChild(name, parent);
-            Image image = CreateRoundedImage(go, color, cornerRadius, LoadAsset<Material>(ButtonMaterialPath));
+            Image image = CreateRoundedImage(go, color, cornerRadius, null);
             var button = go.AddComponent<Button>();
             button.targetGraphic = image;
             button.colors = ButtonColors;
@@ -91,7 +85,6 @@ namespace DNPDemo.Editor
             rect.localRotation = Quaternion.Euler(0f, 0f, rotation);
             var image = go.AddComponent<Image>();
             image.sprite = LoadAsset<Sprite>(spritePath);
-            image.material = LoadAsset<Material>(ButtonMaterialPath);
             image.color = new Color(0.98f, 1f, 1f, 1f);
             image.preserveAspect = true;
             image.raycastTarget = false;
@@ -101,42 +94,10 @@ namespace DNPDemo.Editor
         /// <summary>White label filling <paramref name="button"/>.</summary>
         public static TMP_Text AddLabel(Button button, string text, float fontSize)
         {
-            TMP_Text label = CreateOverlayText("Label", button.transform, text, fontSize, TextAlignmentOptions.Center);
+            TMP_Text label = CreateText("Label", button.transform, text, fontSize, TextAlignmentOptions.Center);
             Anchor(label.rectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             label.raycastTarget = false;
             return label;
-        }
-
-        /// <summary>White text in the UI font that draws over the world (<see cref="CreateOverlayFontMaterial"/>).</summary>
-        public static TMP_Text CreateOverlayText(string name, Transform parent, string text, float fontSize, TextAlignmentOptions alignment)
-        {
-            TMP_Text tmp = CreateText(name, parent, text, fontSize, alignment);
-            tmp.font = LoadAsset<TMP_FontAsset>(UiFontPath);
-            tmp.fontSharedMaterial = CreateOverlayFontMaterial();
-            return tmp;
-        }
-
-        /// <summary>
-        /// Material preset of the UI font with the overlay SDF shader, the one the Basis menu fonts use. Created next to the
-        /// font from its default material the first time it is needed; kept afterwards.
-        /// </summary>
-        public static Material CreateOverlayFontMaterial()
-        {
-            var existing = AssetDatabase.LoadAssetAtPath<Material>(OverlayFontMaterialPath);
-            if (existing != null)
-            {
-                return existing;
-            }
-            var font = LoadAsset<TMP_FontAsset>(UiFontPath);
-            Shader shader = Shader.Find(OverlayFontShaderName);
-            if (shader == null)
-            {
-                throw new InvalidOperationException($"Shader {OverlayFontShaderName} was not found.");
-            }
-            var material = new Material(font.material) { shader = shader, name = Path.GetFileNameWithoutExtension(OverlayFontMaterialPath) };
-            AssetDatabase.CreateAsset(material, OverlayFontMaterialPath);
-            Debug.Log($"[DNPDemo] Created {OverlayFontMaterialPath}");
-            return material;
         }
 
         static Image CreateRoundedImage(GameObject go, Color color, float cornerRadius, Material material)
