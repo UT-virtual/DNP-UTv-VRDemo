@@ -234,7 +234,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5774004141551124121}
-  - component: {fileID: 5390954094214097163}
   m_Layer: 0
   m_Name: J_Bip_C_Neck
   m_TagString: Untagged
@@ -258,22 +257,6 @@ Transform:
   - {fileID: 5479638721080145689}
   m_Father: {fileID: 3048487666844311324}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5390954094214097163
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 377856160634424811}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 646b65a4a57afd34d8c4ed557efb46a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBoneColliderGroup
-  Colliders:
-  - Offset: {x: 0, y: 0.02858389, z: 0.012386353}
-    Radius: 0.047639817
-  m_gizmoColor: {r: 1, g: 0, b: 1, a: 1}
 --- !u!1 &408335406240439424
 GameObject:
   m_ObjectHideFlags: 0
@@ -918,13 +901,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8116234094690726486}
-  - component: {fileID: 2470010034185461712}
-  - component: {fileID: 8268089085729738228}
   - component: {fileID: 396418290036845546}
-  - component: {fileID: 2529095826298918395}
-  - component: {fileID: 2206131004842109495}
-  - component: {fileID: 4422531174334964086}
-  - component: {fileID: 1638548998423497747}
   - component: {fileID: 1187531790025700554}
   m_Layer: 0
   m_Name: AssistantB
@@ -953,33 +930,6 @@ Transform:
   - {fileID: 168235776519478054}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2470010034185461712
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1702158598779589312}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 690ea0146224b8b4694a1925dddeb352, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMMeta
-  Meta: {fileID: 11400000, guid: 86623a92bb207274593d1fd634852a4d, type: 2}
---- !u!114 &8268089085729738228
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1702158598779589312}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3869812175467a143ab9cd865752b4a9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMHumanoidDescription
-  Avatar: {fileID: 9000000, guid: 1e7dde7a31b5d0d478cc990fa5c984f3, type: 2}
-  Description: {fileID: 11400000, guid: 7dfbab7f92c726140b28f485bbc92397, type: 2}
 --- !u!95 &396418290036845546
 Animator:
   serializedVersion: 7
@@ -1002,217 +952,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &2529095826298918395
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1702158598779589312}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b678c1df50cfb547990db24a32856da, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMBlendShapeProxy
-  BlendShapeAvatar: {fileID: 11400000, guid: b9e6340e7468f804c894aae1c33bf952, type: 2}
---- !u!114 &2206131004842109495
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1702158598779589312}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dedba1309bdf12b42af2362f52eea134, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMFirstPerson
-  FirstPersonBone: {fileID: 5479638721080145689}
-  FirstPersonOffset: {x: 0, y: 0.06, z: 0}
-  Renderers:
-  - Renderer: {fileID: 3354867936455233335}
-    FirstPersonFlag: 0
-  - Renderer: {fileID: 9058237949050302578}
-    FirstPersonFlag: 0
-  - Renderer: {fileID: 8213833815563495496}
-    FirstPersonFlag: 0
---- !u!114 &4422531174334964086
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1702158598779589312}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0a1a470564f16f4f94acb4b9ef56367, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMLookAtHead
-  DrawGizmo: 1
-  UpdateType: 1
-  Target: {fileID: 0}
-  Head: {fileID: 0}
-  m_yaw: 0
-  m_pitch: 0
---- !u!114 &1638548998423497747
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1702158598779589312}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a8b72334adf6f7948bd98b4f0a873949, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMLookAtBoneApplyer
-  DrawGizmo: 0
-  LeftEye:
-    Transform: {fileID: 4090830231789249110}
-    OffsetRotation:
-      e00: 1
-      e01: 0
-      e02: 0
-      e03: 0
-      e10: 0
-      e11: 1
-      e12: 0
-      e13: 0
-      e20: 0
-      e21: 0
-      e22: 1
-      e23: 0
-      e30: 0
-      e31: 0
-      e32: 0
-      e33: 1
-  RightEye:
-    Transform: {fileID: 6760782044375596556}
-    OffsetRotation:
-      e00: 1
-      e01: 0
-      e02: 0
-      e03: 0
-      e10: 0
-      e11: 1
-      e12: 0
-      e13: 0
-      e20: 0
-      e21: 0
-      e22: 1
-      e23: 0
-      e30: 0
-      e31: 0
-      e32: 0
-      e33: 1
-  HorizontalOuter:
-    Curve:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 0
-        outSlope: 1
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 1
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    CurveXRangeDegree: 90
-    CurveYRangeDegree: 12
-  HorizontalInner:
-    Curve:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 0
-        outSlope: 1
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 1
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    CurveXRangeDegree: 90
-    CurveYRangeDegree: 8
-  VerticalDown:
-    Curve:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 0
-        outSlope: 1
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 1
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    CurveXRangeDegree: 90
-    CurveYRangeDegree: 10
-  VerticalUp:
-    Curve:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 0
-        outSlope: 1
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 1
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    CurveXRangeDegree: 90
-    CurveYRangeDegree: 10
 --- !u!114 &1187531790025700554
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1354,7 +1093,7 @@ MonoBehaviour:
     SilenceFloor: 0.15
     SilIsRest: 1
     BackendSmoothing: 70
-  BlinkViseme: ffffffff
+  BlinkViseme: 0d000000
   laughterBlendTarget: -1
   AnimatorHumanScale: {x: 1.0724784, y: 1.0724784, z: 1.0724784}
   Renders:
@@ -1439,7 +1178,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5706057765175958055}
-  - component: {fileID: 320821286409029356}
   m_Layer: 0
   m_Name: J_Bip_L_LowerArm
   m_TagString: Untagged
@@ -1463,28 +1201,6 @@ Transform:
   - {fileID: 7471797362366344737}
   m_Father: {fileID: 2448125210074882865}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &320821286409029356
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2257789950862612367}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 646b65a4a57afd34d8c4ed557efb46a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBoneColliderGroup
-  Colliders:
-  - Offset: {x: 0, y: 0, z: 0}
-    Radius: 0.028583894
-  - Offset: {x: -0.047639824, y: 0, z: 0}
-    Radius: 0.033347875
-  - Offset: {x: -0.09527965, y: 0, z: 0}
-    Radius: 0.028583894
-  - Offset: {x: -0.14291948, y: 0, z: 0}
-    Radius: 0.028583894
-  m_gizmoColor: {r: 1, g: 0, b: 1, a: 1}
 --- !u!1 &2533774638582265424
 GameObject:
   m_ObjectHideFlags: 0
@@ -1810,7 +1526,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7471797362366344737}
-  - component: {fileID: 9008347192507025256}
   m_Layer: 0
   m_Name: J_Bip_L_Hand
   m_TagString: Untagged
@@ -1838,22 +1553,6 @@ Transform:
   - {fileID: 8759023357062658812}
   m_Father: {fileID: 5706057765175958055}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &9008347192507025256
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3224047052863489828}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 646b65a4a57afd34d8c4ed557efb46a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBoneColliderGroup
-  Colliders:
-  - Offset: {x: -0.019055929, y: 0, z: 0}
-    Radius: 0.028583894
-  m_gizmoColor: {r: 1, g: 0, b: 1, a: 1}
 --- !u!1 &3228509389812023284
 GameObject:
   m_ObjectHideFlags: 0
@@ -1863,7 +1562,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2711946738566269536}
-  - component: {fileID: 8163355483699391693}
   m_Layer: 0
   m_Name: J_Bip_R_Hand
   m_TagString: Untagged
@@ -1891,22 +1589,6 @@ Transform:
   - {fileID: 6431326778075807461}
   m_Father: {fileID: 5648124773268559078}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8163355483699391693
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3228509389812023284}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 646b65a4a57afd34d8c4ed557efb46a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBoneColliderGroup
-  Colliders:
-  - Offset: {x: 0.019055929, y: 0, z: 0}
-    Radius: 0.028583894
-  m_gizmoColor: {r: 1, g: 0, b: 1, a: 1}
 --- !u!1 &3279076546592849541
 GameObject:
   m_ObjectHideFlags: 0
@@ -1916,7 +1598,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5648124773268559078}
-  - component: {fileID: 4905689444590060447}
   m_Layer: 0
   m_Name: J_Bip_R_LowerArm
   m_TagString: Untagged
@@ -1940,28 +1621,6 @@ Transform:
   - {fileID: 2711946738566269536}
   m_Father: {fileID: 8689455781279020039}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4905689444590060447
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3279076546592849541}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 646b65a4a57afd34d8c4ed557efb46a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBoneColliderGroup
-  Colliders:
-  - Offset: {x: 0, y: 0, z: 0}
-    Radius: 0.028583894
-  - Offset: {x: 0.047639824, y: 0, z: 0}
-    Radius: 0.033347875
-  - Offset: {x: 0.09527965, y: 0, z: 0}
-    Radius: 0.028583894
-  - Offset: {x: 0.14291948, y: 0, z: 0}
-    Radius: 0.028583894
-  m_gizmoColor: {r: 1, g: 0, b: 1, a: 1}
 --- !u!1 &3338703329469750963
 GameObject:
   m_ObjectHideFlags: 0
@@ -2523,7 +2182,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3048487666844311324}
-  - component: {fileID: 1502872813244852910}
   m_Layer: 0
   m_Name: J_Bip_C_UpperChest
   m_TagString: Untagged
@@ -2551,26 +2209,6 @@ Transform:
   - {fileID: 8270416094587260557}
   m_Father: {fileID: 2101232906676850659}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1502872813244852910
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4188703903796393013}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 646b65a4a57afd34d8c4ed557efb46a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBoneColliderGroup
-  Colliders:
-  - Offset: {x: 0, y: 0, z: 0.009527964}
-    Radius: 0.095279634
-  - Offset: {x: -0.047639817, y: 0.06193176, z: -0.009527964}
-    Radius: 0.06669574
-  - Offset: {x: 0.047639817, y: 0.06193176, z: -0.009527964}
-    Radius: 0.06669574
-  m_gizmoColor: {r: 1, g: 0, b: 1, a: 1}
 --- !u!1 &4248228067450177335
 GameObject:
   m_ObjectHideFlags: 0
@@ -2612,7 +2250,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1418304514813397181}
-  - component: {fileID: 364218740605084157}
   m_Layer: 0
   m_Name: J_Bip_C_Spine
   m_TagString: Untagged
@@ -2636,22 +2273,6 @@ Transform:
   - {fileID: 2101232906676850659}
   m_Father: {fileID: 2950997994638444039}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &364218740605084157
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4275411447069677121}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 646b65a4a57afd34d8c4ed557efb46a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBoneColliderGroup
-  Colliders:
-  - Offset: {x: 0, y: 0, z: 0}
-    Radius: 0.11433557
-  m_gizmoColor: {r: 1, g: 0, b: 1, a: 1}
 --- !u!1 &4428092443822082555
 GameObject:
   m_ObjectHideFlags: 0
@@ -2787,7 +2408,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2448125210074882865}
-  - component: {fileID: 7889056634178206607}
   m_Layer: 0
   m_Name: J_Bip_L_UpperArm
   m_TagString: Untagged
@@ -2811,26 +2431,6 @@ Transform:
   - {fileID: 5706057765175958055}
   m_Father: {fileID: 7255552073802197676}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7889056634178206607
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4699663356542012206}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 646b65a4a57afd34d8c4ed557efb46a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBoneColliderGroup
-  Colliders:
-  - Offset: {x: 0, y: -0.0095279645, z: 0}
-    Radius: 0.047639824
-  - Offset: {x: -0.07145974, y: -0.0095279645, z: 0}
-    Radius: 0.047639824
-  - Offset: {x: -0.14291948, y: -0.0095279645, z: 0}
-    Radius: 0.047639824
-  m_gizmoColor: {r: 1, g: 0, b: 1, a: 1}
 --- !u!1 &5069643205209035378
 GameObject:
   m_ObjectHideFlags: 0
@@ -3552,7 +3152,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8689455781279020039}
-  - component: {fileID: 3779251698216271370}
   m_Layer: 0
   m_Name: J_Bip_R_UpperArm
   m_TagString: Untagged
@@ -3576,26 +3175,6 @@ Transform:
   - {fileID: 5648124773268559078}
   m_Father: {fileID: 8270416094587260557}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3779251698216271370
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7114294728267150274}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 646b65a4a57afd34d8c4ed557efb46a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBoneColliderGroup
-  Colliders:
-  - Offset: {x: 0, y: -0.0095279645, z: 0}
-    Radius: 0.047639824
-  - Offset: {x: 0.07145974, y: -0.0095279645, z: 0}
-    Radius: 0.047639824
-  - Offset: {x: 0.14291948, y: -0.0095279645, z: 0}
-    Radius: 0.047639824
-  m_gizmoColor: {r: 1, g: 0, b: 1, a: 1}
 --- !u!1 &7367567152644971363
 GameObject:
   m_ObjectHideFlags: 0
@@ -4033,19 +3612,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 168235776519478054}
-  - component: {fileID: 4716528525311566413}
-  - component: {fileID: 8306715336576596339}
-  - component: {fileID: 1455955446606117890}
-  - component: {fileID: 811560789611543111}
-  - component: {fileID: 3626663540522411426}
-  - component: {fileID: 7355099329790442776}
-  - component: {fileID: 459541893695206513}
-  - component: {fileID: 1694184119373232943}
-  - component: {fileID: 8776457260582953300}
-  - component: {fileID: 8892573397143803938}
-  - component: {fileID: 6009872301148367741}
-  - component: {fileID: 1918243374529165846}
-  - component: {fileID: 8815915123564594093}
   m_Layer: 0
   m_Name: secondary
   m_TagString: Untagged
@@ -4068,434 +3634,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8116234094690726486}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4716528525311566413
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7985399092731755276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ea06e1753e16f4ca870c39c067c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBone
-  m_comment: Bust
-  m_gizmoColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  m_stiffnessForce: 0.75
-  m_gravityPower: 0
-  m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.05
-  m_center: {fileID: 3737188612379705602}
-  RootBones:
-  - {fileID: 1397249154725774892}
-  - {fileID: 6773056653820416883}
-  m_hitRadius: 0.014418923
-  ColliderGroups: []
-  m_updateType: 0
---- !u!114 &8306715336576596339
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7985399092731755276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ea06e1753e16f4ca870c39c067c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBone
-  m_comment: TopsUpperArm
-  m_gizmoColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  m_stiffnessForce: 0.75
-  m_gravityPower: 0
-  m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0
-  m_center: {fileID: 3737188612379705602}
-  RootBones:
-  - {fileID: 6947015453416008340}
-  - {fileID: 4556195320639383718}
-  - {fileID: 2260230146676141567}
-  - {fileID: 1625273676258646203}
-  - {fileID: 5914748046910657986}
-  - {fileID: 4321575027428177180}
-  m_hitRadius: 0.020186517
-  ColliderGroups: []
-  m_updateType: 0
---- !u!114 &1455955446606117890
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7985399092731755276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ea06e1753e16f4ca870c39c067c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBone
-  m_comment: Hair
-  m_gizmoColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  m_stiffnessForce: 0.79583335
-  m_gravityPower: 0
-  m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
-  m_center: {fileID: 3737188612379705602}
-  RootBones:
-  - {fileID: 1003216533482099568}
-  m_hitRadius: 0.009406356
-  ColliderGroups:
-  - {fileID: 5645690559798723625}
-  - {fileID: 7889056634178206607}
-  - {fileID: 3779251698216271370}
-  - {fileID: 320821286409029356}
-  - {fileID: 4905689444590060447}
-  - {fileID: 9008347192507025256}
-  - {fileID: 8163355483699391693}
-  - {fileID: 1502872813244852910}
-  - {fileID: 364218740605084157}
-  - {fileID: 5390954094214097163}
-  m_updateType: 0
---- !u!114 &811560789611543111
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7985399092731755276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ea06e1753e16f4ca870c39c067c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBone
-  m_comment: Hair
-  m_gizmoColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  m_stiffnessForce: 0.7
-  m_gravityPower: 0
-  m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
-  m_center: {fileID: 3737188612379705602}
-  RootBones:
-  - {fileID: 9107086074772443652}
-  m_hitRadius: 0.014318657
-  ColliderGroups:
-  - {fileID: 5645690559798723625}
-  - {fileID: 7889056634178206607}
-  - {fileID: 3779251698216271370}
-  - {fileID: 320821286409029356}
-  - {fileID: 4905689444590060447}
-  - {fileID: 9008347192507025256}
-  - {fileID: 8163355483699391693}
-  - {fileID: 1502872813244852910}
-  - {fileID: 364218740605084157}
-  - {fileID: 5390954094214097163}
-  m_updateType: 0
---- !u!114 &3626663540522411426
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7985399092731755276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ea06e1753e16f4ca870c39c067c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBone
-  m_comment: Hair
-  m_gizmoColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  m_stiffnessForce: 0.7
-  m_gravityPower: 0
-  m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
-  m_center: {fileID: 3737188612379705602}
-  RootBones:
-  - {fileID: 3450742351092226824}
-  m_hitRadius: 0.01538375
-  ColliderGroups:
-  - {fileID: 5645690559798723625}
-  - {fileID: 7889056634178206607}
-  - {fileID: 3779251698216271370}
-  - {fileID: 320821286409029356}
-  - {fileID: 4905689444590060447}
-  - {fileID: 9008347192507025256}
-  - {fileID: 8163355483699391693}
-  - {fileID: 1502872813244852910}
-  - {fileID: 364218740605084157}
-  - {fileID: 5390954094214097163}
-  m_updateType: 0
---- !u!114 &7355099329790442776
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7985399092731755276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ea06e1753e16f4ca870c39c067c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBone
-  m_comment: Hair
-  m_gizmoColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  m_stiffnessForce: 0.7
-  m_gravityPower: 0
-  m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
-  m_center: {fileID: 3737188612379705602}
-  RootBones:
-  - {fileID: 7636605673218508338}
-  m_hitRadius: 0.010019875
-  ColliderGroups:
-  - {fileID: 5645690559798723625}
-  - {fileID: 7889056634178206607}
-  - {fileID: 3779251698216271370}
-  - {fileID: 320821286409029356}
-  - {fileID: 4905689444590060447}
-  - {fileID: 9008347192507025256}
-  - {fileID: 8163355483699391693}
-  - {fileID: 1502872813244852910}
-  - {fileID: 364218740605084157}
-  - {fileID: 5390954094214097163}
-  m_updateType: 0
---- !u!114 &459541893695206513
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7985399092731755276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ea06e1753e16f4ca870c39c067c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBone
-  m_comment: Hair
-  m_gizmoColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  m_stiffnessForce: 0.70416665
-  m_gravityPower: 0
-  m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
-  m_center: {fileID: 3737188612379705602}
-  RootBones:
-  - {fileID: 1534569732636789287}
-  m_hitRadius: 0.010019883
-  ColliderGroups:
-  - {fileID: 5645690559798723625}
-  - {fileID: 7889056634178206607}
-  - {fileID: 3779251698216271370}
-  - {fileID: 320821286409029356}
-  - {fileID: 4905689444590060447}
-  - {fileID: 9008347192507025256}
-  - {fileID: 8163355483699391693}
-  - {fileID: 1502872813244852910}
-  - {fileID: 364218740605084157}
-  - {fileID: 5390954094214097163}
-  m_updateType: 0
---- !u!114 &1694184119373232943
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7985399092731755276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ea06e1753e16f4ca870c39c067c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBone
-  m_comment: Hair
-  m_gizmoColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  m_stiffnessForce: 0.8
-  m_gravityPower: 0
-  m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
-  m_center: {fileID: 3737188612379705602}
-  RootBones:
-  - {fileID: 1283597700569363115}
-  m_hitRadius: 0.0100198835
-  ColliderGroups:
-  - {fileID: 5645690559798723625}
-  - {fileID: 7889056634178206607}
-  - {fileID: 3779251698216271370}
-  - {fileID: 320821286409029356}
-  - {fileID: 4905689444590060447}
-  - {fileID: 9008347192507025256}
-  - {fileID: 8163355483699391693}
-  - {fileID: 1502872813244852910}
-  - {fileID: 364218740605084157}
-  - {fileID: 5390954094214097163}
-  m_updateType: 0
---- !u!114 &8776457260582953300
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7985399092731755276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ea06e1753e16f4ca870c39c067c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBone
-  m_comment: Hair
-  m_gizmoColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  m_stiffnessForce: 0.5416667
-  m_gravityPower: 0
-  m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
-  m_center: {fileID: 3737188612379705602}
-  RootBones:
-  - {fileID: 3453807165691208171}
-  m_hitRadius: 0.010019886
-  ColliderGroups:
-  - {fileID: 5645690559798723625}
-  - {fileID: 7889056634178206607}
-  - {fileID: 3779251698216271370}
-  - {fileID: 320821286409029356}
-  - {fileID: 4905689444590060447}
-  - {fileID: 9008347192507025256}
-  - {fileID: 8163355483699391693}
-  - {fileID: 1502872813244852910}
-  - {fileID: 364218740605084157}
-  - {fileID: 5390954094214097163}
-  m_updateType: 0
---- !u!114 &8892573397143803938
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7985399092731755276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ea06e1753e16f4ca870c39c067c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBone
-  m_comment: Hair
-  m_gizmoColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  m_stiffnessForce: 0.5416667
-  m_gravityPower: 0
-  m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
-  m_center: {fileID: 3737188612379705602}
-  RootBones:
-  - {fileID: 8855555913893116260}
-  m_hitRadius: 0.010019878
-  ColliderGroups:
-  - {fileID: 5645690559798723625}
-  - {fileID: 7889056634178206607}
-  - {fileID: 3779251698216271370}
-  - {fileID: 320821286409029356}
-  - {fileID: 4905689444590060447}
-  - {fileID: 9008347192507025256}
-  - {fileID: 8163355483699391693}
-  - {fileID: 1502872813244852910}
-  - {fileID: 364218740605084157}
-  - {fileID: 5390954094214097163}
-  m_updateType: 0
---- !u!114 &6009872301148367741
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7985399092731755276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ea06e1753e16f4ca870c39c067c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBone
-  m_comment: Hair
-  m_gizmoColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  m_stiffnessForce: 0.6
-  m_gravityPower: 0
-  m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
-  m_center: {fileID: 3737188612379705602}
-  RootBones:
-  - {fileID: 7317184038370105776}
-  m_hitRadius: 0.010019877
-  ColliderGroups:
-  - {fileID: 5645690559798723625}
-  - {fileID: 7889056634178206607}
-  - {fileID: 3779251698216271370}
-  - {fileID: 320821286409029356}
-  - {fileID: 4905689444590060447}
-  - {fileID: 9008347192507025256}
-  - {fileID: 8163355483699391693}
-  - {fileID: 1502872813244852910}
-  - {fileID: 364218740605084157}
-  - {fileID: 5390954094214097163}
-  m_updateType: 0
---- !u!114 &1918243374529165846
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7985399092731755276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ea06e1753e16f4ca870c39c067c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBone
-  m_comment: Hair
-  m_gizmoColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  m_stiffnessForce: 0.6
-  m_gravityPower: 0
-  m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
-  m_center: {fileID: 3737188612379705602}
-  RootBones:
-  - {fileID: 3908184849490189770}
-  m_hitRadius: 0.010019883
-  ColliderGroups:
-  - {fileID: 5645690559798723625}
-  - {fileID: 7889056634178206607}
-  - {fileID: 3779251698216271370}
-  - {fileID: 320821286409029356}
-  - {fileID: 4905689444590060447}
-  - {fileID: 9008347192507025256}
-  - {fileID: 8163355483699391693}
-  - {fileID: 1502872813244852910}
-  - {fileID: 364218740605084157}
-  - {fileID: 5390954094214097163}
-  m_updateType: 0
---- !u!114 &8815915123564594093
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7985399092731755276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ea06e1753e16f4ca870c39c067c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBone
-  m_comment: Hair
-  m_gizmoColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  m_stiffnessForce: 0.4
-  m_gravityPower: 0
-  m_gravityDir: {x: 0, y: -1, z: 0}
-  m_dragForce: 0.4
-  m_center: {fileID: 3737188612379705602}
-  RootBones:
-  - {fileID: 1632330638238646228}
-  m_hitRadius: 0.010019874
-  ColliderGroups:
-  - {fileID: 5645690559798723625}
-  - {fileID: 7889056634178206607}
-  - {fileID: 3779251698216271370}
-  - {fileID: 320821286409029356}
-  - {fileID: 4905689444590060447}
-  - {fileID: 9008347192507025256}
-  - {fileID: 8163355483699391693}
-  - {fileID: 1502872813244852910}
-  - {fileID: 364218740605084157}
-  - {fileID: 5390954094214097163}
-  m_updateType: 0
 --- !u!1 &8095830040355746431
 GameObject:
   m_ObjectHideFlags: 0
@@ -4567,7 +3705,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5479638721080145689}
-  - component: {fileID: 5645690559798723625}
   m_Layer: 0
   m_Name: J_Bip_C_Head
   m_TagString: Untagged
@@ -4603,22 +3740,6 @@ Transform:
   - {fileID: 1632330638238646228}
   m_Father: {fileID: 5774004141551124121}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5645690559798723625
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8177004646522723303}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 646b65a4a57afd34d8c4ed557efb46a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VRM::VRM.VRMSpringBoneColliderGroup
-  Colliders:
-  - Offset: {x: 0, y: 0.10019878, z: -0.014428624}
-    Radius: 0.10019878
-  m_gizmoColor: {r: 1, g: 0, b: 1, a: 1}
 --- !u!1 &8219759502623061677
 GameObject:
   m_ObjectHideFlags: 0
