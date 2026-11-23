@@ -74,6 +74,11 @@ namespace DNPDemo.Venus
                 {
                     problems.Add($"{label}（{version.name}）のモデルが未設定です。");
                 }
+                // The parent has to be reached first; this also rules out a version being its own ancestor.
+                if (version.Parent != null && (version.Parent == version || !seen.Contains(version.Parent)))
+                {
+                    problems.Add($"{label}（{version.name}）の派生元（{version.Parent.name}）が、カタログでこの版より前にありません。");
+                }
             }
             return problems;
         }

@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.IO;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
 using DNPDemo.Interaction.Voice;
+using DNPDemo.Menu;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
 using DNPDemo.Venus;
@@ -168,7 +170,7 @@ namespace DNPDemo.Editor
                     B("では、これまでの過程を振り返ってみましょう。最初の案と、今の案を並べてみてください。")),
                 WithCues(Operation("p2-compare", "Phase 2 [B] Ver 1.0 と比較", DemoRole.PlayerB,
                         "履歴一覧からVer 1.0を呼び出し、完成案の隣に並べよ。",
-                        Panel("履歴一覧から Ver 1.0 を呼び出す")),
+                        History(VenusAssetBuilder.Ver10Id)),
                     new SetObjectActiveCue(ComparisonTableKey, true)),
                 Auto("p3-temple-proposal", "Phase 3 神殿での確認",
                     new StatueVersionCue(VenusStatueKeys.Comparison, VenusAssetBuilder.LoadVersion(VenusAssetBuilder.Ver10Id)),
@@ -225,11 +227,20 @@ namespace DNPDemo.Editor
 
         static StatueVersionCue Version(string id) => new(VenusStatueKeys.Main, VenusAssetBuilder.LoadVersion(id));
 
-        // Stand-ins until the real tool (HistoryPanel) replaces them, and for selections and
-        // manipulations whose objects are not placed on the statue yet.
+        // Stand-ins for selections and manipulations whose objects are not placed on the statue yet.
         static InteractionPart Select(string instruction) => new DummyInteractionPart(PenMode.Select, instruction);
         static InteractionPart Manipulate(string instruction) => new DummyInteractionPart(PenMode.Manipulate, instruction);
-        static InteractionPart Panel(string instruction) => new DummyInteractionPart(PenMode.Panel, instruction);
+
+        static InteractionPart History(string versionId)
+        {
+            VenusVersion version = VenusAssetBuilder.LoadVersion(versionId);
+            string name = version != null ? version.DisplayName : versionId;
+            return new HistoryPart(HistoryInstruction(name), version);
+        }
+
+        /// <summary>Task HUD line of the step that calls <paramref name="versionName"/> back from the history.</summary>
+        public static string HistoryInstruction(string versionName) =>
+            $"メニューの「{HistoryMenuProvider.MenuTitle}」で {versionName} を表示し、「{HistoryPanel.RestoreLabel}」を押す";
 
         static LineCue N(string text) => new(ScenarioSpeaker.Narrator, text);
         static LineCue A(string text) => new(ScenarioSpeaker.ScholarA, text);

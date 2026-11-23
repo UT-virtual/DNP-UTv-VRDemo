@@ -9,7 +9,7 @@ namespace DNPDemo.Menu
     /// A menu entry that opens a second row of buttons right above the hotbar, styled like the hotbar itself.
     /// Each button is one choice; the chosen one carries the hotbar's active indicator.
     /// </summary>
-    public abstract class DemoBarMenuProvider : DemoMenuProvider
+    public abstract class DemoBarMenuProvider : DemoPanelMenuProvider
     {
         /// <summary>Gap between the hotbar and the bar, in hotbar canvas units.</summary>
         const float GapAboveHotbar = 30f;

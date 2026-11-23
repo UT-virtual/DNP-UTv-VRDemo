@@ -61,6 +61,7 @@ namespace DNPDemo.BasisPolicy
         {
             new PenMenuProvider(),
             new EnvironmentMenuProvider(),
+            new HistoryMenuProvider(),
         };
 
         internal static List<Type> FindSuppressedTypes(IEnumerable<Assembly> assemblies)

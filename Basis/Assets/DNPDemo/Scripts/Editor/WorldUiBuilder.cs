@@ -22,15 +22,20 @@ namespace DNPDemo.Editor
         /// <summary>
         /// Builds a prefab at <paramref name="path"/> unless one already exists, and returns the asset.
         /// Existing prefabs are never overwritten: after creation they are edited by hand like any other asset.
+        /// <para>
+        /// The root gets a RectTransform when <paramref name="rectTransformRoot"/> is true. Prefab Mode wraps a prefab with
+        /// such a root in a "Canvas (Environment)", which nests the prefab's own world-space canvas; a root that is not
+        /// itself UI (a tool holding a panel) should use a plain Transform instead.
+        /// </para>
         /// </summary>
-        public static GameObject CreatePrefabIfMissing(string path, string rootName, Action<GameObject> build)
+        public static GameObject CreatePrefabIfMissing(string path, string rootName, Action<GameObject> build, bool rectTransformRoot = true)
         {
             var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (existing != null)
             {
                 return existing;
             }
-            var root = new GameObject(rootName, typeof(RectTransform));
+            var root = rectTransformRoot ? new GameObject(rootName, typeof(RectTransform)) : new GameObject(rootName);
             try
             {
                 build(root);

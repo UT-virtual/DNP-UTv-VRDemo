@@ -550,11 +550,11 @@ MonoBehaviour:
         SimulatedMode: 3
         RequiredPresses: 3
     - rid: 1662061592158404926
-      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+      type: {class: HistoryPart, ns: DNPDemo.Interaction.History, asm: DNPDemo.Runtime}
       data:
-        Instruction: "\u5C65\u6B74\u4E00\u89A7\u304B\u3089 Ver 1.0 \u3092\u547C\u3073\u51FA\u3059"
-        SimulatedMode: 5
-        RequiredPresses: 3
+        Instruction: "\u30E1\u30CB\u30E5\u30FC\u306E\u300C\u30E2\u30C7\u30EB\u306E\u5C65\u6B74\u300D\u3067 Ver 1.0 \u3092\u8868\u793A\u3057\u3001\u300C\u30E2\u30C7\u30EB\u3092\u5FA9\u5143\u300D\u3092\u62BC\u3059"
+        TargetVersion: {fileID: 11400000, guid: 6d031f87170b0de49add3e8d8fbb887e, type: 2}
+        ComparisonStatueKey: ComparisonStatue
     - rid: 1662061592158404927
       type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
       data:

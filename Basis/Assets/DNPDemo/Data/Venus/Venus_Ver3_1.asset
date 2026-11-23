@@ -15,3 +15,6 @@ MonoBehaviour:
   _id: v3.1
   _displayName: Ver 3.1
   _model: {fileID: 1069329269590082838, guid: f220e92b3d193c145a4abfc2089006e8, type: 3}
+  _parent: {fileID: 11400000, guid: 4940cd742af61164eaa5972faf79652e, type: 2}
+  _startsBranch: 0
+  _thumbnail: {fileID: 2800000, guid: d6ffc1d0631ead847b38dc2b566d94df, type: 3}

@@ -50,15 +50,24 @@ namespace DNPDemo.Editor
 
         sealed class Definition
         {
-            public Definition(string id, string displayName, string fileName, Action<Builder> build)
+            public Definition(string id, string parentId, bool startsBranch, string displayName, string fileName, Action<Builder> build)
             {
                 Id = id;
+                ParentId = parentId;
+                StartsBranch = startsBranch;
                 DisplayName = displayName;
                 FileName = fileName;
                 Build = build;
             }
 
             public string Id { get; }
+
+            /// <summary>Id of the version this one was made from (the branches of the history panel), or null for the original.</summary>
+            public string ParentId { get; }
+
+            /// <summary>True when the version starts a new branch off its parent (<see cref="VenusVersion.StartsBranch"/>).</summary>
+            public bool StartsBranch { get; }
+
             public string DisplayName { get; }
             public string FileName { get; }
             public Action<Builder> Build { get; }
@@ -66,11 +75,15 @@ namespace DNPDemo.Editor
             public string ModelPath => $"{ModelFolder}/{FileName}_Placeholder.prefab";
         }
 
-        /// <summary>The versions in the order the scenario reaches them (docs/PLAN.md §2.5).</summary>
+        /// <summary>
+        /// The versions in the order the scenario reaches them, each with the version it was made from (docs/PLAN.md §2.5):
+        /// Scholar B's Ver 1.1 starts a branch off Scholar A's Ver 1.0, and Ver 2.0 starts another off Ver 1.1 instead of
+        /// following the rejected Ver 1.2.
+        /// </summary>
         static readonly Definition[] Definitions =
         {
-            new(ArmlessId, "腕なし", "Venus_Armless", b => b.Body()),
-            new(Ver10Id, "Ver 1.0", "Venus_Ver1_0", b =>
+            new(ArmlessId, null, false, "腕なし", "Venus_Armless", b => b.Body()),
+            new(Ver10Id, ArmlessId, false, "Ver 1.0", "Venus_Ver1_0", b =>
             {
                 // Left arm straight forward, palm up. The apple on the palm is the separate Apple object of the step
                 // definitions until Ver 1.1, because step 6 moves it.
@@ -79,7 +92,7 @@ namespace DNPDemo.Editor
                 b.Limb("LeftArm", LeftShoulder, hand);
                 b.Box("LeftHand", new Vector3(-0.275f, 1.56f, -0.6f), new Vector3(0.1f, 0.02f, 0.12f), Quaternion.identity);
             }),
-            new(Ver11Id, "Ver 1.1", "Venus_Ver1_1", b =>
+            new(Ver11Id, Ver10Id, true, "Ver 1.1", "Venus_Ver1_1", b =>
             {
                 // Same arm; the fingers hold the apple from above.
                 b.Body();
@@ -87,7 +100,7 @@ namespace DNPDemo.Editor
                 b.Box("LeftHand", new Vector3(-0.275f, 1.52f, -0.6f), new Vector3(0.1f, 0.03f, 0.12f), Quaternion.identity);
                 b.Apple(new Vector3(-0.275f, 1.45f, -0.6f));
             }),
-            new(Ver12Id, "Ver 1.2", "Venus_Ver1_2", b =>
+            new(Ver12Id, Ver11Id, false, "Ver 1.2", "Venus_Ver1_2", b =>
             {
                 // The arm slid inwards as one straight piece: an awkward, shortened angle.
                 b.Body();
@@ -96,19 +109,19 @@ namespace DNPDemo.Editor
                 b.Box("LeftHand", hand + new Vector3(0f, -0.02f, -0.03f), new Vector3(0.1f, 0.03f, 0.12f), Quaternion.identity);
                 b.Apple(hand + new Vector3(0f, -0.09f, -0.03f));
             }),
-            new(Ver20Id, "Ver 2.0", "Venus_Ver2_0", b =>
+            new(Ver20Id, Ver11Id, true, "Ver 2.0", "Venus_Ver2_0", b =>
             {
                 b.Body();
                 b.CurvedLeftArm();
             }),
-            new(Ver30Id, "Ver 3.0", "Venus_Ver3_0", b =>
+            new(Ver30Id, Ver20Id, false, "Ver 3.0", "Venus_Ver3_0", b =>
             {
                 // Right arm raised, holding the mirror facing forward.
                 b.Body();
                 b.CurvedLeftArm();
                 b.RightArmWithMirror(Vector3.back);
             }),
-            new(Ver31Id, "Ver 3.1", "Venus_Ver3_1", b =>
+            new(Ver31Id, Ver30Id, false, "Ver 3.1", "Venus_Ver3_1", b =>
             {
                 // The wrist turned so the mirror faces the head.
                 b.Body();
@@ -134,9 +147,13 @@ namespace DNPDemo.Editor
                 return catalog;
             }
             var versions = new List<VenusVersion>();
+            var byId = new Dictionary<string, VenusVersion>();
             foreach (Definition definition in Definitions)
             {
-                versions.Add(CreateVersion(definition));
+                VenusVersion parent = definition.ParentId != null ? byId[definition.ParentId] : null;
+                VenusVersion version = CreateVersion(definition, parent);
+                versions.Add(version);
+                byId.Add(definition.Id, version);
             }
             catalog = ScriptableObject.CreateInstance<VenusVersionCatalog>();
             catalog.SetVersions(versions);
@@ -230,7 +247,7 @@ namespace DNPDemo.Editor
             return catalog != null ? catalog.Find(id) : null;
         }
 
-        static VenusVersion CreateVersion(Definition definition)
+        static VenusVersion CreateVersion(Definition definition, VenusVersion parent)
         {
             var existing = AssetDatabase.LoadAssetAtPath<VenusVersion>(definition.VersionPath);
             if (existing != null)
@@ -238,7 +255,7 @@ namespace DNPDemo.Editor
                 return existing;
             }
             var version = ScriptableObject.CreateInstance<VenusVersion>();
-            version.Initialize(definition.Id, definition.DisplayName, CreateModel(definition));
+            version.Initialize(definition.Id, definition.DisplayName, CreateModel(definition), parent, definition.StartsBranch);
             Directory.CreateDirectory(DataFolder);
             AssetDatabase.CreateAsset(version, definition.VersionPath);
             Debug.Log($"[DNPDemo] Created {definition.VersionPath}");
