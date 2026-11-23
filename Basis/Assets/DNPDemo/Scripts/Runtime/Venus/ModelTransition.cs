@@ -10,21 +10,23 @@ namespace DNPDemo.Venus
         [SerializeField] ModelTransitionProfile _profile;
 
         VenusStatue _statue;
-        VenusVersion _previous;
-        VenusVersion _current;
         GameObject _previousModel;
         GameObject _currentModel;
-        readonly List<ModelTransitionMaterial> _materials = new();
         readonly List<ModelTransitionMaterial> _previousMaterials = new();
         readonly List<ModelTransitionMaterial> _currentMaterials = new();
         GameObject _particleInstance;
         Bounds? _pendingBounds;
-        bool _hasPendingBounds;
         Bounds _bounds;
         float _elapsed;
         bool _animating;
         float _previousDissolve;
         float _currentDissolve;
+
+        // Resolved from the profile when a transition starts, so that Tick does not hash the names every frame.
+        int _dissolveId;
+        int _scanLineId;
+        int _boundsMinId;
+        int _boundsMaxId;
 
         public bool IsAnimating => _animating;
         internal Bounds ActiveBounds => _bounds;
@@ -43,59 +45,30 @@ namespace DNPDemo.Venus
             {
                 _statue = GetComponent<VenusStatue>();
             }
-            if (_statue != null)
-            {
-                _statue.VersionChanged -= OnVersionChanged;
-                _statue.VersionChanged += OnVersionChanged;
-            }
+            Subscribe();
         }
 
         internal void Initialize(VenusStatue statue, ModelTransitionProfile profile)
         {
-            if (_statue != null)
-            {
-                _statue.VersionChanged -= OnVersionChanged;
-            }
+            Unsubscribe();
             _statue = statue != null ? statue : GetComponent<VenusStatue>();
             _profile = profile;
-            if (isActiveAndEnabled && _statue != null)
+            if (isActiveAndEnabled)
             {
-                _statue.VersionChanged -= OnVersionChanged;
-                _statue.VersionChanged += OnVersionChanged;
+                Subscribe();
             }
         }
 
+        // Unity always calls OnDisable before OnDestroy, so this also covers destruction.
         void OnDisable()
         {
-            _animating = false;
             try
             {
                 CompleteImmediately();
             }
             finally
             {
-                _animating = false;
-                if (_statue != null)
-                {
-                    _statue.VersionChanged -= OnVersionChanged;
-                }
-            }
-        }
-
-        void OnDestroy()
-        {
-            _animating = false;
-            try
-            {
-                CompleteImmediately();
-            }
-            finally
-            {
-                _animating = false;
-                if (_statue != null)
-                {
-                    _statue.VersionChanged -= OnVersionChanged;
-                }
+                Unsubscribe();
             }
         }
 
@@ -104,10 +77,12 @@ namespace DNPDemo.Venus
             Tick(Time.deltaTime);
         }
 
+        /// <summary>
+        /// Overrides the bounds of the next transition only. Null, or no call, uses the bounds of both models' renderers.
+        /// </summary>
         public void SetBounds(Bounds? bounds)
         {
             _pendingBounds = bounds;
-            _hasPendingBounds = true;
         }
 
         public void CompleteImmediately()
@@ -115,13 +90,6 @@ namespace DNPDemo.Venus
             _animating = false;
             try
             {
-                if (_particleInstance != null)
-                {
-                    foreach (ParticleSystem particleSystem in _particleInstance.GetComponentsInChildren<ParticleSystem>(true))
-                    {
-                        particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                    }
-                }
                 DestroyParticle();
 
                 if (_currentModel != null)
@@ -129,13 +97,8 @@ namespace DNPDemo.Venus
                     _currentModel.SetActive(true);
                 }
 
-                foreach (ModelTransitionMaterial material in _materials)
-                {
-                    material.Restore();
-                }
-                _materials.Clear();
-                _previousMaterials.Clear();
-                _currentMaterials.Clear();
+                RestoreMaterials(_previousMaterials);
+                RestoreMaterials(_currentMaterials);
 
                 if (_previousModel != null && _previousModel != _currentModel)
                 {
@@ -144,14 +107,10 @@ namespace DNPDemo.Venus
             }
             finally
             {
-                _previous = null;
-                _current = null;
                 _previousModel = null;
                 _currentModel = null;
                 _elapsed = 0f;
-                _animating = false;
                 _pendingBounds = null;
-                _hasPendingBounds = false;
             }
         }
 
@@ -176,31 +135,35 @@ namespace DNPDemo.Venus
             }
         }
 
+        void Subscribe()
+        {
+            if (_statue != null)
+            {
+                // Removing first keeps a single subscription when OnEnable and Initialize both run.
+                _statue.VersionChanged -= OnVersionChanged;
+                _statue.VersionChanged += OnVersionChanged;
+            }
+        }
+
+        void Unsubscribe()
+        {
+            if (_statue != null)
+            {
+                _statue.VersionChanged -= OnVersionChanged;
+            }
+        }
+
         void OnVersionChanged(VenusVersionChange change)
         {
-            if (_statue == null)
-            {
-                _statue = GetComponent<VenusStatue>();
-            }
-            if (_statue == null)
-            {
-                CompleteImmediately();
-                return;
-            }
-
-            Bounds? nextBounds = _hasPendingBounds ? _pendingBounds : null;
+            Bounds? nextBounds = _pendingBounds;
             if (_animating)
             {
                 CompleteImmediately();
             }
 
-            _previous = change.Previous;
-            _current = change.Current;
-            _previousModel = _statue.GetModel(_previous);
-            _currentModel = _statue.GetModel(_current);
-
+            _previousModel = _statue.GetModel(change.Previous);
+            _currentModel = _statue.GetModel(change.Current);
             _pendingBounds = null;
-            _hasPendingBounds = false;
             _bounds = nextBounds ?? ComputeFullBounds(_previousModel, _currentModel);
 
             if (!change.Animate || _profile == null || _profile.TransitionMaterial == null || _profile.Duration <= 0f)
@@ -214,35 +177,18 @@ namespace DNPDemo.Venus
                 _previousModel.SetActive(true);
             }
 
-            _materials.Clear();
-            _previousMaterials.Clear();
-            _currentMaterials.Clear();
-            if (_previousModel != null)
-            {
-                List<ModelTransitionMaterial> previousMaterials = ModelTransitionMaterial.Capture(
-                    _previousModel,
-                    _profile.TransitionMaterial,
-                    _profile.BaseMapPropertyName,
-                    _profile.BaseColorPropertyName);
-                _previousMaterials.AddRange(previousMaterials);
-                _materials.AddRange(previousMaterials);
-            }
-            if (_currentModel != null)
-            {
-                List<ModelTransitionMaterial> currentMaterials = ModelTransitionMaterial.Capture(
-                    _currentModel,
-                    _profile.TransitionMaterial,
-                    _profile.BaseMapPropertyName,
-                    _profile.BaseColorPropertyName);
-                _currentMaterials.AddRange(currentMaterials);
-                _materials.AddRange(currentMaterials);
-            }
-
-            if (_materials.Count == 0)
+            CaptureMaterials(_previousModel, _previousMaterials);
+            CaptureMaterials(_currentModel, _currentMaterials);
+            if (_previousMaterials.Count == 0 && _currentMaterials.Count == 0)
             {
                 CompleteImmediately();
                 return;
             }
+
+            _dissolveId = Shader.PropertyToID(_profile.DissolvePropertyName);
+            _scanLineId = Shader.PropertyToID(_profile.ScanLinePropertyName);
+            _boundsMinId = Shader.PropertyToID(_profile.BoundsMinPropertyName);
+            _boundsMaxId = Shader.PropertyToID(_profile.BoundsMaxPropertyName);
 
             _elapsed = 0f;
             _animating = true;
@@ -250,39 +196,45 @@ namespace DNPDemo.Venus
             SpawnParticle();
         }
 
+        void CaptureMaterials(GameObject model, List<ModelTransitionMaterial> into)
+        {
+            into.Clear();
+            into.AddRange(ModelTransitionMaterial.Capture(
+                model,
+                _profile.TransitionMaterial,
+                _profile.BaseMapPropertyName,
+                _profile.BaseColorPropertyName));
+        }
+
+        static void RestoreMaterials(List<ModelTransitionMaterial> materials)
+        {
+            foreach (ModelTransitionMaterial material in materials)
+            {
+                material.Restore();
+            }
+            materials.Clear();
+        }
+
         void SetShaderProgress(float progress)
         {
             _previousDissolve = _previousModel != null ? 1f - progress : 0f;
             _currentDissolve = progress;
+            SetShaderProgress(_previousMaterials, 1f - progress, progress);
+            SetShaderProgress(_currentMaterials, progress, progress);
+        }
 
-            int dissolveId = Shader.PropertyToID(_profile.DissolvePropertyName);
-            int scanLineId = Shader.PropertyToID(_profile.ScanLinePropertyName);
-            int boundsMinId = Shader.PropertyToID(_profile.BoundsMinPropertyName);
-            int boundsMaxId = Shader.PropertyToID(_profile.BoundsMaxPropertyName);
-
-            foreach (ModelTransitionMaterial material in _previousMaterials)
+        void SetShaderProgress(List<ModelTransitionMaterial> materials, float dissolve, float scanLine)
+        {
+            foreach (ModelTransitionMaterial material in materials)
             {
                 material.SetProperties(
-                    dissolveId,
-                    1f - progress,
-                    scanLineId,
-                    progress,
-                    boundsMinId,
+                    _dissolveId,
+                    dissolve,
+                    _scanLineId,
+                    scanLine,
+                    _boundsMinId,
                     _bounds.min,
-                    boundsMaxId,
-                    _bounds.max);
-            }
-
-            foreach (ModelTransitionMaterial material in _currentMaterials)
-            {
-                material.SetProperties(
-                    dissolveId,
-                    progress,
-                    scanLineId,
-                    progress,
-                    boundsMinId,
-                    _bounds.min,
-                    boundsMaxId,
+                    _boundsMaxId,
                     _bounds.max);
             }
         }
@@ -341,6 +293,8 @@ namespace DNPDemo.Venus
             }
             if (Application.isPlaying)
             {
+                // Destroy takes effect at the end of the frame; hide the instance so its particles vanish now.
+                _particleInstance.SetActive(false);
                 Destroy(_particleInstance);
             }
             else

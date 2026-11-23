@@ -17,84 +17,84 @@ namespace DNPDemo.Venus
             _transitionMaterials = transitionMaterials;
         }
 
+        static readonly int MainTexId = Shader.PropertyToID("_MainTex");
+        static readonly int ColorId = Shader.PropertyToID("_Color");
+
+        /// <summary>
+        /// Swaps every renderer under <paramref name="model"/> to clones of <paramref name="transitionTemplate"/>
+        /// that carry over each original material's base map and color, and returns the captures to restore later.
+        /// </summary>
         public static List<ModelTransitionMaterial> Capture(GameObject model, Material transitionTemplate,
             string baseMapPropertyName, string baseColorPropertyName)
         {
             var captures = new List<ModelTransitionMaterial>();
-            if (model == null)
+            if (model == null || transitionTemplate == null)
             {
                 return captures;
             }
+            int baseMapId = Shader.PropertyToID(baseMapPropertyName);
+            int baseColorId = Shader.PropertyToID(baseColorPropertyName);
             foreach (Renderer renderer in model.GetComponentsInChildren<Renderer>(true))
             {
-                captures.Add(Capture(renderer, transitionTemplate, baseMapPropertyName, baseColorPropertyName));
+                Material[] originals = renderer.sharedMaterials;
+                var transitionMaterials = new Material[originals.Length];
+                for (int i = 0; i < originals.Length; i++)
+                {
+                    transitionMaterials[i] = CreateTransitionMaterial(transitionTemplate, originals[i], baseMapId, baseColorId);
+                }
+                var capture = new ModelTransitionMaterial(renderer, transitionMaterials);
+                capture.Apply();
+                captures.Add(capture);
             }
             return captures;
         }
 
-        static ModelTransitionMaterial Capture(Renderer renderer, Material transitionTemplate,
-            string baseMapPropertyName, string baseColorPropertyName)
+        static Material CreateTransitionMaterial(Material template, Material original, int baseMapId, int baseColorId)
         {
-            Material[] originals = renderer.sharedMaterials;
-            var transitionMaterials = new Material[originals.Length];
-            for (int i = 0; i < originals.Length; i++)
+            var clone = new Material(template);
+            if (original == null)
             {
-                if (transitionTemplate == null)
-                {
-                    transitionMaterials[i] = null;
-                    continue;
-                }
-                var clone = new Material(transitionTemplate);
-                Material original = originals[i];
-                if (original != null)
-                {
-                    int mapId = Shader.PropertyToID(baseMapPropertyName);
-                    if (clone.HasProperty(mapId) && original.HasProperty(mapId))
-                    {
-                        clone.SetTexture(mapId, original.GetTexture(mapId));
-                    }
-                    else if (clone.HasProperty("_MainTex") && original.HasProperty("_MainTex"))
-                    {
-                        clone.SetTexture("_MainTex", original.GetTexture("_MainTex"));
-                    }
-
-                    int colorId = Shader.PropertyToID(baseColorPropertyName);
-                    if (clone.HasProperty(colorId) && original.HasProperty(colorId))
-                    {
-                        clone.SetColor(colorId, original.GetColor(colorId));
-                    }
-                    else if (clone.HasProperty("_Color") && original.HasProperty("_Color"))
-                    {
-                        clone.SetColor("_Color", original.HasProperty("_Color") ? original.GetColor("_Color") : Color.white);
-                    }
-                }
-                transitionMaterials[i] = clone;
+                return clone;
             }
-            var capture = new ModelTransitionMaterial(renderer, transitionMaterials);
-            capture.Apply();
-            return capture;
+            if (!CopyTexture(clone, original, baseMapId))
+            {
+                CopyTexture(clone, original, MainTexId);
+            }
+            if (!CopyColor(clone, original, baseColorId))
+            {
+                CopyColor(clone, original, ColorId);
+            }
+            return clone;
+        }
+
+        static bool CopyTexture(Material to, Material from, int id)
+        {
+            if (!to.HasProperty(id) || !from.HasProperty(id))
+            {
+                return false;
+            }
+            to.SetTexture(id, from.GetTexture(id));
+            return true;
+        }
+
+        static bool CopyColor(Material to, Material from, int id)
+        {
+            if (!to.HasProperty(id) || !from.HasProperty(id))
+            {
+                return false;
+            }
+            to.SetColor(id, from.GetColor(id));
+            return true;
         }
 
         void Apply()
         {
-            if (_renderer == null)
+            if (_renderer == null || _transitionMaterials.Length == 0)
             {
                 return;
             }
-            bool hasTransitionMaterial = false;
-            foreach (Material material in _transitionMaterials)
-            {
-                if (material != null)
-                {
-                    hasTransitionMaterial = true;
-                    break;
-                }
-            }
-            if (hasTransitionMaterial)
-            {
-                _renderer.sharedMaterials = _transitionMaterials;
-                _applied = true;
-            }
+            _renderer.sharedMaterials = _transitionMaterials;
+            _applied = true;
         }
 
         public void SetProperties(int dissolveId, float dissolve, int scanLineId, float scanLine,
@@ -106,23 +106,19 @@ namespace DNPDemo.Venus
             }
             foreach (Material material in _transitionMaterials)
             {
-                if (material == null)
-                {
-                    continue;
-                }
-                if (dissolveId >= 0 && material.HasProperty(dissolveId))
+                if (material.HasProperty(dissolveId))
                 {
                     material.SetFloat(dissolveId, dissolve);
                 }
-                if (scanLineId >= 0 && material.HasProperty(scanLineId))
+                if (material.HasProperty(scanLineId))
                 {
                     material.SetFloat(scanLineId, scanLine);
                 }
-                if (boundsMinId >= 0 && material.HasProperty(boundsMinId))
+                if (material.HasProperty(boundsMinId))
                 {
                     material.SetVector(boundsMinId, boundsMin);
                 }
-                if (boundsMaxId >= 0 && material.HasProperty(boundsMaxId))
+                if (material.HasProperty(boundsMaxId))
                 {
                     material.SetVector(boundsMaxId, boundsMax);
                 }

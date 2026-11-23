@@ -319,28 +319,6 @@ namespace DNPDemo.Tests
             Assert.IsTrue(transition.IsAnimating);
         }
 
-        [Test]
-        public void OnDestroyCompletesWithoutThrowingOnLaterVersionChanges()
-        {
-            // EditMode does not invoke OnDestroy; validate the remaining state after calling it explicitly.
-            VenusStatue statue = CreateStatue();
-            VenusVersion first = CreateVersion("first");
-            VenusVersion second = CreateVersion("second");
-            var transition = statue.gameObject.AddComponent<ModelTransition>();
-            SetProfile(transition, CreateProfile(1f));
-
-            statue.Show(first, false);
-            statue.Show(second, true);
-            Assert.IsTrue(transition.IsAnimating);
-
-            Assert.DoesNotThrow(() =>
-                typeof(ModelTransition).GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.NonPublic)
-                    .Invoke(transition, null));
-            Assert.IsFalse(statue.GetModel(first).activeSelf);
-            Assert.IsTrue(statue.GetModel(second).activeSelf);
-            Assert.DoesNotThrow(() => statue.Show(first, false));
-        }
-
         public static IEnumerable<TestCaseData> CatalogPairs
         {
             get
