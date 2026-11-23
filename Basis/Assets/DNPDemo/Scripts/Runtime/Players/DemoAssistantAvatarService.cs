@@ -12,7 +12,7 @@ namespace DNPDemo.Players
     {
         [SerializeField] DemoRoleService _roleService;
         [SerializeField] string _playerAAddressableKey = "AssistantA";
-        [SerializeField] string _playerBAddressableKey = "AssistantA";
+        [SerializeField] string _playerBAddressableKey = "AssistantB";
 
         string _loadedAddressableKey;
         int _loadGeneration;
