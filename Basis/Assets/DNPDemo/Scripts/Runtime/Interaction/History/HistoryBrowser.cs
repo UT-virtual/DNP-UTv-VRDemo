@@ -4,7 +4,7 @@ using DNPDemo.Venus;
 namespace DNPDemo.Interaction.History
 {
     /// <summary>
-    /// Which version of the history the panel shows, and stepping back and forth through the list.
+    /// Which version of the history the detail view of the panel shows, and stepping back and forth through the list.
     /// The list is oldest first; <see cref="HistoryPanel"/> replaces it whenever the scenario reaches another step.
     /// </summary>
     public sealed class HistoryBrowser
@@ -47,6 +47,18 @@ namespace DNPDemo.Interaction.History
 
         /// <summary>Selects the newest version, the one the statue shows now.</summary>
         public void SelectLatest() => Index = _versions.Count - 1;
+
+        /// <summary>Selects <paramref name="version"/>. Returns false, keeping the selection, when it is not in the list.</summary>
+        public bool Select(VenusVersion version)
+        {
+            int index = version != null ? _versions.IndexOf(version) : -1;
+            if (index < 0)
+            {
+                return false;
+            }
+            Index = index;
+            return true;
+        }
 
         /// <summary>Selects the next older version. Returns false when there is none.</summary>
         public bool GoBack()

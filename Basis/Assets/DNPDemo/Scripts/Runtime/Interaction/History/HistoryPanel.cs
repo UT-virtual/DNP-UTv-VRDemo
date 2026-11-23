@@ -11,8 +11,13 @@ namespace DNPDemo.Interaction.History
 {
     /// <summary>
     /// The history panel: opened from「モデルの履歴」on the main menu (<see cref="Menu.HistoryMenuProvider"/>), it is put in
-    /// front of the view and left there to be pointed at with the laser. It shows one version of the main statue's history
-    /// at a time as a turning miniature (<see cref="HistoryPreview"/>); ◀ ▶ step through the versions and × closes it.
+    /// front of the view and left there to be pointed at with the laser. × closes it. It has two pages:
+    /// <list type="bullet">
+    /// <item><see cref="HistoryPanelPage.Tree"/>, shown on opening: every version of the main statue's history as a card
+    /// in a branch tree (<see cref="HistoryTreeView"/>). Pressing a card shows it on the detail page.</item>
+    /// <item><see cref="HistoryPanelPage.Detail"/>: one version at a time as a turning miniature (<see cref="HistoryPreview"/>);
+    /// ◀ ▶ step through the versions in the order they were reached, and「一覧へ」goes back to the tree.</item>
+    /// </list>
     /// <para>
     /// Either player can open it at any time. The「モデルを復元」button stays greyed out until the scenario allows it:
     /// <see cref="HistoryTool"/> enables it on the actor's device during a <see cref="HistoryPart"/> and handles
@@ -27,6 +32,7 @@ namespace DNPDemo.Interaction.History
     {
         public const string RestoreLabel = "モデルを復元";
         public const string EmptyMessage = "まだ履歴がありません";
+        public const string BackLabel = "一覧へ";
 
         /// <summary>Opacity of the label or icon on a disabled button.</summary>
         const float DisabledContentAlpha = 0.35f;
@@ -44,6 +50,14 @@ namespace DNPDemo.Interaction.History
 
         [Tooltip("Keep it outside the canvas object and active at scene load, so its statue builds the models then rather than on the first open.")]
         [SerializeField] HistoryPreview _preview;
+
+        [Tooltip("Shown on the tree page.")]
+        [SerializeField] GameObject _treePage;
+        [SerializeField] HistoryTreeView _treeView;
+
+        [Tooltip("Shown on the detail page, with the preview.")]
+        [SerializeField] GameObject _detailPage;
+        [SerializeField] Button _backButton;
         [SerializeField] TMP_Text _versionText;
         [SerializeField] TMP_Text _pageText;
         [SerializeField] TMP_Text _emptyText;
@@ -54,6 +68,7 @@ namespace DNPDemo.Interaction.History
         [SerializeField] Button _restoreButton;
 
         readonly HistoryBrowser _browser = new();
+        HistoryPanelPage _page = HistoryPanelPage.Tree;
         bool _restoreAllowed;
         string _status = string.Empty;
 
@@ -61,6 +76,8 @@ namespace DNPDemo.Interaction.History
         public static HistoryPanel Active { get; private set; }
 
         public bool IsOpen => _content != null && _content.activeSelf;
+
+        public HistoryPanelPage Page => _page;
 
         /// <summary>The version on show, or null when there is no history yet.</summary>
         public VenusVersion Selected => _browser.Selected;
@@ -77,6 +94,11 @@ namespace DNPDemo.Interaction.History
             AddListener(_previousButton, GoBack);
             AddListener(_nextButton, GoForward);
             AddListener(_restoreButton, Restore);
+            AddListener(_backButton, ShowTree);
+            if (_treeView != null)
+            {
+                _treeView.VersionPressed += HandleVersionPressed;
+            }
             SetContentVisible(false);
         }
 
@@ -107,9 +129,17 @@ namespace DNPDemo.Interaction.History
             RemoveListener(_previousButton, GoBack);
             RemoveListener(_nextButton, GoForward);
             RemoveListener(_restoreButton, Restore);
+            RemoveListener(_backButton, ShowTree);
+            if (_treeView != null)
+            {
+                _treeView.VersionPressed -= HandleVersionPressed;
+            }
         }
 
-        /// <summary>Puts the panel in front of the view showing the newest version. Opening it again brings it back in front.</summary>
+        /// <summary>
+        /// Puts the panel in front of the view on the tree page, with the newest version selected for the detail page.
+        /// Opening it again brings it back in front.
+        /// </summary>
         public void Open()
         {
             if (HeadPose.IsAvailable)
@@ -118,12 +148,35 @@ namespace DNPDemo.Interaction.History
             }
             _browser.SetVersions(CollectVersions());
             _browser.SelectLatest();
+            _page = HistoryPanelPage.Tree;
             _status = string.Empty;
             SetContentVisible(true);
             Refresh();
         }
 
         public void Close() => SetContentVisible(false);
+
+        /// <summary>Shows <paramref name="version"/> on the detail page. Does nothing when it is not in the history.</summary>
+        public void ShowDetail(VenusVersion version)
+        {
+            if (IsOpen && _browser.Select(version))
+            {
+                _page = HistoryPanelPage.Detail;
+                _status = string.Empty;
+                Refresh();
+            }
+        }
+
+        /// <summary>Goes back to the tree page.</summary>
+        public void ShowTree()
+        {
+            if (IsOpen && _page != HistoryPanelPage.Tree)
+            {
+                _page = HistoryPanelPage.Tree;
+                _status = string.Empty;
+                Refresh();
+            }
+        }
 
         /// <summary>Enables or greys out「モデルを復元」. Disallowing it also clears the status line.</summary>
         public void SetRestoreAllowed(bool allowed)
@@ -161,6 +214,8 @@ namespace DNPDemo.Interaction.History
             // A step's version cue plays at its start, so the version of the current step is already on the statue.
             return VenusVersionHistory.Collect(_director.Scenario.Steps, _director.StepIndex + 1, _statueKey);
         }
+
+        void HandleVersionPressed(VenusVersion version) => ShowDetail(version);
 
         void GoBack()
         {
@@ -209,6 +264,24 @@ namespace DNPDemo.Interaction.History
             }
             VenusVersion selected = _browser.Selected;
             bool hasHistory = selected != null;
+            if (!hasHistory)
+            {
+                // The operator moved the scenario back before the first version while the detail page was open.
+                _page = HistoryPanelPage.Tree;
+            }
+            bool detail = _page == HistoryPanelPage.Detail;
+            if (_treePage != null)
+            {
+                _treePage.SetActive(!detail);
+            }
+            if (_detailPage != null)
+            {
+                _detailPage.SetActive(detail);
+            }
+            if (!detail && _treeView != null)
+            {
+                _treeView.Show(_browser.Versions);
+            }
             SetText(_versionText, hasHistory ? selected.ToString() : string.Empty);
             SetText(_pageText, hasHistory ? $"{_browser.Index + 1} / {_browser.Versions.Count}" : string.Empty);
             SetText(_statusText, _status);
@@ -221,7 +294,7 @@ namespace DNPDemo.Interaction.History
             SetInteractable(_restoreButton, _restoreAllowed && hasHistory);
             if (_preview != null)
             {
-                _preview.Show(selected);
+                _preview.Show(detail ? selected : null);
             }
         }
 
@@ -268,5 +341,15 @@ namespace DNPDemo.Interaction.History
                 button.onClick.RemoveListener(action);
             }
         }
+    }
+
+    /// <summary>The two pages of <see cref="HistoryPanel"/>.</summary>
+    public enum HistoryPanelPage
+    {
+        /// <summary>Every version as a branch tree.</summary>
+        Tree,
+
+        /// <summary>One version at a time, with「モデルを復元」.</summary>
+        Detail,
     }
 }

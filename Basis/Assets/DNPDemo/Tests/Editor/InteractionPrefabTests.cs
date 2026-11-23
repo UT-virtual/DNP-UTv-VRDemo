@@ -44,7 +44,8 @@ namespace DNPDemo.Tests
             var so = new SerializedObject(panel);
             foreach (string field in new[]
             {
-                "_content", "_preview", "_versionText", "_pageText", "_emptyText", "_statusText",
+                "_content", "_preview", "_treePage", "_treeView", "_detailPage", "_backButton",
+                "_versionText", "_pageText", "_emptyText", "_statusText",
                 "_closeButton", "_previousButton", "_nextButton", "_restoreButton",
             })
             {

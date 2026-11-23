@@ -324,12 +324,23 @@ namespace DNPDemo.Editor
                 SetLayerRecursively(root.transform, LayerMask.NameToLayer(UILayerName));
             });
 
+        /// <summary>Size of the history panel in canvas pixels (millimetres). Wide enough for the branch tree of every version.</summary>
+        public static readonly Vector2 HistoryPanelSize = new(960, 620);
+
+        /// <summary>Size of a version card in the branch view, in canvas pixels.</summary>
+        public static readonly Vector2 HistoryCardSize = new(128, 158);
+
         /// <summary>
         /// Tool for <see cref="HistoryPart"/> with the history panel as its child, styled like the Basis menus
         /// (<see cref="BasisUiStyle"/>). The panel is a plain transform placed in front of the view when it opens; under it,
         /// the canvas (switched off while closed) and the turning preview, which stays active so its statue builds the
         /// version models at scene load. The director and the stage live in DemoSystems, so <see cref="ScenarioInstaller"/>
         /// wires them when it places the tool there.
+        /// <para>
+        /// The canvas holds the close button and the empty message, shared by its two pages: the tree page (the title and
+        /// the branch view with an inactive card template) and the detail page (「一覧へ」, the version name, ◀ ▶ and
+        /// 「モデルを復元」).
+        /// </para>
         /// <para>
         /// The preview stands behind the canvas. The background and a depth-only copy of its shape are drawn in the queues
         /// of <see cref="HistoryRenderQueues"/>, around the preview, so the background colour never covers the model while
@@ -344,7 +355,7 @@ namespace DNPDemo.Editor
                 panelObject.transform.SetParent(root.transform, false);
 
                 GameObject canvas = CreateChild("Canvas", panelObject.transform);
-                SetupWorldCanvas(canvas, new Vector2(720, 620), interactive: true);
+                SetupWorldCanvas(canvas, HistoryPanelSize, interactive: true);
                 Transform ui = canvas.transform;
                 const float panelRadius = 28f;
                 BasisUiStyle.CreatePanelImage("Background", ui, BasisUiStyle.PanelColor, panelRadius, CreateHistoryPanelBackgroundMaterial());
@@ -354,39 +365,49 @@ namespace DNPDemo.Editor
                 // shown and hidden with the panel; 2 mm behind it, so the labels and buttons do not fight it for depth.
                 GameObject depth = CreateChild("Depth", ui);
                 depth.transform.localPosition = new Vector3(0f, 0f, 2f);
-                depth.transform.localScale = new Vector3(720f, 620f, 1f);
+                depth.transform.localScale = new Vector3(HistoryPanelSize.x, HistoryPanelSize.y, 1f);
                 depth.AddComponent<MeshFilter>().sharedMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
                 var depthRenderer = depth.AddComponent<MeshRenderer>();
                 depthRenderer.sharedMaterial = CreateHistoryPanelDepthMaterial();
                 depthRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 depthRenderer.receiveShadows = false;
 
-                TMP_Text title = CreateText("Title", ui, HistoryMenuProvider.MenuTitle, 34, TextAlignmentOptions.MidlineLeft);
-                Anchor(title.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(32, -84), new Vector2(-120, -24));
                 Button close = BasisUiStyle.CreateButton("CloseButton", ui, BasisUiStyle.SecondaryButtonColor, cornerRadius: 32);
                 Anchor((RectTransform)close.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-88, -88), new Vector2(-24, -24));
                 BasisUiStyle.AddIcon(close, BasisUiStyle.CloseIconPath, inset: 18);
-
-                TMP_Text version = CreateText("VersionName", ui, string.Empty, 40, TextAlignmentOptions.Center);
-                Anchor(version.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(120, -150), new Vector2(-120, -90));
-                TMP_Text page = CreateText("Page", ui, string.Empty, 24, TextAlignmentOptions.Center);
-                Anchor(page.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(120, -190), new Vector2(-120, -150));
                 TMP_Text empty = CreateText("Empty", ui, HistoryPanel.EmptyMessage, 30, TextAlignmentOptions.Center);
                 Anchor(empty.rectTransform, Vector2.zero, Vector2.one, new Vector2(120, 170), new Vector2(-120, -190));
 
+                GameObject treePage = CreatePage("TreePage", ui);
+                TMP_Text title = CreateText("Title", treePage.transform, HistoryMenuProvider.MenuTitle, 34, TextAlignmentOptions.MidlineLeft);
+                Anchor(title.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(32, -84), new Vector2(-120, -24));
+                HistoryTreeView treeView = CreateHistoryTreeView(treePage.transform);
+
+                GameObject detailPage = CreatePage("DetailPage", ui);
+                Transform detail = detailPage.transform;
+                Button back = BasisUiStyle.CreateButton("BackButton", detail, BasisUiStyle.SecondaryButtonColor, cornerRadius: 32);
+                Anchor((RectTransform)back.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(24, -88), new Vector2(184, -24));
+                BasisUiStyle.AddLabel(back, HistoryPanel.BackLabel, 28);
+
+                TMP_Text version = CreateText("VersionName", detail, string.Empty, 40, TextAlignmentOptions.Center);
+                Anchor(version.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(200, -150), new Vector2(-200, -90));
+                TMP_Text page = CreateText("Page", detail, string.Empty, 24, TextAlignmentOptions.Center);
+                Anchor(page.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(200, -190), new Vector2(-200, -150));
+
                 // Foldout Arrow points down; turned a quarter to point left or right.
-                Button previous = BasisUiStyle.CreateButton("PreviousButton", ui, BasisUiStyle.SecondaryButtonColor, cornerRadius: 40);
+                Button previous = BasisUiStyle.CreateButton("PreviousButton", detail, BasisUiStyle.SecondaryButtonColor, cornerRadius: 40);
                 Anchor((RectTransform)previous.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(24, -55), new Vector2(104, 25));
                 BasisUiStyle.AddIcon(previous, BasisUiStyle.ArrowIconPath, inset: 16, rotation: -90f);
-                Button next = BasisUiStyle.CreateButton("NextButton", ui, BasisUiStyle.SecondaryButtonColor, cornerRadius: 40);
+                Button next = BasisUiStyle.CreateButton("NextButton", detail, BasisUiStyle.SecondaryButtonColor, cornerRadius: 40);
                 Anchor((RectTransform)next.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-104, -55), new Vector2(-24, 25));
                 BasisUiStyle.AddIcon(next, BasisUiStyle.ArrowIconPath, inset: 16, rotation: 90f);
 
-                Button restore = BasisUiStyle.CreateButton("RestoreButton", ui, BasisUiStyle.PrimaryButtonColor, cornerRadius: 40);
+                Button restore = BasisUiStyle.CreateButton("RestoreButton", detail, BasisUiStyle.PrimaryButtonColor, cornerRadius: 40);
                 Anchor((RectTransform)restore.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(-170, 70), new Vector2(170, 150));
                 BasisUiStyle.AddLabel(restore, HistoryPanel.RestoreLabel, 32);
-                TMP_Text status = CreateText("Status", ui, string.Empty, 22, TextAlignmentOptions.Center);
+                TMP_Text status = CreateText("Status", detail, string.Empty, 22, TextAlignmentOptions.Center);
                 Anchor(status.rectTransform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(30, 20), new Vector2(-30, 64));
+                detailPage.SetActive(false);
 
                 SetLayerRecursively(canvas.transform, LayerMask.NameToLayer(UILayerName));
 
@@ -405,6 +426,10 @@ namespace DNPDemo.Editor
                 var panel = panelObject.AddComponent<HistoryPanel>();
                 Assign(panel, "_content", canvas);
                 Assign(panel, "_preview", preview);
+                Assign(panel, "_treePage", treePage);
+                Assign(panel, "_treeView", treeView);
+                Assign(panel, "_detailPage", detailPage);
+                Assign(panel, "_backButton", back);
                 Assign(panel, "_versionText", version);
                 Assign(panel, "_pageText", page);
                 Assign(panel, "_emptyText", empty);
@@ -417,6 +442,61 @@ namespace DNPDemo.Editor
                 var tool = root.AddComponent<HistoryTool>();
                 Assign(tool, "_panel", panel);
             }, rectTransformRoot: false);
+
+        /// <summary>A child filling <paramref name="parent"/>, shown and hidden as one page of the history panel.</summary>
+        static GameObject CreatePage(string name, Transform parent)
+        {
+            GameObject page = CreateChild(name, parent);
+            Anchor((RectTransform)page.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            return page;
+        }
+
+        /// <summary>
+        /// The branch view below the title: the content (lines, then cards, so the lines draw behind) and the inactive card
+        /// template. A card is a frame shown on the current version, behind a button holding the thumbnail and the name.
+        /// </summary>
+        static HistoryTreeView CreateHistoryTreeView(Transform parent)
+        {
+            GameObject area = CreateChild("Tree", parent);
+            Anchor((RectTransform)area.transform, Vector2.zero, Vector2.one, new Vector2(32, 32), new Vector2(-32, -104));
+            var content = (RectTransform)CreateChild("Content", area.transform).transform;
+            var lines = (RectTransform)CreateChild("Lines", content).transform;
+            Anchor(lines, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            var cards = (RectTransform)CreateChild("Cards", content).transform;
+            Anchor(cards, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+
+            GameObject template = CreateChild("CardTemplate", area.transform);
+            var templateRect = (RectTransform)template.transform;
+            templateRect.anchorMin = templateRect.anchorMax = templateRect.pivot = new Vector2(0f, 1f);
+            templateRect.sizeDelta = HistoryCardSize;
+            Image frame = BasisUiStyle.CreatePanelImage("CurrentFrame", template.transform, BasisUiStyle.PrimaryButtonColor, 22f);
+            Anchor(frame.rectTransform, Vector2.zero, Vector2.one, new Vector2(-6, -6), new Vector2(6, 6));
+            frame.raycastTarget = false;
+            Button button = BasisUiStyle.CreateButton("Button", template.transform, BasisUiStyle.SecondaryButtonColor, cornerRadius: 18);
+            Anchor((RectTransform)button.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            GameObject thumbnailObject = CreateChild("Thumbnail", button.transform);
+            var thumbnail = thumbnailObject.AddComponent<RawImage>();
+            thumbnail.raycastTarget = false;
+            float side = HistoryCardSize.x - 16f;
+            Anchor(thumbnail.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(8, -8 - side), new Vector2(-8, -8));
+            TMP_Text label = CreateText("Label", button.transform, string.Empty, 22, TextAlignmentOptions.Center);
+            Anchor(label.rectTransform, Vector2.zero, new Vector2(1, 0), new Vector2(4, 4), new Vector2(-4, 38));
+            label.raycastTarget = false;
+            var card = template.AddComponent<HistoryTreeCard>();
+            Assign(card, "_button", button);
+            Assign(card, "_thumbnail", thumbnail);
+            Assign(card, "_label", label);
+            Assign(card, "_currentFrame", frame.gameObject);
+            frame.gameObject.SetActive(false);
+            template.SetActive(false);
+
+            var view = area.AddComponent<HistoryTreeView>();
+            Assign(view, "_content", content);
+            Assign(view, "_lines", lines);
+            Assign(view, "_cards", cards);
+            Assign(view, "_cardTemplate", card);
+            return view;
+        }
 
         /// <summary>
         /// Tool for <see cref="DummyInteractionPart"/>. The tool sits on the root; the panel is a child canvas that is

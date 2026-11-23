@@ -15,3 +15,6 @@ MonoBehaviour:
   _id: armless
   _displayName: "\u8155\u306A\u3057"
   _model: {fileID: 4068893523779864488, guid: 03a7aae57ef7c0f479f98cb049ca2c60, type: 3}
+  _parent: {fileID: 0}
+  _startsBranch: 0
+  _thumbnail: {fileID: 2800000, guid: 4f76f7da4440c354e91c0e5df5bf7acd, type: 3}
