@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ModelTransition
+  m_Name: M_ModelTransition
   m_Shader: {fileID: 4800000, guid: 463a6871c79500e4cb44e62087f6a607, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0

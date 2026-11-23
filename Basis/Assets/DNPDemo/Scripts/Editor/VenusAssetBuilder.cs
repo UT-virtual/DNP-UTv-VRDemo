@@ -27,8 +27,8 @@ namespace DNPDemo.Editor
         public const string MarbleMaterialPath = MaterialFolder + "/M_MarblePlaceholder.mat";
         public const string AppleMaterialPath = MaterialFolder + "/M_ApplePlaceholder.mat";
         public const string MirrorMaterialPath = MaterialFolder + "/M_MirrorPlaceholder.mat";
-        public const string TransitionShaderPath = DNPDemoProjectSetup.Root + "/Art/Venus/Materials/ModelTransition.shader";
-        public const string TransitionMaterialPath = DNPDemoProjectSetup.Root + "/Art/Venus/Materials/M_ModelTransition.mat";
+        public const string TransitionShaderPath = MaterialFolder + "/ModelTransition.shader";
+        public const string TransitionMaterialPath = MaterialFolder + "/M_ModelTransition.mat";
         public const string TransitionProfilePath = DNPDemoProjectSetup.Root + "/Data/Venus/ModelTransitionProfile.asset";
         public const string StatuePrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Statue_Original.prefab";
         public const string ComparisonTablePrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/ComparisonTable.prefab";
@@ -200,11 +200,6 @@ namespace DNPDemo.Editor
                     if (transition == null)
                     {
                         transition = statue.gameObject.AddComponent<ModelTransition>();
-                        changed = true;
-                    }
-                    if (statue.GetComponent<ModelTransitionDebug>() == null)
-                    {
-                        statue.gameObject.AddComponent<ModelTransitionDebug>();
                         changed = true;
                     }
 
