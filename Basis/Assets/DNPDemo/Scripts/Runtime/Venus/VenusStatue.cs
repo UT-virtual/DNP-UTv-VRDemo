@@ -84,7 +84,25 @@ namespace DNPDemo.Venus
         public GameObject GetModel(VenusVersion version) =>
             version != null && _models.TryGetValue(version, out GameObject model) ? model : null;
 
-        void IStageResettable.ResetToBaseline() => Show(_baseline, false);
+        void IStageResettable.ResetToBaseline()
+        {
+            VenusVersion previous = Current;
+            VenusVersion next = _baseline;
+            GameObject nextModel = next != null ? GetOrCreateModel(next) : null;
+
+            foreach (KeyValuePair<VenusVersion, GameObject> pair in _models)
+            {
+                if (pair.Value != null)
+                {
+                    pair.Value.SetActive(pair.Value == nextModel);
+                }
+            }
+            Current = next;
+
+            // A reset must notify ModelTransition even when the baseline is already Current.
+            // This prevents an in-flight transition from remaining active when there is no model change.
+            VersionChanged?.Invoke(new VenusVersionChange(previous, next, false));
+        }
 
         GameObject GetOrCreateModel(VenusVersion version)
         {
