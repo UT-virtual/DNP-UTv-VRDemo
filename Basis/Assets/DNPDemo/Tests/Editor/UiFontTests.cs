@@ -2,7 +2,9 @@ using System.Collections.Generic;
 using System.IO;
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Voice;
+using DNPDemo.Menu;
 using DNPDemo.Operator;
 using DNPDemo.Scenario;
 using DNPDemo.TaskHud;
@@ -46,6 +48,20 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void HistoryPanelTextsAreInTheCharacterSet()
+        {
+            AssertInCharacterSet(new[]
+            {
+                HistoryMenuProvider.MenuTitle,
+                HistoryPanel.RestoreLabel,
+                HistoryPanel.EmptyMessage,
+                HistoryTool.FormatRestored(null),
+                ScenarioDataBuilder.HistoryInstruction("Ver 1.0"),
+                "0123456789 / Ver.",
+            });
+        }
+
+        [Test]
         public void VoiceCommandTextsAreInTheCharacterSet()
         {
             var texts = new List<string>
@@ -69,6 +85,11 @@ namespace DNPDemo.Tests
                 }
             }
 
+            AssertInCharacterSet(texts);
+        }
+
+        static void AssertInCharacterSet(IEnumerable<string> texts)
+        {
             string characters = File.ReadAllText(CharacterSetPath);
             var missing = new HashSet<char>();
             foreach (string text in texts)

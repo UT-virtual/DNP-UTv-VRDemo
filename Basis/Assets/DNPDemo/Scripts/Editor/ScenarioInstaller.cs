@@ -1,4 +1,5 @@
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
@@ -152,6 +153,14 @@ namespace DNPDemo.Editor
                 var voice = InstantiatePrefab<VoiceCommandTool>(InteractionPrefabBuilder.VoiceCommandToolPath, interaction);
                 WorldUiBuilder.Assign(voice, "_pen", FindPen(root, nameof(VoiceCommandTool)));
                 RegisterTool(runner, voice);
+                changed = true;
+            }
+            if (interaction.GetComponentInChildren<HistoryTool>(true) == null)
+            {
+                var history = InstantiatePrefab<HistoryTool>(InteractionPrefabBuilder.HistoryToolPath, interaction);
+                WorldUiBuilder.Assign(history, "_stage", scenario.GetComponent<ScenarioStage>());
+                WorldUiBuilder.Assign(history.GetComponentInChildren<HistoryPanel>(true), "_director", scenario.GetComponent<ScenarioDirector>());
+                RegisterTool(runner, history);
                 changed = true;
             }
             if (interaction.GetComponentInChildren<DummyInteractionTool>(true) == null)

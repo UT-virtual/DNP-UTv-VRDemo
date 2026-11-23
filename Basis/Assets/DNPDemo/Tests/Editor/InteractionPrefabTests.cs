@@ -1,11 +1,13 @@
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
 using DNPDemo.Interaction.Voice;
 using DNPDemo.Pen;
 using DNPDemo.Scenario;
+using DNPDemo.Venus;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -30,6 +32,70 @@ namespace DNPDemo.Tests
                 Assert.AreEqual(uiLayer, t.gameObject.layer,
                     $"'{t.name}' must be on the {WorldUiBuilder.UILayerName} layer so the Basis laser can hit it.");
             }
+        }
+
+        [Test]
+        public void HistoryPanelCanvasIsOnUILayerAndPreviewIsOutsideIt()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(InteractionPrefabBuilder.HistoryToolPath);
+            Assert.IsNotNull(prefab, $"{InteractionPrefabBuilder.HistoryToolPath} (create it from DNP Demo/Create/Interaction Prefabs)");
+            var panel = prefab.GetComponentInChildren<HistoryPanel>(true);
+            Assert.IsNotNull(panel);
+            var so = new SerializedObject(panel);
+            foreach (string field in new[]
+            {
+                "_content", "_preview", "_versionText", "_pageText", "_emptyText", "_statusText",
+                "_closeButton", "_previousButton", "_nextButton", "_restoreButton",
+            })
+            {
+                Assert.IsNotNull(so.FindProperty(field).objectReferenceValue, $"HistoryPanel.{field} is not set.");
+            }
+
+            var content = (GameObject)so.FindProperty("_content").objectReferenceValue;
+            Assert.IsNotNull(content.GetComponent<Canvas>());
+            int uiLayer = LayerMask.NameToLayer(WorldUiBuilder.UILayerName);
+            foreach (Transform t in content.GetComponentsInChildren<Transform>(true))
+            {
+                Assert.AreEqual(uiLayer, t.gameObject.layer,
+                    $"'{t.name}' must be on the {WorldUiBuilder.UILayerName} layer so the Basis laser can hit it.");
+            }
+
+            var preview = (HistoryPreview)so.FindProperty("_preview").objectReferenceValue;
+            Assert.IsFalse(preview.transform.IsChildOf(content.transform),
+                "The canvas is switched off while closed; the preview must stay active so its statue builds the models at scene load.");
+            Assert.IsTrue(preview.gameObject.activeSelf);
+            var statue = (VenusStatue)new SerializedObject(preview).FindProperty("_statue").objectReferenceValue;
+            Assert.IsNotNull(statue, "HistoryPreview needs its statue.");
+            Assert.IsNotNull(statue.Catalog, "The preview statue needs the version catalog.");
+            Assert.IsNull(statue.Baseline, "The preview shows nothing until the panel opens.");
+            Assert.IsNull(statue.GetComponent<ScenarioObjectBinding>(), "The preview is not a stage object; the stage must not reset it.");
+
+            Assert.AreSame(panel, new SerializedObject(prefab.GetComponent<HistoryTool>()).FindProperty("_panel").objectReferenceValue);
+        }
+
+        [Test]
+        public void DemoSystemsHistoryToolIsWired()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioInstaller.DemoSystemsPrefabPath);
+            Assert.IsNotNull(prefab);
+            var runner = prefab.GetComponentInChildren<InteractionRunner>(true);
+            Assert.IsNotNull(runner);
+            var history = runner.GetComponentInChildren<HistoryTool>(true);
+            Assert.IsNotNull(history, "Install it from DNP Demo/Setup/Install Scenario Into DemoSystems Prefab.");
+
+            var tool = new SerializedObject(history);
+            Assert.IsNotNull(tool.FindProperty("_stage").objectReferenceValue, "HistoryTool needs the scenario stage.");
+            var panel = (HistoryPanel)tool.FindProperty("_panel").objectReferenceValue;
+            Assert.IsNotNull(panel, "HistoryTool needs its panel.");
+            Assert.IsNotNull(new SerializedObject(panel).FindProperty("_director").objectReferenceValue, "HistoryPanel needs the director.");
+
+            SerializedProperty tools = new SerializedObject(runner).FindProperty("_tools");
+            bool registered = false;
+            for (int i = 0; i < tools.arraySize; i++)
+            {
+                registered |= tools.GetArrayElementAtIndex(i).objectReferenceValue == history;
+            }
+            Assert.IsTrue(registered, "HistoryTool is not registered with the runner.");
         }
 
         [Test]

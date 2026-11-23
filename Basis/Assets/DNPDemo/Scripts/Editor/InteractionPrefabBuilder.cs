@@ -1,11 +1,14 @@
 using System;
 using System.IO;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
 using DNPDemo.Interaction.Stroke.Testing;
 using DNPDemo.Interaction.Voice;
+using DNPDemo.Menu;
+using DNPDemo.Venus;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -27,6 +30,10 @@ namespace DNPDemo.Editor
         public const string StrokeToolPath = Folder + "/StrokeTool.prefab";
         public const string ManipulateToolPath = Folder + "/ManipulateTool.prefab";
         public const string VoiceCommandToolPath = Folder + "/VoiceCommandTool.prefab";
+        public const string HistoryToolPath = Folder + "/HistoryTool.prefab";
+
+        /// <summary>Name of the child of <see cref="HistoryToolPath"/> that holds the <see cref="HistoryPanel"/>.</summary>
+        public const string HistoryPanelObjectName = "HistoryPanel";
         public const string StrokeTestPanelPath = Folder + "/Testing/StrokeTestPanel.prefab";
 
         public const string SelectionVolumeShaderName = "DNPDemo/SelectionVolume";
@@ -54,6 +61,7 @@ namespace DNPDemo.Editor
             CreateStrokeTool();
             CreateManipulateTool();
             CreateVoiceCommandTool();
+            CreateHistoryTool();
         }
 
         /// <summary>
@@ -276,6 +284,85 @@ namespace DNPDemo.Editor
                 Assign(panel, "_switchLabel", switchButton.GetComponentInChildren<TMP_Text>());
 
                 SetLayerRecursively(root.transform, LayerMask.NameToLayer(UILayerName));
+            });
+
+        /// <summary>
+        /// Tool for <see cref="HistoryPart"/> with the history panel as its child, styled like the Basis menus
+        /// (<see cref="BasisUiStyle"/>). The panel is a plain transform placed in front of the view when it opens; under it,
+        /// the canvas (switched off while closed) and the turning preview, which stays active so its statue builds the
+        /// version models at scene load. The director and the stage live in DemoSystems, so <see cref="ScenarioInstaller"/>
+        /// wires them when it places the tool there.
+        /// <para>
+        /// The preview stands between the background and the viewer, so the background, drawn with the depth test, never
+        /// covers it; the labels and buttons draw over everything, so they stay readable in front of it.
+        /// </para>
+        /// </summary>
+        public static GameObject CreateHistoryTool() =>
+            CreatePrefabIfMissing(HistoryToolPath, "HistoryTool", root =>
+            {
+                var panelObject = new GameObject(HistoryPanelObjectName);
+                panelObject.transform.SetParent(root.transform, false);
+
+                GameObject canvas = CreateChild("Canvas", panelObject.transform);
+                SetupWorldCanvas(canvas, new Vector2(720, 620), interactive: true);
+                Transform ui = canvas.transform;
+                BasisUiStyle.CreatePanelBackground(ui, cornerRadius: 28);
+
+                TMP_Text title = BasisUiStyle.CreateOverlayText("Title", ui, HistoryMenuProvider.MenuTitle, 34, TextAlignmentOptions.MidlineLeft);
+                Anchor(title.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(32, -84), new Vector2(-120, -24));
+                Button close = BasisUiStyle.CreateButton("CloseButton", ui, BasisUiStyle.SecondaryButtonColor, cornerRadius: 32);
+                Anchor((RectTransform)close.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-88, -88), new Vector2(-24, -24));
+                BasisUiStyle.AddIcon(close, BasisUiStyle.CloseIconPath, inset: 18);
+
+                TMP_Text version = BasisUiStyle.CreateOverlayText("VersionName", ui, string.Empty, 40, TextAlignmentOptions.Center);
+                Anchor(version.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(120, -150), new Vector2(-120, -90));
+                TMP_Text page = BasisUiStyle.CreateOverlayText("Page", ui, string.Empty, 24, TextAlignmentOptions.Center);
+                Anchor(page.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(120, -190), new Vector2(-120, -150));
+                TMP_Text empty = BasisUiStyle.CreateOverlayText("Empty", ui, HistoryPanel.EmptyMessage, 30, TextAlignmentOptions.Center);
+                Anchor(empty.rectTransform, Vector2.zero, Vector2.one, new Vector2(120, 170), new Vector2(-120, -190));
+
+                // Foldout Arrow points down; turned a quarter to point left or right.
+                Button previous = BasisUiStyle.CreateButton("PreviousButton", ui, BasisUiStyle.SecondaryButtonColor, cornerRadius: 40);
+                Anchor((RectTransform)previous.transform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(24, -55), new Vector2(104, 25));
+                BasisUiStyle.AddIcon(previous, BasisUiStyle.ArrowIconPath, inset: 16, rotation: -90f);
+                Button next = BasisUiStyle.CreateButton("NextButton", ui, BasisUiStyle.SecondaryButtonColor, cornerRadius: 40);
+                Anchor((RectTransform)next.transform, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-104, -55), new Vector2(-24, 25));
+                BasisUiStyle.AddIcon(next, BasisUiStyle.ArrowIconPath, inset: 16, rotation: 90f);
+
+                Button restore = BasisUiStyle.CreateButton("RestoreButton", ui, BasisUiStyle.PrimaryButtonColor, cornerRadius: 40);
+                Anchor((RectTransform)restore.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(-170, 70), new Vector2(170, 150));
+                BasisUiStyle.AddLabel(restore, HistoryPanel.RestoreLabel, 32);
+                TMP_Text status = BasisUiStyle.CreateOverlayText("Status", ui, string.Empty, 22, TextAlignmentOptions.Center);
+                Anchor(status.rectTransform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(30, 20), new Vector2(-30, 64));
+
+                SetLayerRecursively(canvas.transform, LayerMask.NameToLayer(UILayerName));
+
+                // Between the page number and the restore button. Its centre sits far enough in front of the canvas (the
+                // viewer is on its -Z side) that the turning model, arms included, never reaches behind the background.
+                var previewObject = new GameObject("Preview");
+                previewObject.transform.SetParent(panelObject.transform, false);
+                previewObject.transform.localPosition = new Vector3(0f, -0.02f, -0.09f);
+                var modelObject = new GameObject("Model");
+                modelObject.transform.SetParent(previewObject.transform, false);
+                var statue = modelObject.AddComponent<VenusStatue>();
+                Assign(statue, "_catalog", AssetDatabase.LoadAssetAtPath<VenusVersionCatalog>(VenusAssetBuilder.CatalogPath));
+                var preview = previewObject.AddComponent<HistoryPreview>();
+                Assign(preview, "_statue", statue);
+
+                var panel = panelObject.AddComponent<HistoryPanel>();
+                Assign(panel, "_content", canvas);
+                Assign(panel, "_preview", preview);
+                Assign(panel, "_versionText", version);
+                Assign(panel, "_pageText", page);
+                Assign(panel, "_emptyText", empty);
+                Assign(panel, "_statusText", status);
+                Assign(panel, "_closeButton", close);
+                Assign(panel, "_previousButton", previous);
+                Assign(panel, "_nextButton", next);
+                Assign(panel, "_restoreButton", restore);
+
+                var tool = root.AddComponent<HistoryTool>();
+                Assign(tool, "_panel", panel);
             });
 
         /// <summary>
