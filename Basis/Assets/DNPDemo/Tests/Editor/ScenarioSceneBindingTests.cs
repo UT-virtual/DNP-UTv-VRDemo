@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Basis.Scripts.BasisSdk;
 using DNPDemo.Editor;
 using DNPDemo.Environment;
 using DNPDemo.Interaction;
@@ -69,6 +70,25 @@ namespace DNPDemo.Tests
                 count += root.GetComponentsInChildren<ScenarioStage>(true).Length;
             }
             Assert.AreEqual(1, count, "DNPDemo_Main must contain exactly one ScenarioStage (in the DemoSystems prefab).");
+        }
+
+        [Test]
+        public void SceneCameraDrawsTheEnvironmentSkybox()
+        {
+            // Basis copies the clear flags of BasisScene.MainCamera to the local player's camera
+            // (BasisSceneFactory.LoadCameraProperties); a solid colour would hide the environment panorama.
+            BasisScene basisScene = null;
+            foreach (UnityEngine.GameObject root in _scene.GetRootGameObjects())
+            {
+                basisScene = root.GetComponentInChildren<BasisScene>(true);
+                if (basisScene != null)
+                {
+                    break;
+                }
+            }
+            Assert.IsNotNull(basisScene, "DNPDemo_Main must contain a BasisScene.");
+            Assert.IsNotNull(basisScene.MainCamera, "BasisScene.MainCamera is the camera Basis takes its settings from.");
+            Assert.AreEqual(UnityEngine.CameraClearFlags.Skybox, basisScene.MainCamera.clearFlags);
         }
 
         [Test]
