@@ -10,7 +10,7 @@ namespace DNPDemo.Scenario.Cues
     [Serializable]
     public sealed class EnvironmentCue : ScenarioCue
     {
-        public string EnvironmentKey = "Environment";
+        public string EnvironmentKey = EnvironmentController.EnvironmentKey;
         public EnvironmentPreset Preset;
         [Min(0f)] public float Duration = 2f;
 

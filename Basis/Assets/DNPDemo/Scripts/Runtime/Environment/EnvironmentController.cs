@@ -11,7 +11,10 @@ namespace DNPDemo.Environment
     [DisallowMultipleComponent]
     public sealed class EnvironmentController : MonoBehaviour, IStageResettable
     {
-        const string ExhibitionRoomKey = "ExhibitionRoom";
+        /// <summary>Default <see cref="DNPDemo.Scenario.ScenarioObjectBinding"/> key of the object that holds this controller.</summary>
+        public const string EnvironmentKey = "Environment";
+        /// <summary>Key of the exhibition room whose renderers fade out when a preset hides the room.</summary>
+        public const string ExhibitionRoomKey = "ExhibitionRoom";
         const string PanoramaShaderName = "DNPDemo/Environment Crossfade Panorama";
 
         static readonly int PanoramaAId = Shader.PropertyToID("_PanoramaA");
@@ -71,9 +74,7 @@ namespace DNPDemo.Environment
             public float AmbientIntensity;
             public DefaultReflectionMode ReflectionMode;
             public Texture CustomReflection;
-            public int ReflectionResolution;
             public float ReflectionIntensity;
-            public int ReflectionBounces;
             public float WallAlpha;
 
             public static RuntimeState FromPreset(EnvironmentPreset preset)
@@ -114,15 +115,19 @@ namespace DNPDemo.Environment
                     AmbientIntensity = ambient.Intensity,
                     ReflectionMode = reflection.Mode,
                     CustomReflection = reflection.CustomReflectionTexture,
-                    ReflectionResolution = reflection.Resolution,
                     ReflectionIntensity = reflection.Intensity,
-                    ReflectionBounces = reflection.Bounces,
                     WallAlpha = preset.ExhibitionRoomVisible ? 1f : 0f,
                 };
             }
 
+            /// <summary>
+            /// Intermediate state of a transition. A disabled spot light counts as intensity 0, so a light that turns on
+            /// fades in from dark and one that turns off fades out before it is deactivated at the end.
+            /// </summary>
             public static RuntimeState Lerp(RuntimeState from, RuntimeState to, float t)
             {
+                float fromSpotIntensity = from.SpotEnabled ? from.SpotIntensity : 0f;
+                float toSpotIntensity = to.SpotEnabled ? to.SpotIntensity : 0f;
                 return new RuntimeState
                 {
                     DirectionalColor = Color.Lerp(from.DirectionalColor, to.DirectionalColor, t),
@@ -136,7 +141,7 @@ namespace DNPDemo.Environment
                     DirectionalShadowNearPlane = Mathf.Lerp(from.DirectionalShadowNearPlane, to.DirectionalShadowNearPlane, t),
                     SpotEnabled = t >= 1f ? to.SpotEnabled : from.SpotEnabled || to.SpotEnabled,
                     SpotColor = Color.Lerp(from.SpotColor, to.SpotColor, t),
-                    SpotIntensity = Mathf.Lerp(from.SpotIntensity, to.SpotIntensity, t),
+                    SpotIntensity = Mathf.Lerp(fromSpotIntensity, toSpotIntensity, t),
                     SpotRotation = Quaternion.Slerp(from.SpotRotation, to.SpotRotation, t),
                     SpotRange = Mathf.Lerp(from.SpotRange, to.SpotRange, t),
                     SpotAngle = Mathf.Lerp(from.SpotAngle, to.SpotAngle, t),
@@ -155,9 +160,7 @@ namespace DNPDemo.Environment
                     AmbientIntensity = Mathf.Lerp(from.AmbientIntensity, to.AmbientIntensity, t),
                     ReflectionMode = t < 0.5f ? from.ReflectionMode : to.ReflectionMode,
                     CustomReflection = t < 0.5f ? from.CustomReflection : to.CustomReflection,
-                    ReflectionResolution = t < 0.5f ? from.ReflectionResolution : to.ReflectionResolution,
                     ReflectionIntensity = Mathf.Lerp(from.ReflectionIntensity, to.ReflectionIntensity, t),
-                    ReflectionBounces = t < 0.5f ? from.ReflectionBounces : to.ReflectionBounces,
                     WallAlpha = Mathf.Lerp(from.WallAlpha, to.WallAlpha, t),
                 };
             }
@@ -182,7 +185,6 @@ namespace DNPDemo.Environment
         bool _reportedWallMaterial;
 
         public bool IsTransitioning => _isTransitioning;
-        public float TransitionDuration => _transitionDuration;
 
         void Update() => AdvanceTransition(Time.unscaledDeltaTime);
 
@@ -197,19 +199,18 @@ namespace DNPDemo.Environment
             {
                 duration = _transitionDuration;
             }
-            duration = Mathf.Max(0f, duration);
+            if (duration <= 0f)
+            {
+                ApplyInstant(preset);
+                return;
+            }
 
             CaptureCurrentSky();
             _transitionStart = CaptureCurrentState();
             _transitionTarget = preset;
             _elapsed = 0f;
             _duration = duration;
-            _isTransitioning = duration > 0f;
-            if (!_isTransitioning)
-            {
-                ApplyInstant(preset);
-                return;
-            }
+            _isTransitioning = true;
             ConfigureSkyTransition(preset);
         }
 
@@ -240,7 +241,7 @@ namespace DNPDemo.Environment
             float linear = _duration <= 0f ? 1f : _elapsed / _duration;
             float progress = Mathf.SmoothStep(0f, 1f, linear);
             ApplyState(RuntimeState.Lerp(_transitionStart, RuntimeState.FromPreset(_transitionTarget), progress));
-            ApplySkyProgress(_transitionTarget, progress);
+            _skyboxMaterial.SetFloat(BlendId, progress);
 
             if (_elapsed >= _duration)
             {
@@ -285,22 +286,19 @@ namespace DNPDemo.Environment
             _activeSkySnapshot = snapshot;
         }
 
+        /// <summary>
+        /// The snapshot already has the outgoing exposure and rotation baked in, so it is drawn as is. The target panorama
+        /// uses its own exposure and rotation from the first frame; only the blend factor animates.
+        /// </summary>
         void ConfigureSkyTransition(EnvironmentPreset preset)
         {
             _skyboxMaterial.SetTexture(PanoramaAId, _activeSkySnapshot);
             _skyboxMaterial.SetTexture(PanoramaBId, preset.Panorama);
             _skyboxMaterial.SetFloat(BlendId, 0f);
             _skyboxMaterial.SetFloat(ExposureAId, 0f);
-            _skyboxMaterial.SetFloat(ExposureBId, 0f);
+            _skyboxMaterial.SetFloat(ExposureBId, preset.Exposure);
             _skyboxMaterial.SetFloat(RotationAId, 0f);
-            _skyboxMaterial.SetFloat(RotationBId, 0f);
-        }
-
-        void ApplySkyProgress(EnvironmentPreset preset, float progress)
-        {
-            _skyboxMaterial.SetFloat(BlendId, progress);
-            _skyboxMaterial.SetFloat(ExposureBId, Mathf.Lerp(0f, preset.Exposure, progress));
-            _skyboxMaterial.SetFloat(RotationBId, Mathf.Lerp(0f, preset.Rotation, progress));
+            _skyboxMaterial.SetFloat(RotationBId, preset.Rotation);
         }
 
         void SetSkyboxPreset(EnvironmentPreset preset)
@@ -348,39 +346,50 @@ namespace DNPDemo.Environment
                 AmbientIntensity = RenderSettings.ambientIntensity,
                 ReflectionMode = RenderSettings.defaultReflectionMode,
                 CustomReflection = RenderSettings.customReflectionTexture,
-                ReflectionResolution = RenderSettings.defaultReflectionResolution,
                 ReflectionIntensity = RenderSettings.reflectionIntensity,
-                ReflectionBounces = RenderSettings.reflectionBounces,
                 WallAlpha = _wallAlpha,
             };
         }
 
         void ApplyState(RuntimeState state)
         {
-            _directionalLight.color = state.DirectionalColor;
-            _directionalLight.intensity = state.DirectionalIntensity;
-            _directionalLight.transform.rotation = state.DirectionalRotation;
-            _directionalLight.shadows = state.DirectionalShadows;
-            _directionalLight.shadowResolution = state.DirectionalShadowResolution;
-            _directionalLight.shadowStrength = state.DirectionalShadowStrength;
-            _directionalLight.shadowBias = state.DirectionalShadowBias;
-            _directionalLight.shadowNormalBias = state.DirectionalShadowNormalBias;
-            _directionalLight.shadowNearPlane = state.DirectionalShadowNearPlane;
+            ApplyLightingState(state);
+            SetWallAlpha(state.WallAlpha);
+        }
 
-            _spotLight.gameObject.SetActive(state.SpotEnabled);
-            _spotLight.enabled = true;
-            _spotLight.color = state.SpotColor;
-            _spotLight.intensity = state.SpotIntensity;
-            _spotLight.transform.rotation = state.SpotRotation;
-            _spotLight.range = state.SpotRange;
-            _spotLight.spotAngle = state.SpotAngle;
-            _spotLight.innerSpotAngle = state.SpotInnerAngle;
-            _spotLight.shadows = state.SpotShadows;
-            _spotLight.shadowResolution = state.SpotShadowResolution;
-            _spotLight.shadowStrength = state.SpotShadowStrength;
-            _spotLight.shadowBias = state.SpotShadowBias;
-            _spotLight.shadowNormalBias = state.SpotShadowNormalBias;
-            _spotLight.shadowNearPlane = state.SpotShadowNearPlane;
+        /// <summary>Applies the lights and RenderSettings. The lights are null-checked because OnDestroy may run after them.</summary>
+        void ApplyLightingState(RuntimeState state)
+        {
+            if (_directionalLight != null)
+            {
+                _directionalLight.color = state.DirectionalColor;
+                _directionalLight.intensity = state.DirectionalIntensity;
+                _directionalLight.transform.rotation = state.DirectionalRotation;
+                _directionalLight.shadows = state.DirectionalShadows;
+                _directionalLight.shadowResolution = state.DirectionalShadowResolution;
+                _directionalLight.shadowStrength = state.DirectionalShadowStrength;
+                _directionalLight.shadowBias = state.DirectionalShadowBias;
+                _directionalLight.shadowNormalBias = state.DirectionalShadowNormalBias;
+                _directionalLight.shadowNearPlane = state.DirectionalShadowNearPlane;
+            }
+
+            if (_spotLight != null)
+            {
+                _spotLight.gameObject.SetActive(state.SpotEnabled);
+                _spotLight.enabled = true;
+                _spotLight.color = state.SpotColor;
+                _spotLight.intensity = state.SpotIntensity;
+                _spotLight.transform.rotation = state.SpotRotation;
+                _spotLight.range = state.SpotRange;
+                _spotLight.spotAngle = state.SpotAngle;
+                _spotLight.innerSpotAngle = state.SpotInnerAngle;
+                _spotLight.shadows = state.SpotShadows;
+                _spotLight.shadowResolution = state.SpotShadowResolution;
+                _spotLight.shadowStrength = state.SpotShadowStrength;
+                _spotLight.shadowBias = state.SpotShadowBias;
+                _spotLight.shadowNormalBias = state.SpotShadowNormalBias;
+                _spotLight.shadowNearPlane = state.SpotShadowNearPlane;
+            }
 
             RenderSettings.ambientMode = state.AmbientMode;
             RenderSettings.ambientSkyColor = state.AmbientSky;
@@ -391,11 +400,7 @@ namespace DNPDemo.Environment
 
             RenderSettings.defaultReflectionMode = state.ReflectionMode;
             RenderSettings.customReflectionTexture = state.CustomReflection;
-            RenderSettings.defaultReflectionResolution = state.ReflectionResolution;
             RenderSettings.reflectionIntensity = state.ReflectionIntensity;
-            RenderSettings.reflectionBounces = state.ReflectionBounces;
-
-            SetWallAlpha(state.WallAlpha);
         }
 
         void SetWallAlpha(float alpha)
@@ -621,7 +626,7 @@ namespace DNPDemo.Environment
                 if (RenderSettings.skybox == _skyboxMaterial)
                 {
                     RenderSettings.skybox = _originalSkybox;
-                    ApplyGlobalState(_originalState);
+                    ApplyLightingState(_originalState);
                 }
             }
             ReleaseSnapshots();
@@ -629,50 +634,6 @@ namespace DNPDemo.Environment
             {
                 DestroyRuntimeObject(_skyboxMaterial);
             }
-        }
-
-        void ApplyGlobalState(RuntimeState state)
-        {
-            if (_directionalLight != null)
-            {
-                _directionalLight.color = state.DirectionalColor;
-                _directionalLight.intensity = state.DirectionalIntensity;
-                _directionalLight.transform.rotation = state.DirectionalRotation;
-                _directionalLight.shadows = state.DirectionalShadows;
-                _directionalLight.shadowResolution = state.DirectionalShadowResolution;
-                _directionalLight.shadowStrength = state.DirectionalShadowStrength;
-                _directionalLight.shadowBias = state.DirectionalShadowBias;
-                _directionalLight.shadowNormalBias = state.DirectionalShadowNormalBias;
-                _directionalLight.shadowNearPlane = state.DirectionalShadowNearPlane;
-            }
-            if (_spotLight != null)
-            {
-                _spotLight.gameObject.SetActive(state.SpotEnabled);
-                _spotLight.enabled = true;
-                _spotLight.color = state.SpotColor;
-                _spotLight.intensity = state.SpotIntensity;
-                _spotLight.transform.rotation = state.SpotRotation;
-                _spotLight.range = state.SpotRange;
-                _spotLight.spotAngle = state.SpotAngle;
-                _spotLight.innerSpotAngle = state.SpotInnerAngle;
-                _spotLight.shadows = state.SpotShadows;
-                _spotLight.shadowResolution = state.SpotShadowResolution;
-                _spotLight.shadowStrength = state.SpotShadowStrength;
-                _spotLight.shadowBias = state.SpotShadowBias;
-                _spotLight.shadowNormalBias = state.SpotShadowNormalBias;
-                _spotLight.shadowNearPlane = state.SpotShadowNearPlane;
-            }
-            RenderSettings.ambientMode = state.AmbientMode;
-            RenderSettings.ambientSkyColor = state.AmbientSky;
-            RenderSettings.ambientEquatorColor = state.AmbientEquator;
-            RenderSettings.ambientGroundColor = state.AmbientGround;
-            RenderSettings.ambientLight = state.AmbientFlat;
-            RenderSettings.ambientIntensity = state.AmbientIntensity;
-            RenderSettings.defaultReflectionMode = state.ReflectionMode;
-            RenderSettings.customReflectionTexture = state.CustomReflection;
-            RenderSettings.defaultReflectionResolution = state.ReflectionResolution;
-            RenderSettings.reflectionIntensity = state.ReflectionIntensity;
-            RenderSettings.reflectionBounces = state.ReflectionBounces;
         }
 
         static void DestroyRuntimeObject(UnityEngine.Object target)

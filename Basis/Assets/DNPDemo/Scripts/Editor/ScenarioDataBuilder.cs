@@ -70,11 +70,6 @@ namespace DNPDemo.Editor
             var existing = AssetDatabase.LoadAssetAtPath<ScenarioData>(AssetPath);
             if (existing != null)
             {
-                if (EnsureEnvironmentCue(existing))
-                {
-                    EditorUtility.SetDirty(existing);
-                    AssetDatabase.SaveAssets();
-                }
                 return existing;
             }
             // The version cues refer to the version assets.
@@ -135,7 +130,7 @@ namespace DNPDemo.Editor
         {
             EnvironmentPresetBuilder.CreatePresetsIfMissing();
             EnvironmentPreset templePreset = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.TemplePresetPath);
-            var steps = new List<ScenarioStep>
+            return new List<ScenarioStep>
             {
                 new()
                 {
@@ -247,7 +242,6 @@ namespace DNPDemo.Editor
                     },
                 },
             };
-            return steps;
         }
 
         static ScenarioStep Auto(string id, string title, params ScenarioCue[] cues) => new()

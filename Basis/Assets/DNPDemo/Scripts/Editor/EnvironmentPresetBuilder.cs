@@ -97,9 +97,7 @@ namespace DNPDemo.Editor
                 {
                     Mode = DefaultReflectionMode.Skybox,
                     CustomReflectionTexture = null,
-                    Resolution = 128,
                     Intensity = 0.6f,
-                    Bounces = 1,
                 });
 
             EnsurePreset(
@@ -150,9 +148,7 @@ namespace DNPDemo.Editor
                 {
                     Mode = DefaultReflectionMode.Skybox,
                     CustomReflectionTexture = null,
-                    Resolution = 128,
                     Intensity = 0.9f,
-                    Bounces = 2,
                 });
             AssetDatabase.SaveAssets();
         }
@@ -273,7 +269,7 @@ namespace DNPDemo.Editor
                 {
                     binding = root.AddComponent<ScenarioObjectBinding>();
                 }
-                SetBindingKey(binding, "Environment");
+                SetBindingKey(binding, EnvironmentController.EnvironmentKey);
 
                 EnvironmentController controller = root.GetComponent<EnvironmentController>();
                 if (controller == null)
@@ -310,7 +306,7 @@ namespace DNPDemo.Editor
                 {
                     binding = root.AddComponent<ScenarioObjectBinding>();
                 }
-                SetBindingKey(binding, "ExhibitionRoom");
+                SetBindingKey(binding, EnvironmentController.ExhibitionRoomKey);
                 PrefabUtility.SaveAsPrefabAsset(root, ExhibitionRoomPrefabPath);
             }
             finally

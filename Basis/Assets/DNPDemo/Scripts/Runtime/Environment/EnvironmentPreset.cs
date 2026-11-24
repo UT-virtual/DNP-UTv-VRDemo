@@ -47,14 +47,16 @@ namespace DNPDemo.Environment
         public float Intensity;
     }
 
+    /// <summary>
+    /// Environment reflection applied at runtime. Resolution and bounces are only read when lighting is baked, so they are
+    /// left to the scene's Lighting settings.
+    /// </summary>
     [Serializable]
     public struct ReflectionSettings
     {
         public DefaultReflectionMode Mode;
         public Texture CustomReflectionTexture;
-        public int Resolution;
         public float Intensity;
-        public int Bounces;
     }
 
     [CreateAssetMenu(menuName = "DNP Demo/Environment Preset", fileName = "EnvironmentPreset")]

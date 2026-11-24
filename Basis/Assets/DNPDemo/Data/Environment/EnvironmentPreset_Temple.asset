@@ -50,6 +50,4 @@ MonoBehaviour:
   _reflection:
     Mode: 0
     CustomReflectionTexture: {fileID: 0}
-    Resolution: 128
     Intensity: 0.9
-    Bounces: 2
