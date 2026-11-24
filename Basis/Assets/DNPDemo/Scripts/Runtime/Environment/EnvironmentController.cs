@@ -126,19 +126,27 @@ namespace DNPDemo.Environment
             /// </summary>
             public static RuntimeState Lerp(RuntimeState from, RuntimeState to, float t)
             {
-                bool fromSpotActive = from.SpotEnabled != SpotLightMode.Off;
-                bool toSpotActive = to.SpotEnabled != SpotLightMode.Off;
-                float fromSpotIntensity = fromSpotActive ? from.SpotIntensity : 0f;
-                float toSpotIntensity = toSpotActive ? to.SpotIntensity : 0f;
+                bool fromSpotActive = from.SpotEnabled == SpotLightMode.On;
+                bool toSpotActive = to.SpotEnabled == SpotLightMode.On;
+                
+                // When Keep mode is involved, determine effective active states
+                SpotLightMode effectiveFrom = from.SpotEnabled;
+                SpotLightMode effectiveTo = to.SpotEnabled == SpotLightMode.Keep ? from.SpotEnabled : to.SpotEnabled;
+                
+                bool effectiveFromActive = effectiveFrom == SpotLightMode.On;
+                bool effectiveToActive = effectiveTo == SpotLightMode.On;
+                
+                float fromSpotIntensity = effectiveFromActive ? from.SpotIntensity : 0f;
+                float toSpotIntensity = effectiveToActive ? to.SpotIntensity : 0f;
                 
                 SpotLightMode resultSpotEnabled;
                 if (to.SpotEnabled == SpotLightMode.Keep)
                 {
-                    resultSpotEnabled = t >= 1f ? from.SpotEnabled : (fromSpotActive || toSpotActive ? from.SpotEnabled : SpotLightMode.Off);
+                    resultSpotEnabled = t >= 1f ? from.SpotEnabled : (effectiveFromActive || effectiveToActive ? from.SpotEnabled : SpotLightMode.Off);
                 }
                 else
                 {
-                    resultSpotEnabled = t >= 1f ? to.SpotEnabled : (fromSpotActive || toSpotActive ? to.SpotEnabled : SpotLightMode.Off);
+                    resultSpotEnabled = t >= 1f ? to.SpotEnabled : (effectiveFromActive || effectiveToActive ? to.SpotEnabled : SpotLightMode.Off);
                 }
                 
                 return new RuntimeState

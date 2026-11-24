@@ -100,6 +100,7 @@ namespace DNPDemo.Tests
             fixture.Stage.ResetToBaseline();
 
             Assert.AreEqual(_exhibition.DirectionalLight.Intensity, fixture.Directional.intensity);
+            // Exhibition uses SpotLightMode.Keep, so spotlight remains off after reset (it was off when transitioning away).
             Assert.IsFalse(fixture.Spot.gameObject.activeSelf);
             Assert.AreSame(_exhibition.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
             Assert.AreEqual(1f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.001f);

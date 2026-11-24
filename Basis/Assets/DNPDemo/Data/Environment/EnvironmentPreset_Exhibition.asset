@@ -19,7 +19,7 @@ MonoBehaviour:
   _directionalLight:
     Color: {r: 1, g: 0.94, b: 0.84, a: 1}
     Intensity: 0.15
-    Rotation: {x: 48, y: -30, z: 0}
+    Rotation: {x: 50, y: -30, z: 0}
     Shadows: 0
     ShadowResolution: 1
     ShadowStrength: 0
@@ -30,7 +30,7 @@ MonoBehaviour:
     Enabled: 0
     Color: {r: 1, g: 1, b: 1, a: 1}
     Intensity: 30
-    Rotation: {x: 40, y: 0, z: 0}
+    Rotation: {x: 80, y: 0, z: 0}
     Range: 8
     SpotAngle: 40
     InnerSpotAngle: 22
