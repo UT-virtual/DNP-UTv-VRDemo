@@ -164,10 +164,10 @@ namespace DNPDemo.Tests
         {
             EnvironmentFixture fixture = CreateFixture();
             SpotLightSettings litSpot = _exhibition.SpotLight;
-            litSpot.Enabled = true;
+            litSpot.Enabled = SpotLightMode.On;
             litSpot.Intensity = 10f;
             EnvironmentPreset lit = CreateVariant(fixture, _exhibition, _exhibition.Rotation, litSpot);
-            Assume.That(_exhibition.SpotLight.Enabled, Is.False);
+            Assume.That(_exhibition.SpotLight.Enabled, Is.EqualTo(SpotLightMode.Keep));
             Assume.That(_exhibition.SpotLight.Intensity, Is.GreaterThan(litSpot.Intensity));
 
             fixture.Controller.ApplyInstant(_exhibition);

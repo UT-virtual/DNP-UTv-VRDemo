@@ -53,7 +53,7 @@ namespace DNPDemo.Environment
             public float DirectionalShadowBias;
             public float DirectionalShadowNormalBias;
             public float DirectionalShadowNearPlane;
-            public bool SpotEnabled;
+            public SpotLightMode SpotEnabled;
             public Color SpotColor;
             public float SpotIntensity;
             public Quaternion SpotRotation;
@@ -126,8 +126,21 @@ namespace DNPDemo.Environment
             /// </summary>
             public static RuntimeState Lerp(RuntimeState from, RuntimeState to, float t)
             {
-                float fromSpotIntensity = from.SpotEnabled ? from.SpotIntensity : 0f;
-                float toSpotIntensity = to.SpotEnabled ? to.SpotIntensity : 0f;
+                bool fromSpotActive = from.SpotEnabled != SpotLightMode.Off;
+                bool toSpotActive = to.SpotEnabled != SpotLightMode.Off;
+                float fromSpotIntensity = fromSpotActive ? from.SpotIntensity : 0f;
+                float toSpotIntensity = toSpotActive ? to.SpotIntensity : 0f;
+                
+                SpotLightMode resultSpotEnabled;
+                if (to.SpotEnabled == SpotLightMode.Keep)
+                {
+                    resultSpotEnabled = t >= 1f ? from.SpotEnabled : (fromSpotActive || toSpotActive ? from.SpotEnabled : SpotLightMode.Off);
+                }
+                else
+                {
+                    resultSpotEnabled = t >= 1f ? to.SpotEnabled : (fromSpotActive || toSpotActive ? to.SpotEnabled : SpotLightMode.Off);
+                }
+                
                 return new RuntimeState
                 {
                     DirectionalColor = Color.Lerp(from.DirectionalColor, to.DirectionalColor, t),
@@ -139,7 +152,7 @@ namespace DNPDemo.Environment
                     DirectionalShadowBias = Mathf.Lerp(from.DirectionalShadowBias, to.DirectionalShadowBias, t),
                     DirectionalShadowNormalBias = Mathf.Lerp(from.DirectionalShadowNormalBias, to.DirectionalShadowNormalBias, t),
                     DirectionalShadowNearPlane = Mathf.Lerp(from.DirectionalShadowNearPlane, to.DirectionalShadowNearPlane, t),
-                    SpotEnabled = t >= 1f ? to.SpotEnabled : from.SpotEnabled || to.SpotEnabled,
+                    SpotEnabled = resultSpotEnabled,
                     SpotColor = Color.Lerp(from.SpotColor, to.SpotColor, t),
                     SpotIntensity = Mathf.Lerp(fromSpotIntensity, toSpotIntensity, t),
                     SpotRotation = Quaternion.Slerp(from.SpotRotation, to.SpotRotation, t),
@@ -325,7 +338,7 @@ namespace DNPDemo.Environment
                 DirectionalShadowBias = _directionalLight.shadowBias,
                 DirectionalShadowNormalBias = _directionalLight.shadowNormalBias,
                 DirectionalShadowNearPlane = _directionalLight.shadowNearPlane,
-                SpotEnabled = _spotLight.gameObject.activeSelf && _spotLight.enabled,
+                SpotEnabled = _spotLight.gameObject.activeSelf && _spotLight.enabled ? SpotLightMode.On : SpotLightMode.Off,
                 SpotColor = _spotLight.color,
                 SpotIntensity = _spotLight.intensity,
                 SpotRotation = _spotLight.transform.rotation,
@@ -375,7 +388,7 @@ namespace DNPDemo.Environment
 
             if (_spotLight != null)
             {
-                _spotLight.gameObject.SetActive(state.SpotEnabled);
+                _spotLight.gameObject.SetActive(state.SpotEnabled != SpotLightMode.Off);
                 _spotLight.enabled = true;
                 _spotLight.color = state.SpotColor;
                 _spotLight.intensity = state.SpotIntensity;

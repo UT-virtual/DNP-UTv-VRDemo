@@ -66,7 +66,6 @@ namespace DNPDemo.Editor
 
         public static ScenarioData CreateIfMissing()
         {
-            EnvironmentPresetBuilder.BuildAssetsAndPrefabs();
             var existing = AssetDatabase.LoadAssetAtPath<ScenarioData>(AssetPath);
             if (existing != null)
             {

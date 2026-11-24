@@ -4,6 +4,13 @@ using UnityEngine.Rendering;
 
 namespace DNPDemo.Environment
 {
+    public enum SpotLightMode
+    {
+        Keep,
+        On,
+        Off,
+    }
+
     [Serializable]
     public struct DirectionalLightSettings
     {
@@ -21,7 +28,7 @@ namespace DNPDemo.Environment
     [Serializable]
     public struct SpotLightSettings
     {
-        public bool Enabled;
+        public SpotLightMode Enabled;
         public Color Color;
         public float Intensity;
         public Vector3 Rotation;

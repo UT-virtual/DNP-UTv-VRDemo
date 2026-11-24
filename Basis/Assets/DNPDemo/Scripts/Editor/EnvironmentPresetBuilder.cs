@@ -60,7 +60,7 @@ namespace DNPDemo.Editor
                 {
                     Color = new Color(1f, 0.94f, 0.84f),
                     Intensity = 0.15f,
-                    Rotation = new Vector3(48f, -30f, 0f),
+                    Rotation = new Vector3(50f, -30f, 0f),
                     Shadows = LightShadows.None,
                     ShadowResolution = LightShadowResolution.Medium,
                     ShadowStrength = 0f,
@@ -70,10 +70,10 @@ namespace DNPDemo.Editor
                 },
                 spot: new SpotLightSettings
                 {
-                    Enabled = false,
+                    Enabled = SpotLightMode.Keep,
                     Color = Color.white,
                     Intensity = 30f,
-                    Rotation = new Vector3(40f, 0f, 0f),
+                    Rotation = new Vector3(80f, 0f, 0f),
                     Range = 8f,
                     SpotAngle = 40f,
                     InnerSpotAngle = 22f,
@@ -121,10 +121,10 @@ namespace DNPDemo.Editor
                 },
                 spot: new SpotLightSettings
                 {
-                    Enabled = false,
+                    Enabled = SpotLightMode.Off,
                     Color = Color.white,
                     Intensity = 0f,
-                    Rotation = new Vector3(40f, 0f, 0f),
+                    Rotation = new Vector3(80f, 0f, 0f),
                     Range = 8f,
                     SpotAngle = 40f,
                     InnerSpotAngle = 22f,
