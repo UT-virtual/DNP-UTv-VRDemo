@@ -117,13 +117,15 @@ PowerShell で、リポジトリのルートから実行します。
 | シーンのルート | プレハブ（`Basis/Assets/DNPDemo/Prefabs/`） | 内容 |
 |---|---|---|
 | BasisScene | （シーンに直接置く） | Basis のシーン定義、初期スポーン位置、カメラ |
-| Env_ExhibitionRoom | `Env_ExhibitionRoom.prefab` | 展示室。見た目は `Model`、床と壁の当たり判定は `Colliders` に分けてある。モデルを差し替えたら `Colliders` を見た目に合わせる |
+| Env_ExhibitionRoom | `Env_ExhibitionRoom.prefab` | 展示室。見た目は `Model`、床と壁の当たり判定は `Colliders` に分けてある。モデルを差し替えたら `Colliders` を見た目に合わせる。キー `ExhibitionRoom` を持ち、環境が展示室を隠すときは `EnvironmentController` が配下の Renderer をフェードする（当たり判定は残る） |
 | Env_Temple | `Env_Temple.prefab` | 神殿（最初は非表示） |
-| Lighting | `Lighting.prefab` | ライト。像のスポットライトはロビー中は消えている |
+| Lighting | `Lighting.prefab` | ライト。像のスポットライトはロビー中は消えている。ルートにキー `Environment` と `EnvironmentController` を持ち、環境プリセットに合わせてライト、Skybox、Ambient、Reflection を切り替える |
 | Statue_Original | `Statue_Original.prefab` | 台座と像 |
 | ComparisonTable | `ComparisonTable.prefab` | 比較台（最初は非表示） |
 | Scholars | `Scholars.prefab` | 学者 A・B。どちらも `Scholars/Scholar.prefab` のバリアント |
 | DemoSystems | `DemoSystems.prefab` | 接続、ロール、スポーン、ロビーパネル、シナリオ（`Scenario`） |
+
+神殿の背景は、環境プリセット（`Data/Environment/EnvironmentPreset_Temple.asset`）のパノラマとライトで表示していて、`Env_Temple` は使っていません。`Env_Temple.prefab` は今は中身のない置き場で、シーンでは非表示のままです。神殿の柱などの立体物を足すときはこのプレハブに置き、キー（`ScenarioObjectBinding`）を付けて、結びのステップ（`closing`）の `SetObjectActiveCue` で表示してください。`EnvironmentController` は `Env_Temple` を操作しないので、表示の切り替えはシナリオのデータで行います。
 
 - シナリオのデータ（`Data/ScenarioData.asset`）はシーンのオブジェクトを直接参照できません。キューから操作したいオブジェクトには `ScenarioObjectBinding`（キー）を、台詞を話すオブジェクトには `ScenarioSpeakerBinding`（話者、音声、字幕）を、そのオブジェクトのプレハブに付けてください。ScenarioStage が起動時にシーンから集めます。
 - データが使う話者とキーがシーンにそろっているか、重複がないかは、Editor テスト `ScenarioSceneBindingTests` で確認できます。

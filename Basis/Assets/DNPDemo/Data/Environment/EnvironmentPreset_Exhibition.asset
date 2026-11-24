@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adc590f12d8057745ac026cd6bf71119, type: 3}
+  m_Name: EnvironmentPreset_Exhibition
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Environment.EnvironmentPreset
+  _panorama: {fileID: 2800000, guid: 5e5631136fbbfe84f95f6a5af28477fd, type: 3}
+  _exposure: 0
+  _rotation: 0
+  _exhibitionRoomVisible: 1
+  _directionalLight:
+    Color: {r: 1, g: 0.94, b: 0.84, a: 1}
+    Intensity: 0.15
+    Rotation: {x: 50, y: -30, z: 0}
+    Shadows: 0
+    ShadowResolution: 1
+    ShadowStrength: 0
+    ShadowBias: 0.05
+    ShadowNormalBias: 0.4
+    ShadowNearPlane: 0.2
+  _spotLight:
+    Enabled: 0
+    Color: {r: 1, g: 1, b: 1, a: 1}
+    Intensity: 30
+    Rotation: {x: 80, y: 0, z: 0}
+    Range: 8
+    SpotAngle: 40
+    InnerSpotAngle: 22
+    Shadows: 0
+    ShadowResolution: 1
+    ShadowStrength: 0
+    ShadowBias: 0.05
+    ShadowNormalBias: 0.4
+    ShadowNearPlane: 0.2
+  _ambient:
+    Mode: 1
+    SkyColor: {r: 0.35, g: 0.34, b: 0.32, a: 1}
+    EquatorColor: {r: 0.2, g: 0.19, b: 0.17, a: 1}
+    GroundColor: {r: 0.08, g: 0.075, b: 0.07, a: 1}
+    FlatColor: {r: 0.2, g: 0.19, b: 0.17, a: 1}
+    Intensity: 1
+  _reflection:
+    Mode: 0
+    CustomReflectionTexture: {fileID: 0}
+    Intensity: 0.6
