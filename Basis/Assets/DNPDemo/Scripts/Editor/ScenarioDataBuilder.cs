@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.IO;
+using DNPDemo.Environment;
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
 using DNPDemo.Interaction.Voice;
-using DNPDemo.Environment;
 using DNPDemo.Menu;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
@@ -66,19 +66,14 @@ namespace DNPDemo.Editor
 
         public static ScenarioData CreateIfMissing()
         {
-            EnvironmentPresetBuilder.BuildAssetsAndPrefabs();
             var existing = AssetDatabase.LoadAssetAtPath<ScenarioData>(AssetPath);
             if (existing != null)
             {
-                if (EnsureEnvironmentCue(existing))
-                {
-                    EditorUtility.SetDirty(existing);
-                    AssetDatabase.SaveAssets();
-                }
                 return existing;
             }
-            // The version cues refer to the version assets.
+            // The version cues and the environment cue refer to these assets.
             VenusAssetBuilder.CreateIfMissing();
+            EnvironmentPresetBuilder.CreatePresetsIfMissing();
             var data = ScriptableObject.CreateInstance<ScenarioData>();
             data.SetSteps(CreateDefaultSteps());
             Directory.CreateDirectory(Path.GetDirectoryName(AssetPath));
@@ -88,54 +83,16 @@ namespace DNPDemo.Editor
             return data;
         }
 
-        public static void EnsureEnvironmentCueInExistingAsset()
-        {
-            ScenarioData data = AssetDatabase.LoadAssetAtPath<ScenarioData>(AssetPath);
-            if (data != null && EnsureEnvironmentCue(data))
-            {
-                EditorUtility.SetDirty(data);
-                AssetDatabase.SaveAssets();
-            }
-        }
-
-        static bool EnsureEnvironmentCue(ScenarioData data)
-        {
-            EnvironmentPreset templePreset = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.TemplePresetPath);
-            foreach (ScenarioStep step in data.Steps)
-            {
-                if (step == null || step.Id != "closing")
-                {
-                    continue;
-                }
-                step.Cues ??= new List<ScenarioCue>();
-                foreach (ScenarioCue cue in step.Cues)
-                {
-                    if (cue is EnvironmentCue environmentCue)
-                    {
-                        if (environmentCue.Preset == null && templePreset != null)
-                        {
-                            environmentCue.Preset = templePreset;
-                            return true;
-                        }
-                        return false;
-                    }
-                }
-                step.Cues.Insert(0, new EnvironmentCue(templePreset));
-                return true;
-            }
-            return false;
-        }
-
         /// <summary>
         /// The steps of docs/PLAN.md §3. A version reached by an operation is shown by a cue at the head of the next step,
         /// so it appears as the step completes and every later step applies it instantly. The version assets are loaded
-        /// from <see cref="VenusAssetBuilder.CatalogPath"/>.
+        /// from <see cref="VenusAssetBuilder.CatalogPath"/> and the temple preset from
+        /// <see cref="EnvironmentPresetBuilder.TemplePresetPath"/>; nothing is created here.
         /// </summary>
         public static List<ScenarioStep> CreateDefaultSteps()
         {
-            EnvironmentPresetBuilder.CreatePresetsIfMissing();
-            EnvironmentPreset templePreset = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.TemplePresetPath);
-            var steps = new List<ScenarioStep>
+            var templePreset = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.TemplePresetPath);
+            return new List<ScenarioStep>
             {
                 new()
                 {
@@ -247,7 +204,6 @@ namespace DNPDemo.Editor
                     },
                 },
             };
-            return steps;
         }
 
         static ScenarioStep Auto(string id, string title, params ScenarioCue[] cues) => new()

@@ -21,21 +21,14 @@ MonoBehaviour:
     Intensity: 1.4
     Rotation: {x: 38, y: -42, z: 0}
     Shadows: 2
-    ShadowResolution: 2
     ShadowStrength: 0.85
     ShadowBias: 0.035
     ShadowNormalBias: 0.3
     ShadowNearPlane: 0.2
   _spotLight:
-    Enabled: 0
     Color: {r: 1, g: 1, b: 1, a: 1}
     Intensity: 0
-    Rotation: {x: 40, y: 0, z: 0}
-    Range: 8
-    SpotAngle: 40
-    InnerSpotAngle: 22
     Shadows: 0
-    ShadowResolution: 1
     ShadowStrength: 0
     ShadowBias: 0.05
     ShadowNormalBias: 0.4
@@ -50,6 +43,4 @@ MonoBehaviour:
   _reflection:
     Mode: 0
     CustomReflectionTexture: {fileID: 0}
-    Resolution: 128
     Intensity: 0.9
-    Bounces: 2

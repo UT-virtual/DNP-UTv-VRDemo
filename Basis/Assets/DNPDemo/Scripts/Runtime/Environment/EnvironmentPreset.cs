@@ -11,25 +11,22 @@ namespace DNPDemo.Environment
         public float Intensity;
         public Vector3 Rotation;
         public LightShadows Shadows;
-        public LightShadowResolution ShadowResolution;
         public float ShadowStrength;
         public float ShadowBias;
         public float ShadowNormalBias;
         public float ShadowNearPlane;
     }
 
+    /// <summary>
+    /// How the statue spotlight looks in this environment. Where it points and whether it is on belong to the Lighting
+    /// prefab and the scenario cues, so a preset only changes its colour, brightness and shadows.
+    /// </summary>
     [Serializable]
     public struct SpotLightSettings
     {
-        public bool Enabled;
         public Color Color;
         public float Intensity;
-        public Vector3 Rotation;
-        public float Range;
-        public float SpotAngle;
-        public float InnerSpotAngle;
         public LightShadows Shadows;
-        public LightShadowResolution ShadowResolution;
         public float ShadowStrength;
         public float ShadowBias;
         public float ShadowNormalBias;
@@ -47,14 +44,16 @@ namespace DNPDemo.Environment
         public float Intensity;
     }
 
+    /// <summary>
+    /// The default reflection. Changing the skybox at runtime does not re-render the skybox reflection, so an environment
+    /// that needs its own reflections supplies a custom cubemap.
+    /// </summary>
     [Serializable]
     public struct ReflectionSettings
     {
         public DefaultReflectionMode Mode;
         public Texture CustomReflectionTexture;
-        public int Resolution;
         public float Intensity;
-        public int Bounces;
     }
 
     [CreateAssetMenu(menuName = "DNP Demo/Environment Preset", fileName = "EnvironmentPreset")]

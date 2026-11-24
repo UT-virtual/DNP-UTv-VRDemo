@@ -29,7 +29,6 @@ namespace DNPDemo.Editor
             CreatePresetsIfMissing();
             ConfigureLightingPrefab();
             ConfigureExhibitionRoomPrefab();
-            ScenarioDataBuilder.EnsureEnvironmentCueInExistingAsset();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("[DNPDemo] Environment presets and prefab bindings are ready.");
@@ -62,7 +61,6 @@ namespace DNPDemo.Editor
                     Intensity = 0.15f,
                     Rotation = new Vector3(48f, -30f, 0f),
                     Shadows = LightShadows.None,
-                    ShadowResolution = LightShadowResolution.Medium,
                     ShadowStrength = 0f,
                     ShadowBias = 0.05f,
                     ShadowNormalBias = 0.4f,
@@ -70,15 +68,9 @@ namespace DNPDemo.Editor
                 },
                 spot: new SpotLightSettings
                 {
-                    Enabled = false,
                     Color = Color.white,
                     Intensity = 30f,
-                    Rotation = new Vector3(40f, 0f, 0f),
-                    Range = 8f,
-                    SpotAngle = 40f,
-                    InnerSpotAngle = 22f,
                     Shadows = LightShadows.None,
-                    ShadowResolution = LightShadowResolution.Medium,
                     ShadowStrength = 0f,
                     ShadowBias = 0.05f,
                     ShadowNormalBias = 0.4f,
@@ -97,9 +89,7 @@ namespace DNPDemo.Editor
                 {
                     Mode = DefaultReflectionMode.Skybox,
                     CustomReflectionTexture = null,
-                    Resolution = 128,
                     Intensity = 0.6f,
-                    Bounces = 1,
                 });
 
             EnsurePreset(
@@ -115,7 +105,6 @@ namespace DNPDemo.Editor
                     Intensity = 1.4f,
                     Rotation = new Vector3(38f, -42f, 0f),
                     Shadows = LightShadows.Soft,
-                    ShadowResolution = LightShadowResolution.High,
                     ShadowStrength = 0.85f,
                     ShadowBias = 0.035f,
                     ShadowNormalBias = 0.3f,
@@ -123,15 +112,9 @@ namespace DNPDemo.Editor
                 },
                 spot: new SpotLightSettings
                 {
-                    Enabled = false,
                     Color = Color.white,
                     Intensity = 0f,
-                    Rotation = new Vector3(40f, 0f, 0f),
-                    Range = 8f,
-                    SpotAngle = 40f,
-                    InnerSpotAngle = 22f,
                     Shadows = LightShadows.None,
-                    ShadowResolution = LightShadowResolution.Medium,
                     ShadowStrength = 0f,
                     ShadowBias = 0.05f,
                     ShadowNormalBias = 0.4f,
@@ -150,9 +133,7 @@ namespace DNPDemo.Editor
                 {
                     Mode = DefaultReflectionMode.Skybox,
                     CustomReflectionTexture = null,
-                    Resolution = 128,
                     Intensity = 0.9f,
-                    Bounces = 2,
                 });
             AssetDatabase.SaveAssets();
         }

@@ -14,6 +14,8 @@ namespace DNPDemo.Tests
 {
     public class EnvironmentPresetTests
     {
+        static readonly Quaternion SpotAim = Quaternion.Euler(80f, 0f, 0f);
+
         Scene _scene;
         Scene _previousActiveScene;
         bool _sceneOpenedAdditively;
@@ -25,9 +27,10 @@ namespace DNPDemo.Tests
         [SetUp]
         public void SetUp()
         {
-            EnvironmentPresetBuilder.CreatePresetsIfMissing();
             _exhibition = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.ExhibitionPresetPath);
             _temple = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.TemplePresetPath);
+            Assert.IsNotNull(_exhibition, $"{EnvironmentPresetBuilder.ExhibitionPresetPath} is missing.");
+            Assert.IsNotNull(_temple, $"{EnvironmentPresetBuilder.TemplePresetPath} is missing.");
             _previousActiveScene = SceneManager.GetActiveScene();
             // RenderSettings live on the active scene, so each test needs its own. The Test Runner runs Edit Mode tests
             // in an untitled scratch scene, and NewScene(Additive) throws once that scene is dirty; replace it instead,
@@ -64,8 +67,6 @@ namespace DNPDemo.Tests
         [Test]
         public void PresetAssetsHaveCompletePanoramasAndTempleSunlight()
         {
-            Assert.IsNotNull(_exhibition);
-            Assert.IsNotNull(_temple);
             Assert.IsNotNull(_exhibition.Panorama);
             Assert.IsNotNull(_temple.Panorama);
             Assert.AreEqual(2f, (float)_exhibition.Panorama.width / _exhibition.Panorama.height, 0.01f);
@@ -75,6 +76,8 @@ namespace DNPDemo.Tests
             Assert.Greater(_temple.DirectionalLight.Intensity, _exhibition.DirectionalLight.Intensity);
             Assert.AreEqual(LightShadows.Soft, _temple.DirectionalLight.Shadows);
             Assert.Greater(_temple.DirectionalLight.ShadowStrength, 0f);
+            Assert.Greater(_exhibition.SpotLight.Intensity, 0f, "The statue spotlight is lit in the exhibition room.");
+            Assert.AreEqual(0f, _temple.SpotLight.Intensity, "The temple is lit by the sun alone.");
             Assert.AreEqual(DefaultReflectionMode.Skybox, _temple.Reflection.Mode);
             Assert.AreEqual(AmbientMode.Trilight, _temple.Ambient.Mode);
             AssertPresetComplete(_exhibition);
@@ -92,17 +95,21 @@ namespace DNPDemo.Tests
             cue.ApplyInstant(context);
 
             Assert.AreEqual(_temple.DirectionalLight.Intensity, fixture.Directional.intensity);
-            Assert.IsFalse(fixture.Spot.gameObject.activeSelf);
+            Assert.AreEqual(_temple.SpotLight.Intensity, fixture.Spot.intensity);
+            AssertSpotPlacementUntouched(fixture);
             Assert.AreSame(_temple.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
-            Assert.AreEqual(0f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.001f);
-            Assert.IsTrue(fixture.WallCollider.enabled, "Fading the display must not disable the navigation collider.");
+            Assert.IsFalse(fixture.WallRenderer.enabled, "A hidden room must neither draw nor cast shadows.");
+            Assert.AreSame(_wallMaterial, fixture.WallRenderer.sharedMaterial);
+            Assert.IsTrue(fixture.WallCollider.enabled, "Hiding the room must not disable the navigation collider.");
 
             fixture.Stage.ResetToBaseline();
 
             Assert.AreEqual(_exhibition.DirectionalLight.Intensity, fixture.Directional.intensity);
-            Assert.IsFalse(fixture.Spot.gameObject.activeSelf);
+            Assert.AreEqual(_exhibition.SpotLight.Intensity, fixture.Spot.intensity);
+            AssertSpotPlacementUntouched(fixture);
             Assert.AreSame(_exhibition.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
-            Assert.AreEqual(1f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.001f);
+            Assert.IsTrue(fixture.WallRenderer.enabled);
+            Assert.AreSame(_wallMaterial, fixture.WallRenderer.sharedMaterial, "A fully shown room keeps its opaque material.");
         }
 
         [Test]
@@ -115,11 +122,19 @@ namespace DNPDemo.Tests
 
             Assert.IsTrue(playback.MoveNext());
             Assert.IsTrue(fixture.Controller.IsTransitioning);
+            Assert.AreEqual(_temple.Exposure, RenderSettings.skybox.GetFloat("_ExposureB"), 0.0001f,
+                "The target panorama fades in at its final exposure.");
+            Assert.AreEqual(_temple.Rotation, RenderSettings.skybox.GetFloat("_RotationB"), 0.0001f,
+                "The target panorama fades in at its final rotation.");
             fixture.Controller.AdvanceTransition(1f);
             float halfwayIntensity = fixture.Directional.intensity;
             Assert.Greater(halfwayIntensity, _exhibition.DirectionalLight.Intensity);
             Assert.Less(halfwayIntensity, _temple.DirectionalLight.Intensity);
-            Assert.AreEqual(0.5f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.02f);
+            Material fading = fixture.WallRenderer.sharedMaterial;
+            Assert.AreNotSame(_wallMaterial, fading, "The room uses a transparent copy only while it fades.");
+            Assert.AreEqual((int)RenderQueue.Transparent, fading.renderQueue);
+            Assert.AreEqual(0.5f, fading.GetColor("_BaseColor").a, 0.02f);
+            Assert.IsTrue(fixture.WallRenderer.enabled);
 
             Texture currentSky = RenderSettings.skybox.GetTexture("_PanoramaA");
             fixture.Controller.TransitionTo(_exhibition, 2f);
@@ -133,7 +148,9 @@ namespace DNPDemo.Tests
             Assert.IsFalse(fixture.Controller.IsTransitioning);
             Assert.AreEqual(_exhibition.DirectionalLight.Intensity, fixture.Directional.intensity);
             Assert.AreSame(_exhibition.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
-            Assert.AreEqual(1f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.001f);
+            Assert.IsTrue(fixture.WallRenderer.enabled);
+            Assert.AreSame(_wallMaterial, fixture.WallRenderer.sharedMaterial);
+            AssertSpotPlacementUntouched(fixture);
 
             fixture.Controller.TransitionTo(_temple, 2f);
             fixture.Controller.AdvanceTransition(0.5f);
@@ -141,6 +158,7 @@ namespace DNPDemo.Tests
             Assert.IsFalse(fixture.Controller.IsTransitioning);
             Assert.AreEqual(_temple.DirectionalLight.Intensity, fixture.Directional.intensity);
             Assert.AreSame(_temple.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
+            Assert.IsFalse(fixture.WallRenderer.enabled);
         }
 
         EnvironmentFixture CreateFixture()
@@ -155,19 +173,19 @@ namespace DNPDemo.Tests
             fixture.Directional.type = LightType.Directional;
             fixture.Directional.intensity = 0.15f;
 
+            // Lit and aimed as the Opening leaves it; the environment must not move it or switch it off.
             var spotObject = fixture.Track(new GameObject("Spot"));
             fixture.Spot = spotObject.AddComponent<Light>();
             fixture.Spot.type = LightType.Spot;
-            spotObject.SetActive(false);
+            spotObject.transform.rotation = SpotAim;
 
             var room = fixture.Track(new GameObject("ExhibitionRoom"));
-            fixture.Room = room;
             SetBindingKey(room.AddComponent<ScenarioObjectBinding>(), "ExhibitionRoom");
             fixture.WallCollider = room.AddComponent<BoxCollider>();
             var wall = new GameObject("WallDisplay");
             wall.transform.SetParent(room.transform, false);
-            var renderer = wall.AddComponent<MeshRenderer>();
-            renderer.sharedMaterial = _wallMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            fixture.WallRenderer = wall.AddComponent<MeshRenderer>();
+            fixture.WallRenderer.sharedMaterial = _wallMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
 
             var environment = fixture.Track(new GameObject("Environment"));
             SetBindingKey(environment.AddComponent<ScenarioObjectBinding>(), "Environment");
@@ -181,6 +199,13 @@ namespace DNPDemo.Tests
             return fixture;
         }
 
+        static void AssertSpotPlacementUntouched(EnvironmentFixture fixture)
+        {
+            Assert.IsTrue(fixture.Spot.gameObject.activeSelf, "Whether the spotlight is on belongs to the scenario cues.");
+            Assert.AreEqual(0f, Quaternion.Angle(SpotAim, fixture.Spot.transform.rotation), 0.01f,
+                "Where the spotlight points belongs to the Lighting prefab.");
+        }
+
         static void SetBindingKey(ScenarioObjectBinding binding, string key)
         {
             var serialized = new SerializedObject(binding);
@@ -192,13 +217,9 @@ namespace DNPDemo.Tests
         {
             Assert.Greater(preset.DirectionalLight.Intensity, 0f, preset.name);
             Assert.Greater(preset.DirectionalLight.ShadowNearPlane, 0f, preset.name);
-            Assert.Greater(preset.SpotLight.Range, 0f, preset.name);
-            Assert.Greater(preset.SpotLight.SpotAngle, 0f, preset.name);
-            Assert.Greater(preset.SpotLight.InnerSpotAngle, 0f, preset.name);
+            Assert.GreaterOrEqual(preset.SpotLight.Intensity, 0f, preset.name);
             Assert.Greater(preset.SpotLight.ShadowNearPlane, 0f, preset.name);
             Assert.Greater(preset.Ambient.Intensity, 0f, preset.name);
-            Assert.Greater(preset.Reflection.Resolution, 0, preset.name);
-            Assert.GreaterOrEqual(preset.Reflection.Bounces, 0, preset.name);
             Assert.GreaterOrEqual(preset.Reflection.Intensity, 0f, preset.name);
         }
 
@@ -211,18 +232,12 @@ namespace DNPDemo.Tests
             public Light Directional;
             public Light Spot;
             public BoxCollider WallCollider;
-            public GameObject Room;
+            public MeshRenderer WallRenderer;
 
             public T Track<T>(T target) where T : Object
             {
                 _objects.Add(target);
                 return target;
-            }
-
-            public Material WallMaterial()
-            {
-                Renderer renderer = Room.GetComponentInChildren<Renderer>(true);
-                return renderer.sharedMaterial;
             }
 
             public void Dispose()

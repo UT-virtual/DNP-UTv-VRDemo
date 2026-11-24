@@ -261,9 +261,13 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 
 ### 2.6 環境の切り替え
 
-`EnvironmentPreset`（ScriptableObject）に、2:1 の Skybox パノラマと露出・回転、展示室の壁の表示、Directional / Spot Light、Ambient、Reflection の設定をまとめて持たせる。`EnvironmentController` は描画中のパノラマをスナップショットしてから次の環境へクロスフェードするため、遷移中の再指定でも画面を飛ばさず目標へ収束する。壁の表示は透明度だけを変え、移動用 Collider は維持する。
+`EnvironmentPreset`（ScriptableObject）に、2:1 の Skybox パノラマと露出・回転、展示室の表示、Directional Light、像のスポットライトの色・強さ・影、Ambient、Reflection（種類・カスタムキューブマップ・強度）の設定をまとめて持たせる。`EnvironmentController` は描画中のパノラマをスナップショットしてから次の環境へクロスフェードするため、遷移中の再指定でも画面を飛ばさず目標へ収束する。
 
-プリセットは「展示室」と「神殿（エーゲ海の青空と自然光）」の2つ。神殿では像の大理石に自然光と影が落ちるよう、ディレクショナルライトの向き・強さ・ソフトシャドウを設定する。仮のパノラマとプリセットは `DNP Demo/Setup/Build Environment Presets` で生成し、Lighting / Env_ExhibitionRoom Prefab に `Environment` / `ExhibitionRoom` のバインディングを設定する。共有シーンは編集しない。
+- 展示室（壁と床）は、フェード中だけ半透明のマテリアルに差し替える。表示中は元の不透明マテリアル、非表示中は Renderer を止めて描画も影も出さない。移動用 Collider は維持する。
+- スポットライトの位置・向きは Lighting Prefab、点灯と消灯はシナリオのキュー（`SetObjectActiveCue`）が受け持つ。環境は色・強さ・影だけを切り替え、神殿では強さを 0 にする。
+- 実行時に Skybox を差し替えても、Skybox 由来の反射は描き直されない。環境ごとに反射を変える場合は、プリセットにカスタムキューブマップを設定する。
+
+プリセットは「展示室」と「神殿（エーゲ海の青空と自然光）」の2つ。神殿では像の大理石に自然光と影が落ちるよう、ディレクショナルライトの向き・強さ・ソフトシャドウを設定する。仮のパノラマとプリセット、Lighting / Env_ExhibitionRoom Prefab の `Environment` / `ExhibitionRoom` バインディングは、`DNP Demo/Setup/Build Environment Presets` で作成する。
 
 シナリオ step 21 までは展示室を基準とし、step 22「結び」の先頭にある永続 `EnvironmentCue` が神殿へ切り替える。後続ステップや途中参加では `ApplyInstant` で同じ状態を即時再構築し、舞台リセットでは展示室プリセットへ戻す。
 
