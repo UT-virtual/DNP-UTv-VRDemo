@@ -279,6 +279,10 @@ namespace DNPDemo.Environment
 
         void IStageResettable.ResetToBaseline()
         {
+            _isTransitioning = false;
+            _transitionTarget = null;
+            _elapsed = 0f;
+            ReleaseSnapshots();
             ApplyInstant(_baselinePreset);
         }
 
