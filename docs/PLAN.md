@@ -89,8 +89,8 @@ StepCompletion（完了条件）
    ├ Interaction  … 担当ロールの端末で操作定義の部品がすべて完了すると、InteractionRunner が ScenarioDirector.ReportInteractionComplete() を呼んで進む
    └ Manual       … 運営の操作でのみ進む（結び）
    運営スキップはどの条件でも常に使える
-ScenarioCue（キュー）… LineCue（話者＋字幕＋音声）/ WaitCue / SoundCue / SetObjectActiveCue / BannerCue / StatueVersionCue（§2.5）
-   └ 見た目を後に残すキュー（永続キュー）は ApplyInstant を実装する。環境のキューも同じ形で足す
+ScenarioCue（キュー）… LineCue（話者＋字幕＋音声）/ WaitCue / SoundCue / SetObjectActiveCue / BannerCue / StatueVersionCue（§2.5）/ EnvironmentCue（§2.6）
+   └ 見た目を後に残すキュー（永続キュー）は ApplyInstant を実装する
 ScenarioPlayer … ステップに入るたびに、舞台を初期状態に戻し、それまでのステップの永続キューを即時に適用してから、
                  現在のステップのキューを頭から再生する
 ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシーンを参照できないため、話者（音声と字幕）とキー付きオブジェクトは、
@@ -231,6 +231,7 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 | 版の一覧 | 腕なし → Ver 1.0 → Ver 1.1 → Ver 1.2 → Ver 2.0 → Ver 3.0 → Ver 3.1（§3） |
 | `StatueVersionCue` | 永続キュー。キーで指した像に版を表示する（空なら何も表示しない）。操作で到達する版は、操作が完了した次のステップの先頭に置く（ステップ0：腕なし、4：Ver 1.0、8：Ver 1.1、10：Ver 1.2、12：Ver 2.0、16：Ver 3.0、18：Ver 3.1。比較台はステップ19の先頭で台を表示し、ステップ20の先頭で Ver 1.0 を表示する）。版はステップ番号から決まるので、同期は不要 |
 | 履歴 | `VenusVersionHistory.Collect(ステップ列, ステップ番号, 像のキー)` が、現在より前のステップの `StatueVersionCue` がその像に表示した版を、初めて出た順に1つずつ返す |
+| `EnvironmentCue` | 永続キュー。キー `Environment` の `EnvironmentController` に環境プリセットを渡し、クロスフェードで切り替える（ステップ22「結び」の先頭で神殿へ）。後続ステップや途中参加では即時に適用する。詳細は §2.6 |
 | 仮モデル | M3 まではプリミティブを組み合わせた仮モデル（`Art/Venus/Placeholders/`）を使う。メニュー「DNP Demo/Create/Venus Versions」で、仮モデル、`VenusVersion`、カタログのうち足りないものを生成する。以後はアセットを直接編集し、本番のモデルは各 `VenusVersion` のモデルを付け替えて差し替える。Ver 1.0 の林檎は、ステップ6 で動かすため別オブジェクト（`Statue_Original/StatueAnchor/Targets/Apple`）にしていて、ステップ4〜7 の間だけ表示する。Ver 1.1 以降は林檎をモデルに含める |
 | 操作対象のオブジェクト | 部位ゾーン、目標マーカー、仮の林檎は `Statue_Original/StatueAnchor/Targets` に置き、版のモデルとは分ける |
 | 操作対象の定義 | 部位ゾーン（林檎、腕、手鏡など）、ギズモの原点（重心）、始点・終点ポーズ、制約（平行移動の範囲、回転の軸と角度範囲）、ゴーストの形状と大きさはステップ定義側に持つ。モデルには ID やピボットを持たせない |
@@ -261,7 +262,7 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 
 ### 2.6 環境の切り替え
 
-`EnvironmentPreset`（ScriptableObject）に、2:1 の Skybox パノラマと露出・回転、展示室の壁の表示、Directional / Spot Light、Ambient、Reflection の設定をまとめて持たせる。`EnvironmentController` は描画中のパノラマをスナップショットしてから次の環境へクロスフェードするため、遷移中の再指定でも画面を飛ばさず目標へ収束する。壁の表示は透明度だけを変え、移動用 Collider は維持する。
+`EnvironmentPreset`（ScriptableObject）に、2:1 の Skybox パノラマと露出・回転、展示室の壁の表示、Directional / Spot Light、Ambient、Reflection の設定をまとめて持たせる。`EnvironmentController` は描画中のパノラマをスナップショットしてから次の環境へクロスフェードするため、遷移中の再指定でも画面を飛ばさず目標へ収束する。遷移先のパノラマは最初から自分の露出・回転で描き、混ぜる割合だけを変える。無効のスポットライトは強度 0 として補間するので、点くときは暗い状態から、消えるときは暗くなってから切り替わる。Reflection の解像度とバウンス数はベイク時にしか使われないため、プリセットには持たせずシーンの Lighting 設定に任せる。壁の表示は透明度だけを変え、移動用 Collider は維持する。
 
 プリセットは「展示室」と「神殿（エーゲ海の青空と自然光）」の2つ。神殿では像の大理石に自然光と影が落ちるよう、ディレクショナルライトの向き・強さ・ソフトシャドウを設定する。仮のパノラマとプリセットは `DNP Demo/Setup/Build Environment Presets` で生成し、Lighting / Env_ExhibitionRoom Prefab に `Environment` / `ExhibitionRoom` のバインディングを設定する。共有シーンは編集しない。
 
