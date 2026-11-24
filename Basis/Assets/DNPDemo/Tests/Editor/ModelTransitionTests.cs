@@ -539,6 +539,48 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void StatueVersionCueCentresTheTransitionOnItsFocus()
+        {
+            VenusStatue statue = CreateStatue();
+            VenusVersion first = CreateVersion("first");
+            VenusVersion second = CreateVersion("second");
+            var transition = statue.gameObject.AddComponent<ModelTransition>();
+            SetProfile(transition, CreateProfile(1f));
+            Bind(statue.gameObject, "FocusStatue");
+
+            GameObject focus = Track(new GameObject("FocusZone"));
+            focus.transform.position = new Vector3(4f, 1f, -2f);
+            var zone = focus.AddComponent<DNPDemo.Interaction.DetectionZone>();
+            zone.ShapeType = DNPDemo.Interaction.ZoneShapeType.Box;
+            zone.BoxSize = new Vector3(0.5f, 0.6f, 0.7f);
+            Bind(focus, "FocusZone");
+
+            var stage = Track(new GameObject("FocusStage")).AddComponent<ScenarioStage>();
+            Assume.That(stage.gameObject.scene.isLoaded);
+            var context = new ScenarioCueContext(stage, Track(ScriptableObject.CreateInstance<ScenarioData>()));
+            statue.Show(first, false);
+
+            // Showing the version already shown does not leave the focus pending for a later change.
+            new StatueVersionCue("FocusStatue", first, "FocusZone").Play(context).MoveNext();
+            new StatueVersionCue("FocusStatue", second).Play(context).MoveNext();
+            Assert.IsTrue(transition.IsAnimating);
+            Assert.AreNotEqual(zone.WorldBounds, transition.ActiveBounds);
+
+            transition.CompleteImmediately();
+            new StatueVersionCue("FocusStatue", first, "FocusZone").Play(context).MoveNext();
+            Assert.IsTrue(transition.IsAnimating);
+            Assert.AreEqual(zone.WorldBounds, transition.ActiveBounds);
+        }
+
+        static void Bind(GameObject target, string key)
+        {
+            var binding = target.AddComponent<ScenarioObjectBinding>();
+            var so = new SerializedObject(binding);
+            so.FindProperty("_key").stringValue = key;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        [Test]
         public void ParticleIsPlayingAndDestroyedOnComplete()
         {
             VenusStatue statue = CreateStatue();
