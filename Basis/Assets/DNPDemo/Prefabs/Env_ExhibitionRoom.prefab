@@ -294,7 +294,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4c15b5691703344aa015751d770f626, type: 3}
   m_Name:
   m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Presentation.ExhibitionDistanceFog
-  _startDistance: 2.5
+  _startDistance: 4
   _endDistance: 7
 --- !u!1 &8472031599263114555
 GameObject:
