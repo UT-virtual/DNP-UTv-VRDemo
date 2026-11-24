@@ -25,9 +25,10 @@ namespace DNPDemo.Tests
         [SetUp]
         public void SetUp()
         {
-            EnvironmentPresetBuilder.CreatePresetsIfMissing();
             _exhibition = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.ExhibitionPresetPath);
             _temple = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.TemplePresetPath);
+            Assert.IsNotNull(_exhibition, $"{EnvironmentPresetBuilder.ExhibitionPresetPath} がありません。");
+            Assert.IsNotNull(_temple, $"{EnvironmentPresetBuilder.TemplePresetPath} がありません。");
             _previousActiveScene = SceneManager.GetActiveScene();
             // RenderSettings live on the active scene, so each test needs its own. The Test Runner runs Edit Mode tests
             // in an untitled scratch scene, and NewScene(Additive) throws once that scene is dirty; replace it instead,

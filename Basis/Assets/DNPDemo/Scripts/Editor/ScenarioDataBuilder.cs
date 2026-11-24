@@ -71,8 +71,9 @@ namespace DNPDemo.Editor
             {
                 return existing;
             }
-            // The version cues refer to the version assets.
+            // The version cues and the environment cue refer to these assets.
             VenusAssetBuilder.CreateIfMissing();
+            EnvironmentPresetBuilder.CreatePresetsIfMissing();
             var data = ScriptableObject.CreateInstance<ScenarioData>();
             data.SetSteps(CreateDefaultSteps());
             Directory.CreateDirectory(Path.GetDirectoryName(AssetPath));
@@ -123,11 +124,11 @@ namespace DNPDemo.Editor
         /// <summary>
         /// The steps of docs/PLAN.md §3. A version reached by an operation is shown by a cue at the head of the next step,
         /// so it appears as the step completes and every later step applies it instantly. The version assets are loaded
-        /// from <see cref="VenusAssetBuilder.CatalogPath"/>.
+        /// from <see cref="VenusAssetBuilder.CatalogPath"/> and the temple preset from
+        /// <see cref="EnvironmentPresetBuilder.TemplePresetPath"/>; this method only loads them and never creates assets.
         /// </summary>
         public static List<ScenarioStep> CreateDefaultSteps()
         {
-            EnvironmentPresetBuilder.CreatePresetsIfMissing();
             EnvironmentPreset templePreset = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.TemplePresetPath);
             return new List<ScenarioStep>
             {
