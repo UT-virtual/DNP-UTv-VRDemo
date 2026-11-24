@@ -8,6 +8,7 @@
 # To move them back to Git LFS, add the filter=lfs rules to this file again and commit the result of "git add --renormalize .".
 # Basis itself (Basis/Packages and the rest) stays in plain git so that upstream merges keep working.
 # Extensions are matched case-insensitively with bracket expressions, because Linux CI matches case-sensitively.
+# The empty headings below are kept as the places to put the LFS rules back.
 
 # 3D models
 
