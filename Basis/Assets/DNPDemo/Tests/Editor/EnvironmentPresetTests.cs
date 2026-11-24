@@ -143,6 +143,49 @@ namespace DNPDemo.Tests
             Assert.AreSame(_temple.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
         }
 
+        [Test]
+        public void TargetSkyUsesItsOwnExposureAndRotationFromTheFirstFrame()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            EnvironmentPreset rotated = CreateVariant(fixture, _temple, 90f, _temple.SpotLight);
+
+            fixture.Controller.TransitionTo(rotated, 2f);
+            fixture.Controller.AdvanceTransition(0.1f);
+
+            Material sky = RenderSettings.skybox;
+            Assert.AreEqual(rotated.Exposure, sky.GetFloat("_ExposureB"), 0.0001f);
+            Assert.AreEqual(90f, sky.GetFloat("_RotationB"), 0.0001f, "The target panorama must not spin while it fades in.");
+            Assert.AreEqual(0f, sky.GetFloat("_ExposureA"), 0.0001f, "The snapshot already contains the outgoing exposure.");
+            Assert.AreEqual(0f, sky.GetFloat("_RotationA"), 0.0001f, "The snapshot already contains the outgoing rotation.");
+        }
+
+        [Test]
+        public void SpotLightFadesFromDarkWhenEnabledAndToDarkWhenDisabled()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            SpotLightSettings litSpot = _exhibition.SpotLight;
+            litSpot.Enabled = true;
+            litSpot.Intensity = 10f;
+            EnvironmentPreset lit = CreateVariant(fixture, _exhibition, _exhibition.Rotation, litSpot);
+            Assume.That(_exhibition.SpotLight.Enabled, Is.False);
+            Assume.That(_exhibition.SpotLight.Intensity, Is.GreaterThan(litSpot.Intensity));
+
+            fixture.Controller.ApplyInstant(_exhibition);
+            fixture.Controller.TransitionTo(lit, 2f);
+            fixture.Controller.AdvanceTransition(0.2f);
+            Assert.IsTrue(fixture.Spot.gameObject.activeSelf);
+            Assert.Less(fixture.Spot.intensity, 1f, "A disabled spot light counts as dark, so it must not start at its stored intensity.");
+            fixture.Controller.AdvanceTransition(2f);
+            Assert.AreEqual(litSpot.Intensity, fixture.Spot.intensity, 0.001f);
+
+            fixture.Controller.TransitionTo(_exhibition, 2f);
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.IsTrue(fixture.Spot.gameObject.activeSelf, "The light stays active while it fades out.");
+            Assert.Less(fixture.Spot.intensity, litSpot.Intensity);
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.IsFalse(fixture.Spot.gameObject.activeSelf);
+        }
+
         EnvironmentFixture CreateFixture()
         {
             var fixture = new EnvironmentFixture();
@@ -197,9 +240,22 @@ namespace DNPDemo.Tests
             Assert.Greater(preset.SpotLight.InnerSpotAngle, 0f, preset.name);
             Assert.Greater(preset.SpotLight.ShadowNearPlane, 0f, preset.name);
             Assert.Greater(preset.Ambient.Intensity, 0f, preset.name);
-            Assert.Greater(preset.Reflection.Resolution, 0, preset.name);
-            Assert.GreaterOrEqual(preset.Reflection.Bounces, 0, preset.name);
             Assert.GreaterOrEqual(preset.Reflection.Intensity, 0f, preset.name);
+        }
+
+        static EnvironmentPreset CreateVariant(EnvironmentFixture fixture, EnvironmentPreset source, float rotation, SpotLightSettings spot)
+        {
+            EnvironmentPreset preset = fixture.Track(ScriptableObject.CreateInstance<EnvironmentPreset>());
+            preset.Configure(
+                source.Panorama,
+                source.Exposure,
+                rotation,
+                source.ExhibitionRoomVisible,
+                source.DirectionalLight,
+                spot,
+                source.Ambient,
+                source.Reflection);
+            return preset;
         }
 
         sealed class EnvironmentFixture

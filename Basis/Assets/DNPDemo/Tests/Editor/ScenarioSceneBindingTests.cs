@@ -75,9 +75,35 @@ namespace DNPDemo.Tests
         public void EnvironmentBindingHasAConfiguredController()
         {
             ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
-            Assert.IsTrue(bindings.TryGetObject("Environment", out UnityEngine.GameObject target));
-            Assert.IsTrue(target.TryGetComponent(out EnvironmentController controller));
-            Assert.IsNotNull(controller);
+            Assert.IsTrue(bindings.TryGetObject(EnvironmentController.EnvironmentKey, out UnityEngine.GameObject target),
+                $"No object has the key \"{EnvironmentController.EnvironmentKey}\" (Lighting prefab).");
+            Assert.IsTrue(target.TryGetComponent(out EnvironmentController controller),
+                $"The \"{EnvironmentController.EnvironmentKey}\" object has no EnvironmentController.");
+
+            var serialized = new SerializedObject(controller);
+            Assert.AreEqual(AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.ExhibitionPresetPath),
+                serialized.FindProperty("_baselinePreset").objectReferenceValue, "The baseline must be the exhibition preset.");
+            Assert.AreEqual(AssetDatabase.LoadAssetAtPath<UnityEngine.Shader>(EnvironmentPresetBuilder.CrossfadeShaderPath),
+                serialized.FindProperty("_crossfadeShader").objectReferenceValue);
+
+            var directional = serialized.FindProperty("_directionalLight").objectReferenceValue as UnityEngine.Light;
+            Assert.IsNotNull(directional, "The directional light is not assigned.");
+            Assert.AreEqual(UnityEngine.LightType.Directional, directional.type);
+
+            var spot = serialized.FindProperty("_spotLight").objectReferenceValue as UnityEngine.Light;
+            Assert.IsNotNull(spot, "The spot light is not assigned.");
+            Assert.AreEqual(UnityEngine.LightType.Spot, spot.type);
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.SpotlightKey, out UnityEngine.GameObject statueSpot));
+            Assert.AreSame(statueSpot, spot.gameObject, "The controller must drive the statue spotlight that the scenario turns on.");
+        }
+
+        [Test]
+        public void ExhibitionRoomKeyResolvesToRenderedRoom()
+        {
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(EnvironmentController.ExhibitionRoomKey, out UnityEngine.GameObject room),
+                $"No object has the key \"{EnvironmentController.ExhibitionRoomKey}\" (Env_ExhibitionRoom prefab). EnvironmentController fades it.");
+            Assert.IsNotEmpty(room.GetComponentsInChildren<UnityEngine.Renderer>(true), "The exhibition room has nothing to fade.");
         }
 
         [Test]
