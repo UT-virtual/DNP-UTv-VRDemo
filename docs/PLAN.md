@@ -262,7 +262,7 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 
 ### 2.6 環境の切り替え
 
-`EnvironmentPreset`（ScriptableObject）に、2:1 の Skybox パノラマと露出・回転、展示室の壁の表示、Directional / Spot Light、Ambient、Reflection の設定をまとめて持たせる。`EnvironmentController` は描画中のパノラマをスナップショットしてから次の環境へクロスフェードするため、遷移中の再指定でも画面を飛ばさず目標へ収束する。遷移先のパノラマは最初から自分の露出・回転で描き、混ぜる割合だけを変える。無効のスポットライトは強度 0 として補間するので、点くときは暗い状態から、消えるときは暗くなってから切り替わる。Reflection の解像度とバウンス数はベイク時にしか使われないため、プリセットには持たせずシーンの Lighting 設定に任せる。壁の表示は透明度だけを変え、移動用 Collider は維持する。
+`EnvironmentPreset`（ScriptableObject）に、2:1 の Skybox パノラマと露出・回転、展示室の壁の表示、Directional / Spot Light、Ambient、Reflection の設定をまとめて持たせる。`EnvironmentController` は描画中のパノラマをスナップショットしてから次の環境へクロスフェードするため、遷移中の再指定でも画面を飛ばさず目標へ収束する。遷移先のパノラマは最初から自分の露出・回転で描き、混ぜる割合だけを変える。無効のスポットライトは強度 0 として補間するので、点くときは暗い状態から、消えるときは暗くなってから切り替わる。スポットライトの点灯は Keep / On / Off で指定し、Keep は点灯状態を変えない（遷移中に再指定されたときは進行中の遷移先の点灯状態を引き継ぐ）。色・強度・向きなどはどの指定でも適用する。展示室は Keep、神殿は Off。Reflection の解像度とバウンス数はベイク時にしか使われないため、プリセットには持たせずシーンの Lighting 設定に任せる。壁の表示は透明度だけを変え、移動用 Collider は維持する。
 
 プリセットは「展示室」と「神殿（エーゲ海の青空と自然光）」の2つ。神殿では像の大理石に自然光と影が落ちるよう、ディレクショナルライトの向き・強さ・ソフトシャドウを設定する。仮のパノラマとプリセットは `DNP Demo/Setup/Build Environment Presets` で生成し、Lighting / Env_ExhibitionRoom Prefab に `Environment` / `ExhibitionRoom` のバインディングを設定する。共有シーンは編集しない。
 

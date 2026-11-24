@@ -4,6 +4,10 @@ using UnityEngine.Rendering;
 
 namespace DNPDemo.Environment
 {
+    /// <summary>
+    /// How a preset sets the spot light's activation. Keep leaves it as it is, so lights switched by other cues survive the
+    /// change; the remaining spot light settings are applied either way.
+    /// </summary>
     public enum SpotLightMode
     {
         Keep,

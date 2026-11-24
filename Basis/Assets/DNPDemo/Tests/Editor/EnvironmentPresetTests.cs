@@ -100,8 +100,7 @@ namespace DNPDemo.Tests
             fixture.Stage.ResetToBaseline();
 
             Assert.AreEqual(_exhibition.DirectionalLight.Intensity, fixture.Directional.intensity);
-            // Exhibition uses SpotLightMode.Keep, so spotlight remains off after reset (it was off when transitioning away).
-            Assert.IsFalse(fixture.Spot.gameObject.activeSelf);
+            Assert.IsFalse(fixture.Spot.gameObject.activeSelf, "The exhibition keeps the spot light as the temple left it.");
             Assert.AreSame(_exhibition.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
             Assert.AreEqual(1f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.001f);
         }
@@ -170,8 +169,10 @@ namespace DNPDemo.Tests
             EnvironmentPreset lit = CreateVariant(fixture, _exhibition, _exhibition.Rotation, litSpot);
             Assume.That(_exhibition.SpotLight.Enabled, Is.EqualTo(SpotLightMode.Keep));
             Assume.That(_exhibition.SpotLight.Intensity, Is.GreaterThan(litSpot.Intensity));
+            Assume.That(_temple.SpotLight.Enabled, Is.EqualTo(SpotLightMode.Off));
 
             fixture.Controller.ApplyInstant(_exhibition);
+            Assert.IsFalse(fixture.Spot.gameObject.activeSelf, "Keep must not turn on a spot light that is off.");
             fixture.Controller.TransitionTo(lit, 2f);
             fixture.Controller.AdvanceTransition(0.2f);
             Assert.IsTrue(fixture.Spot.gameObject.activeSelf);
@@ -180,9 +181,14 @@ namespace DNPDemo.Tests
             Assert.AreEqual(litSpot.Intensity, fixture.Spot.intensity, 0.001f);
 
             fixture.Controller.TransitionTo(_exhibition, 2f);
+            fixture.Controller.AdvanceTransition(2f);
+            Assert.IsTrue(fixture.Spot.gameObject.activeSelf, "Keep must not turn off a spot light that is on.");
+            Assert.AreEqual(_exhibition.SpotLight.Intensity, fixture.Spot.intensity, 0.001f);
+
+            fixture.Controller.TransitionTo(_temple, 2f);
             fixture.Controller.AdvanceTransition(1f);
             Assert.IsTrue(fixture.Spot.gameObject.activeSelf, "The light stays active while it fades out.");
-            Assert.Less(fixture.Spot.intensity, litSpot.Intensity);
+            Assert.Less(fixture.Spot.intensity, _exhibition.SpotLight.Intensity);
             fixture.Controller.AdvanceTransition(1f);
             Assert.IsFalse(fixture.Spot.gameObject.activeSelf);
         }

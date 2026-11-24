@@ -124,7 +124,7 @@ namespace DNPDemo.Editor
                     Enabled = SpotLightMode.Off,
                     Color = Color.white,
                     Intensity = 0f,
-                    Rotation = new Vector3(80f, 0f, 0f),
+                    Rotation = new Vector3(40f, 0f, 0f),
                     Range = 8f,
                     SpotAngle = 40f,
                     InnerSpotAngle = 22f,

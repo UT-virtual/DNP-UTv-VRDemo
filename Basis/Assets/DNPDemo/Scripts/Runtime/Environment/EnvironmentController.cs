@@ -53,7 +53,7 @@ namespace DNPDemo.Environment
             public float DirectionalShadowBias;
             public float DirectionalShadowNormalBias;
             public float DirectionalShadowNearPlane;
-            public SpotLightMode SpotEnabled;
+            public bool SpotEnabled;
             public Color SpotColor;
             public float SpotIntensity;
             public Quaternion SpotRotation;
@@ -77,7 +77,8 @@ namespace DNPDemo.Environment
             public float ReflectionIntensity;
             public float WallAlpha;
 
-            public static RuntimeState FromPreset(EnvironmentPreset preset)
+            /// <param name="spotEnabled">Spot light activation already resolved from the preset's <see cref="SpotLightMode"/>.</param>
+            public static RuntimeState FromPreset(EnvironmentPreset preset, bool spotEnabled)
             {
                 DirectionalLightSettings directional = preset.DirectionalLight;
                 SpotLightSettings spot = preset.SpotLight;
@@ -94,7 +95,7 @@ namespace DNPDemo.Environment
                     DirectionalShadowBias = directional.ShadowBias,
                     DirectionalShadowNormalBias = directional.ShadowNormalBias,
                     DirectionalShadowNearPlane = directional.ShadowNearPlane,
-                    SpotEnabled = spot.Enabled,
+                    SpotEnabled = spotEnabled,
                     SpotColor = spot.Color,
                     SpotIntensity = spot.Intensity,
                     SpotRotation = Quaternion.Euler(spot.Rotation),
@@ -126,29 +127,8 @@ namespace DNPDemo.Environment
             /// </summary>
             public static RuntimeState Lerp(RuntimeState from, RuntimeState to, float t)
             {
-                bool fromSpotActive = from.SpotEnabled == SpotLightMode.On;
-                bool toSpotActive = to.SpotEnabled == SpotLightMode.On;
-                
-                // When Keep mode is involved, determine effective active states
-                SpotLightMode effectiveFrom = from.SpotEnabled;
-                SpotLightMode effectiveTo = to.SpotEnabled == SpotLightMode.Keep ? from.SpotEnabled : to.SpotEnabled;
-                
-                bool effectiveFromActive = effectiveFrom == SpotLightMode.On;
-                bool effectiveToActive = effectiveTo == SpotLightMode.On;
-                
-                float fromSpotIntensity = effectiveFromActive ? from.SpotIntensity : 0f;
-                float toSpotIntensity = effectiveToActive ? to.SpotIntensity : 0f;
-                
-                SpotLightMode resultSpotEnabled;
-                if (to.SpotEnabled == SpotLightMode.Keep)
-                {
-                    resultSpotEnabled = t >= 1f ? from.SpotEnabled : (effectiveFromActive || effectiveToActive ? from.SpotEnabled : SpotLightMode.Off);
-                }
-                else
-                {
-                    resultSpotEnabled = t >= 1f ? to.SpotEnabled : (effectiveFromActive || effectiveToActive ? to.SpotEnabled : SpotLightMode.Off);
-                }
-                
+                float fromSpotIntensity = from.SpotEnabled ? from.SpotIntensity : 0f;
+                float toSpotIntensity = to.SpotEnabled ? to.SpotIntensity : 0f;
                 return new RuntimeState
                 {
                     DirectionalColor = Color.Lerp(from.DirectionalColor, to.DirectionalColor, t),
@@ -160,7 +140,7 @@ namespace DNPDemo.Environment
                     DirectionalShadowBias = Mathf.Lerp(from.DirectionalShadowBias, to.DirectionalShadowBias, t),
                     DirectionalShadowNormalBias = Mathf.Lerp(from.DirectionalShadowNormalBias, to.DirectionalShadowNormalBias, t),
                     DirectionalShadowNearPlane = Mathf.Lerp(from.DirectionalShadowNearPlane, to.DirectionalShadowNearPlane, t),
-                    SpotEnabled = resultSpotEnabled,
+                    SpotEnabled = t >= 1f ? to.SpotEnabled : from.SpotEnabled || to.SpotEnabled,
                     SpotColor = Color.Lerp(from.SpotColor, to.SpotColor, t),
                     SpotIntensity = Mathf.Lerp(fromSpotIntensity, toSpotIntensity, t),
                     SpotRotation = Quaternion.Slerp(from.SpotRotation, to.SpotRotation, t),
@@ -196,6 +176,7 @@ namespace DNPDemo.Environment
         RuntimeState _originalState;
         RuntimeState _transitionStart;
         EnvironmentPreset _transitionTarget;
+        bool _transitionTargetSpotEnabled;
         ScenarioStage _stage;
         float _wallAlpha = 1f;
         float _elapsed;
@@ -226,9 +207,11 @@ namespace DNPDemo.Environment
                 return;
             }
 
+            bool targetSpotEnabled = ResolveSpotEnabled(preset);
             CaptureCurrentSky();
             _transitionStart = CaptureCurrentState();
             _transitionTarget = preset;
+            _transitionTargetSpotEnabled = targetSpotEnabled;
             _elapsed = 0f;
             _duration = duration;
             _isTransitioning = true;
@@ -242,10 +225,11 @@ namespace DNPDemo.Environment
             {
                 return;
             }
+            bool spotEnabled = ResolveSpotEnabled(preset);
             _isTransitioning = false;
             _transitionTarget = null;
             _elapsed = 0f;
-            RuntimeState state = RuntimeState.FromPreset(preset);
+            RuntimeState state = RuntimeState.FromPreset(preset, spotEnabled);
             ApplyState(state);
             SetSkyboxPreset(preset);
             ReleaseSnapshots();
@@ -261,18 +245,36 @@ namespace DNPDemo.Environment
             _elapsed = Mathf.Min(_elapsed + Mathf.Max(0f, deltaTime), _duration);
             float linear = _duration <= 0f ? 1f : _elapsed / _duration;
             float progress = Mathf.SmoothStep(0f, 1f, linear);
-            ApplyState(RuntimeState.Lerp(_transitionStart, RuntimeState.FromPreset(_transitionTarget), progress));
+            RuntimeState target = RuntimeState.FromPreset(_transitionTarget, _transitionTargetSpotEnabled);
+            ApplyState(RuntimeState.Lerp(_transitionStart, target, progress));
             _skyboxMaterial.SetFloat(BlendId, progress);
 
             if (_elapsed >= _duration)
             {
-                EnvironmentPreset target = _transitionTarget;
+                EnvironmentPreset targetPreset = _transitionTarget;
                 _isTransitioning = false;
                 _transitionTarget = null;
-                ApplyState(RuntimeState.FromPreset(target));
-                SetSkyboxPreset(target);
+                ApplyState(target);
+                SetSkyboxPreset(targetPreset);
                 ReleaseSnapshots();
             }
+        }
+
+        bool IsSpotLightOn() => _spotLight.gameObject.activeSelf && _spotLight.enabled;
+
+        /// <summary>
+        /// Resolves the preset's spot light mode to an activation. Keep follows the destination of an in-flight transition,
+        /// so a light that is fading out is not turned back on by a preset that leaves it alone.
+        /// </summary>
+        bool ResolveSpotEnabled(EnvironmentPreset preset)
+        {
+            bool current = _isTransitioning ? _transitionTargetSpotEnabled : IsSpotLightOn();
+            return preset.SpotLight.Enabled switch
+            {
+                SpotLightMode.On => true,
+                SpotLightMode.Off => false,
+                _ => current,
+            };
         }
 
         void IStageResettable.ResetToBaseline()
@@ -346,7 +348,7 @@ namespace DNPDemo.Environment
                 DirectionalShadowBias = _directionalLight.shadowBias,
                 DirectionalShadowNormalBias = _directionalLight.shadowNormalBias,
                 DirectionalShadowNearPlane = _directionalLight.shadowNearPlane,
-                SpotEnabled = _spotLight.gameObject.activeSelf && _spotLight.enabled ? SpotLightMode.On : SpotLightMode.Off,
+                SpotEnabled = IsSpotLightOn(),
                 SpotColor = _spotLight.color,
                 SpotIntensity = _spotLight.intensity,
                 SpotRotation = _spotLight.transform.rotation,
@@ -396,7 +398,7 @@ namespace DNPDemo.Environment
 
             if (_spotLight != null)
             {
-                _spotLight.gameObject.SetActive(state.SpotEnabled != SpotLightMode.Off);
+                _spotLight.gameObject.SetActive(state.SpotEnabled);
                 _spotLight.enabled = true;
                 _spotLight.color = state.SpotColor;
                 _spotLight.intensity = state.SpotIntensity;
@@ -559,7 +561,7 @@ namespace DNPDemo.Environment
             RenderSettings.skybox = _skyboxMaterial;
             _stage = FindStage(gameObject.scene);
             _initialized = true;
-            ApplyState(RuntimeState.FromPreset(_baselinePreset));
+            ApplyState(RuntimeState.FromPreset(_baselinePreset, ResolveSpotEnabled(_baselinePreset)));
             SetSkyboxPreset(_baselinePreset);
             return true;
         }

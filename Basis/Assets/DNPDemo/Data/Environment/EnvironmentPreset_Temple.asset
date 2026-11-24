@@ -27,7 +27,7 @@ MonoBehaviour:
     ShadowNormalBias: 0.3
     ShadowNearPlane: 0.2
   _spotLight:
-    Enabled: 0
+    Enabled: 2
     Color: {r: 1, g: 1, b: 1, a: 1}
     Intensity: 0
     Rotation: {x: 40, y: 0, z: 0}
