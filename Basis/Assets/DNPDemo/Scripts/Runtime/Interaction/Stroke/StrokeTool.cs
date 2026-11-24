@@ -90,11 +90,18 @@ namespace DNPDemo.Interaction.Stroke
             }
         }
 
+        /// <summary>
+        /// The finished lines of the most recent stroke part, kept after the step moves on so that later effects can
+        /// refer to them. Null until a stroke part has ended on this device; replaced when the next stroke part begins.
+        /// </summary>
+        public StrokeResult LastResult { get; private set; }
+
         public override bool CanRun(InteractionPart part) => part is StrokePart;
 
         public override void Begin(InteractionSession session)
         {
             StopInput();
+            LastResult = null;
             _session = session;
             _part = (StrokePart)session.Part;
             ClearAll();
@@ -105,7 +112,16 @@ namespace DNPDemo.Interaction.Stroke
             }
         }
 
-        public override void End() => StopInput();
+        public override void End()
+        {
+            // End runs before Discard on every device, and guide lines that missed have been erased by then, so the
+            // set holds the lines that count on the actor's device and on the others alike.
+            if (_session != null && _part != null)
+            {
+                LastResult = StrokeResult.Capture(_session.Step, _part, _set);
+            }
+            StopInput();
+        }
 
         public override void Discard()
         {

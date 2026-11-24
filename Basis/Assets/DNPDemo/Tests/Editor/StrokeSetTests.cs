@@ -18,6 +18,22 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void ResultKeepsFinishedLinesAfterTheSetIsCleared()
+        {
+            var set = new StrokeSet();
+            StrokeLine finished = DrawLine(set, Vector3.zero, new Vector3(0.2f, 0f, 0f), 10);
+            StrokeLine drawing = set.Begin(Vector3.one);
+            set.Extend(drawing, Vector3.one * 1.1f);
+
+            StrokeResult result = StrokeResult.Capture(null, StrokePart.Guide("x", "A", "B"), set);
+            set.Clear();
+
+            Assert.AreEqual(1, result.Lines.Count, "The line still being drawn does not count.");
+            Assert.AreEqual(finished.Count, result.Lines[0].Count);
+            Assert.AreEqual(new Vector3(0.2f, 0f, 0f), result.Lines[0][result.Lines[0].Count - 1]);
+        }
+
+        [Test]
         public void ExtendSkipsPointsCloserThanTheSpacing()
         {
             var set = new StrokeSet();
