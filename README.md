@@ -15,6 +15,8 @@ Built with [Basis](https://github.com/BasisVR/basis)
 
 ## セットアップ
 
+> 注意: 仮素材の期間は、バイナリを Git LFS ではなく通常の git で管理しています（詳細は #60）。
+
 1. [Git LFS](https://git-lfs.com) をインストールしてから、リポジトリを clone する。
 2. リポジトリのルートで `sh tools/setup-git.sh` を実行する（Git LFS と UnityYAMLMerge の設定。詳しくは [CONTRIBUTING.md](CONTRIBUTING.md)）。
 3. Unity Hub で `Basis/` フォルダをプロジェクトとして開く（Unity 6000.5.10f1）。

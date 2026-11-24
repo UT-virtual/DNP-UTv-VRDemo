@@ -170,6 +170,8 @@ git mergetool --tool=unityyamlmerge -- <衝突したファイル>
 
 ## Git LFS
 
+> 注意: 仮素材の期間は、`Basis/Assets/DNPDemo/` のバイナリも通常の git で管理しています。以下の LFS の手順は現在使っていません（詳細は #60）。
+
 `Basis/Assets/DNPDemo/` 以下のバイナリ（3D モデル、画像、音声、動画、フォント、ライトマップなど）は Git LFS で管理します。対象の拡張子は [.gitattributes](.gitattributes) にあります。
 
 - セットアップを済ませていれば、普段どおり `git add` するだけで LFS に入ります。`git lfs ls-files` で、LFS に入ったファイルを確認できます。
