@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
+using DNPDemo.Interaction.Stroke;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
 using DNPDemo.Venus;
@@ -148,6 +150,36 @@ namespace DNPDemo.Tests
             }
             CollectionAssert.AreEquivalent(new[] { VenusStatueKeys.Main, VenusStatueKeys.Comparison }, statueKeys,
                 "Both the main statue and the comparison table show versions.");
+        }
+
+        [Test]
+        public void GuideSnapCurvesJoinTheZonesOfTheGuideBeforeThem()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data);
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            int checkedCurves = 0;
+            for (int i = 1; i < data.Steps.Count; i++)
+            {
+                foreach (ScenarioCue cue in data.Steps[i].Cues)
+                {
+                    if (cue is not GuideSnapCue snap)
+                    {
+                        continue;
+                    }
+                    StrokePart guide = data.Steps[i - 1].Interaction.OfType<StrokePart>().FirstOrDefault(part => part.Goal == StrokeGoal.Guide);
+                    Assert.IsNotNull(guide, $"{data.Steps[i].Id}: the arm snaps along a guide, so the step before it should draw one.");
+                    Assert.IsTrue(bindings.TryGetObject(snap.Key, out UnityEngine.GameObject target), $"'{snap.Key}' is not bound.");
+                    Assert.IsTrue(target.TryGetComponent(out GuideCurve curve), $"'{snap.Key}' has no GuideCurve.");
+                    Assert.IsTrue(target.TryGetComponent(out GuideSnapEffect _), $"'{snap.Key}' has no GuideSnapEffect.");
+                    Assert.IsTrue(bindings.TryGetObject(guide.StartZoneKey, out UnityEngine.GameObject start));
+                    Assert.IsTrue(bindings.TryGetObject(guide.EndZoneKey, out UnityEngine.GameObject end));
+                    Assert.IsTrue(DetectionVolumes.Find(start).ContainsPoint(curve.Evaluate(0f)), $"'{snap.Key}' should start in '{guide.StartZoneKey}'.");
+                    Assert.IsTrue(DetectionVolumes.Find(end).ContainsPoint(curve.Evaluate(1f)), $"'{snap.Key}' should end in '{guide.EndZoneKey}'.");
+                    checkedCurves++;
+                }
+            }
+            Assert.Greater(checkedCurves, 0, "Step 12 should play the arm snapping along the guide of step 11.");
         }
 
         [Test]
