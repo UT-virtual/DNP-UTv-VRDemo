@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DNPDemo.Editor;
+using DNPDemo.Environment;
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
@@ -68,6 +69,15 @@ namespace DNPDemo.Tests
                 count += root.GetComponentsInChildren<ScenarioStage>(true).Length;
             }
             Assert.AreEqual(1, count, "DNPDemo_Main must contain exactly one ScenarioStage (in the DemoSystems prefab).");
+        }
+
+        [Test]
+        public void EnvironmentBindingHasAConfiguredController()
+        {
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject("Environment", out UnityEngine.GameObject target));
+            Assert.IsTrue(target.TryGetComponent(out EnvironmentController controller));
+            Assert.IsNotNull(controller);
         }
 
         [Test]

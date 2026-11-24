@@ -235,6 +235,7 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
+    - rid: 4263738388917256512
     - rid: 1662061592158404902
     - rid: 1662061592158404903
     - rid: 1662061592158404904
@@ -646,3 +647,9 @@ MonoBehaviour:
       data:
         StatueKey: ComparisonStatue
         Version: {fileID: 11400000, guid: 6d031f87170b0de49add3e8d8fbb887e, type: 2}
+    - rid: 4263738388917256512
+      type: {class: EnvironmentCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        EnvironmentKey: Environment
+        Preset: {fileID: 11400000, guid: e0956dc4b6bd04340be655738996d8c3, type: 2}
+        Duration: 2

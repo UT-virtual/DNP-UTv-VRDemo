@@ -9,6 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2757286448212103017}
+  - component: {fileID: 6081392359585676018}
+  - component: {fileID: 3205201650079626418}
   m_Layer: 0
   m_Name: Lighting
   m_TagString: Untagged
@@ -33,6 +35,36 @@ Transform:
   - {fileID: 3334493598856859425}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6081392359585676018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477400891594689947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 998c79d74c621ac4593d08c949a4e71a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Scenario.ScenarioObjectBinding
+  _key: Environment
+--- !u!114 &3205201650079626418
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477400891594689947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa5fa6e8c763a004684fb4e7e58efaa9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Environment.EnvironmentController
+  _baselinePreset: {fileID: 11400000, guid: 2a358f46b3f95304a85760ac2137e470, type: 2}
+  _directionalLight: {fileID: 240152703250384453}
+  _spotLight: {fileID: 1429037978030560603}
+  _crossfadeShader: {fileID: 4800000, guid: 6dff28a51fb2b6947aae4f0ae6a38cd6, type: 3}
+  _transitionDuration: 2
 --- !u!1 &4285524975826606217
 GameObject:
   m_ObjectHideFlags: 0

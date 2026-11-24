@@ -20,6 +20,26 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void EnvironmentTransitionStartsAtStep22AndIsPersistent()
+        {
+            List<ScenarioStep> steps = DefaultSteps;
+            Assert.AreEqual(22, steps.FindIndex(step => step.Id == "closing"));
+            Assert.IsFalse(steps.GetRange(0, 22).Exists(step => step.Cues.Exists(cue => cue is EnvironmentCue)));
+            Assert.IsInstanceOf<EnvironmentCue>(steps[22].Cues[0]);
+            Assert.IsNotNull(((EnvironmentCue)steps[22].Cues[0]).Preset);
+            var data = UnityEngine.ScriptableObject.CreateInstance<ScenarioData>();
+            try
+            {
+                data.SetSteps(steps);
+                CollectionAssert.Contains(data.CollectRequirements().ObjectKeys, "Environment");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(data);
+            }
+        }
+
+        [Test]
         public void DefaultScenarioFollowsThePlan()
         {
             List<ScenarioStep> steps = DefaultSteps;

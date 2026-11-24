@@ -261,7 +261,11 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 
 ### 2.6 環境の切り替え
 
-`EnvironmentPreset`（ScriptableObject）に、Skybox（360度パノラマ）、展示室の壁の表示、ライト・アンビエント・リフレクションの設定をまとめて持たせ、クロスフェードで切り替える。プリセットは「展示室」と「神殿（エーゲ海の青空と自然光）」の2つ。神殿では像の大理石に自然光と影が落ちるよう、ディレクショナルライトの向きと強さも切り替える。
+`EnvironmentPreset`（ScriptableObject）に、2:1 の Skybox パノラマと露出・回転、展示室の壁の表示、Directional / Spot Light、Ambient、Reflection の設定をまとめて持たせる。`EnvironmentController` は描画中のパノラマをスナップショットしてから次の環境へクロスフェードするため、遷移中の再指定でも画面を飛ばさず目標へ収束する。壁の表示は透明度だけを変え、移動用 Collider は維持する。
+
+プリセットは「展示室」と「神殿（エーゲ海の青空と自然光）」の2つ。神殿では像の大理石に自然光と影が落ちるよう、ディレクショナルライトの向き・強さ・ソフトシャドウを設定する。仮のパノラマとプリセットは `DNP Demo/Setup/Build Environment Presets` で生成し、Lighting / Env_ExhibitionRoom Prefab に `Environment` / `ExhibitionRoom` のバインディングを設定する。共有シーンは編集しない。
+
+シナリオ step 21 までは展示室を基準とし、step 22「結び」の先頭にある永続 `EnvironmentCue` が神殿へ切り替える。後続ステップや途中参加では `ApplyInstant` で同じ状態を即時再構築し、舞台リセットでは展示室プリセットへ戻す。
 
 ### 2.7 タスク HUD
 
