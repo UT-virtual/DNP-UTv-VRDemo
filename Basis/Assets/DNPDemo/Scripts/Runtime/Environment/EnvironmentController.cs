@@ -32,6 +32,7 @@ namespace DNPDemo.Environment
         [SerializeField] Light _directionalLight;
         [SerializeField] Light _spotLight;
         [SerializeField] Shader _crossfadeShader;
+        [SerializeField] Shader _snapshotShader;
         [SerializeField, Min(0f)] float _transitionDuration = 2f;
 
         sealed class WallRenderer
@@ -173,6 +174,7 @@ namespace DNPDemo.Environment
 
         readonly List<WallRenderer> _wallRenderers = new();
         Material _skyboxMaterial;
+        Material _snapshotMaterial;
         RenderTexture _skySnapshotA;
         RenderTexture _skySnapshotB;
         RenderTexture _activeSkySnapshot;
@@ -338,7 +340,9 @@ namespace DNPDemo.Environment
                     _skySnapshotA = snapshot;
                 }
             }
-            Graphics.Blit(null, snapshot, _skyboxMaterial, 1);
+            // The snapshot shader samples the same properties as the sky, so it bakes exactly what the sky shows.
+            _snapshotMaterial.CopyPropertiesFromMaterial(_skyboxMaterial);
+            Graphics.Blit(null, snapshot, _snapshotMaterial);
             _activeSkySnapshot = snapshot;
         }
 
@@ -590,12 +594,23 @@ namespace DNPDemo.Environment
                 Debug.LogError($"[DNPDemo] Skybox shader '{PanoramaShaderName}' was not found.", this);
                 return false;
             }
+            // A Hidden shader is only in a build when something references it, so it is never looked up by name.
+            if (_snapshotShader == null)
+            {
+                Debug.LogError("[DNPDemo] EnvironmentController needs the panorama snapshot shader.", this);
+                return false;
+            }
             _originalSkybox = RenderSettings.skybox;
             _originalState = CaptureCurrentState();
             _shadowQuality = new ShadowQualityOverride(_shadowQualityAssetProvider);
             _skyboxMaterial = new Material(_crossfadeShader)
             {
                 name = "Environment Crossfade Runtime",
+                hideFlags = HideFlags.DontSave,
+            };
+            _snapshotMaterial = new Material(_snapshotShader)
+            {
+                name = "Environment Snapshot Runtime",
                 hideFlags = HideFlags.DontSave,
             };
             RenderSettings.skybox = _skyboxMaterial;
@@ -697,6 +712,10 @@ namespace DNPDemo.Environment
             if (_skyboxMaterial != null)
             {
                 DestroyRuntimeObject(_skyboxMaterial);
+            }
+            if (_snapshotMaterial != null)
+            {
+                DestroyRuntimeObject(_snapshotMaterial);
             }
         }
 

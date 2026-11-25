@@ -20,6 +20,7 @@ namespace DNPDemo.Editor
         public const string ExhibitionPanoramaPath = DNPDemoProjectSetup.Root + "/Art/Environment/Environment_Exhibition_Panorama.png";
         public const string TemplePanoramaPath = DNPDemoProjectSetup.Root + "/Art/Environment/Environment_Temple_Panorama.jpg";
         public const string CrossfadeShaderPath = DNPDemoProjectSetup.Root + "/Scripts/Runtime/Environment/EnvironmentCrossfadePanorama.shader";
+        public const string SnapshotShaderPath = DNPDemoProjectSetup.Root + "/Scripts/Runtime/Environment/EnvironmentPanoramaSnapshot.shader";
 
         const string LightingPrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Lighting.prefab";
         const string ExhibitionRoomPrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Env_ExhibitionRoom.prefab";
@@ -324,16 +325,12 @@ namespace DNPDemo.Editor
                 {
                     controller = root.AddComponent<EnvironmentController>();
                 }
-                Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(CrossfadeShaderPath);
-                if (shader == null)
-                {
-                    throw new InvalidOperationException($"Crossfade shader is missing: {CrossfadeShaderPath}");
-                }
                 var serialized = new SerializedObject(controller);
                 serialized.FindProperty("_baselinePreset").objectReferenceValue = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(ExhibitionPresetPath);
                 serialized.FindProperty("_directionalLight").objectReferenceValue = directional;
                 serialized.FindProperty("_spotLight").objectReferenceValue = spot;
-                serialized.FindProperty("_crossfadeShader").objectReferenceValue = shader;
+                serialized.FindProperty("_crossfadeShader").objectReferenceValue = LoadShader(CrossfadeShaderPath);
+                serialized.FindProperty("_snapshotShader").objectReferenceValue = LoadShader(SnapshotShaderPath);
                 serialized.FindProperty("_transitionDuration").floatValue = 2f;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.SaveAsPrefabAsset(root, LightingPrefabPath);
@@ -342,6 +339,16 @@ namespace DNPDemo.Editor
             {
                 PrefabUtility.UnloadPrefabContents(root);
             }
+        }
+
+        static Shader LoadShader(string assetPath)
+        {
+            Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(assetPath);
+            if (shader == null)
+            {
+                throw new InvalidOperationException($"Shader is missing: {assetPath}");
+            }
+            return shader;
         }
 
         static void ConfigureExhibitionRoomPrefab()

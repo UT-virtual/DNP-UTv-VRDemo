@@ -15,6 +15,9 @@ namespace DNPDemo.Tests
 {
     public class EnvironmentPresetTests
     {
+        /// <summary>The temple panorama is used as generated, 2912 x 1440 (2.022:1); the skybox maps any width to 360 degrees.</summary>
+        const float PanoramaAspectTolerance = 0.025f;
+
         Scene _scene;
         Scene _previousActiveScene;
         bool _sceneOpenedAdditively;
@@ -70,8 +73,8 @@ namespace DNPDemo.Tests
             Assert.IsNotNull(_temple);
             Assert.IsNotNull(_exhibition.Panorama);
             Assert.IsNotNull(_temple.Panorama);
-            Assert.AreEqual(2f, (float)_exhibition.Panorama.width / _exhibition.Panorama.height, 0.01f);
-            Assert.AreEqual(2f, (float)_temple.Panorama.width / _temple.Panorama.height, 0.01f);
+            Assert.AreEqual(2f, (float)_exhibition.Panorama.width / _exhibition.Panorama.height, PanoramaAspectTolerance);
+            Assert.AreEqual(2f, (float)_temple.Panorama.width / _temple.Panorama.height, PanoramaAspectTolerance);
             Assert.IsTrue(_exhibition.ExhibitionRoomVisible);
             Assert.IsFalse(_temple.ExhibitionRoomVisible);
             Assert.Greater(_temple.DirectionalLight.Intensity, _exhibition.DirectionalLight.Intensity);
@@ -88,7 +91,8 @@ namespace DNPDemo.Tests
         {
             Assert.AreEqual(EnvironmentPresetBuilder.TemplePanoramaPath, AssetDatabase.GetAssetPath(_temple.Panorama));
             StringAssert.EndsWith("/Environment_Temple_Panorama.jpg", EnvironmentPresetBuilder.TemplePanoramaPath);
-            Assert.AreEqual(_temple.Panorama.height * 2, _temple.Panorama.width, "An equirectangular panorama is exactly 2:1.");
+            Assert.AreEqual(2f, (float)_temple.Panorama.width / _temple.Panorama.height, PanoramaAspectTolerance,
+                "The temple panorama is an equirectangular image.");
 
             ShadowQualitySettings temple = _temple.ShadowQuality;
             Assert.IsTrue(temple.Override);
@@ -96,6 +100,69 @@ namespace DNPDemo.Tests
             Assert.Greater(temple.ShadowDistance, 0f);
             Assert.That(temple.CascadeCount, Is.InRange(1, 4));
             Assert.IsFalse(_exhibition.ShadowQuality.Override, "The exhibition keeps Basis' shadow quality.");
+        }
+
+        [Test]
+        public void SkyShaderHasASinglePassAndTheSnapshotIsSeparate()
+        {
+            // Unity draws every pass of the skybox material, so any extra pass would be drawn over the sky.
+            Shader sky = AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.CrossfadeShaderPath);
+            Shader snapshot = AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.SnapshotShaderPath);
+            Assert.IsNotNull(sky);
+            Assert.IsNotNull(snapshot);
+            Assert.AreEqual(1, sky.passCount);
+            Assert.AreEqual(1, snapshot.passCount);
+            Assert.IsTrue(sky.isSupported && snapshot.isSupported);
+        }
+
+        [Test]
+        public void PanoramaUvAndDirectionMappingsAreInverses()
+        {
+            for (int i = 0; i <= 16; i++)
+            {
+                for (int j = 1; j < 16; j++)
+                {
+                    var uv = new Vector2(i / 16f, j / 16f);
+                    Vector3 direction = PanoramaMapping.DirectionFromUv(uv);
+                    Assert.AreEqual(1f, direction.magnitude, 1e-5f);
+                    Vector2 back = PanoramaMapping.UvFromDirection(direction, 0f);
+                    float du = Mathf.Abs(back.x - uv.x);
+                    Assert.Less(Mathf.Min(du, 1f - du), 1e-4f, $"u at {uv}");
+                    Assert.AreEqual(uv.y, back.y, 1e-4f, $"v at {uv}");
+                }
+            }
+
+            // The image centre is +Z and the horizon; u grows towards +X; the top row is the zenith.
+            AssertDirection(new Vector3(0f, 0f, 1f), PanoramaMapping.DirectionFromUv(new Vector2(0.5f, 0.5f)));
+            AssertDirection(new Vector3(1f, 0f, 0f), PanoramaMapping.DirectionFromUv(new Vector2(0.75f, 0.5f)));
+            AssertDirection(Vector3.up, PanoramaMapping.DirectionFromUv(new Vector2(0.5f, 1f)));
+            // A positive rotation moves a direction to a larger u.
+            Assert.AreEqual(0.75f, PanoramaMapping.UvFromDirection(Vector3.forward, 90f).x, 1e-4f);
+        }
+
+        static void AssertDirection(Vector3 expected, Vector3 actual) =>
+            Assert.Less(Vector3.Distance(expected, actual), 1e-4f, $"expected {expected}, was {actual}");
+
+        /// <summary>C# copy of EnvironmentPanorama.cginc's mappings between a direction and equirectangular UV.</summary>
+        static class PanoramaMapping
+        {
+            public static Vector2 UvFromDirection(Vector3 direction, float rotation)
+            {
+                direction.Normalize();
+                float longitude = Mathf.Atan2(direction.x, direction.z) / (2f * Mathf.PI) + rotation / 360f;
+                float latitude = Mathf.Asin(Mathf.Clamp(direction.y, -1f, 1f)) / Mathf.PI + 0.5f;
+                return new Vector2(Frac(longitude + 0.5f), latitude);
+            }
+
+            public static Vector3 DirectionFromUv(Vector2 uv)
+            {
+                float longitude = (uv.x - 0.5f) * 2f * Mathf.PI;
+                float latitude = (uv.y - 0.5f) * Mathf.PI;
+                float latitudeCos = Mathf.Cos(latitude);
+                return new Vector3(Mathf.Sin(longitude) * latitudeCos, Mathf.Sin(latitude), Mathf.Cos(longitude) * latitudeCos);
+            }
+
+            static float Frac(float value) => value - Mathf.Floor(value);
         }
 
         [Test]
@@ -322,7 +389,8 @@ namespace DNPDemo.Tests
             serialized.FindProperty("_baselinePreset").objectReferenceValue = _exhibition;
             serialized.FindProperty("_directionalLight").objectReferenceValue = fixture.Directional;
             serialized.FindProperty("_spotLight").objectReferenceValue = fixture.Spot;
-            serialized.FindProperty("_crossfadeShader").objectReferenceValue = Shader.Find("DNPDemo/Environment Crossfade Panorama");
+            serialized.FindProperty("_crossfadeShader").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.CrossfadeShaderPath);
+            serialized.FindProperty("_snapshotShader").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.SnapshotShaderPath);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             // The shadow override writes to the URP asset; keep the project's asset out of the tests.
             fixture.Urp = fixture.Track(CreateUrpAsset());
