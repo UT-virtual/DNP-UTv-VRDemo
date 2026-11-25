@@ -94,10 +94,9 @@ namespace DNPDemo.Interaction.Stroke
         /// The finished lines of the most recent stroke part, captured at the end of that part so that later effects can
         /// refer to them. Set by <see cref="End()"/> (called when the step ends) and cleared by <see cref="Begin()"/>
         /// (called when the next stroke part begins). Null until a stroke part has ended on this device.
+        /// Currently unused; kept for future use if the curve is later replaced with a player-drawn trajectory.
         /// <para>
-        /// The guide's rejected lines are removed during the part, so they are not included. The effect runs along a
-        /// set curve, not along these lines (see PLAN §2.5); they are kept for future use if the curve is later replaced
-        /// with a player-drawn trajectory.
+        /// The guide's rejected lines are removed during the part, so they are not included.
         /// </para>
         /// </summary>
         public StrokeResult LastResult { get; private set; }
