@@ -45,6 +45,11 @@ namespace DNPDemo.Environment
         public float ShadowNearPlane;
     }
 
+    /// <summary>
+    /// Ambient light. Trilight and Flat use the colours, as Unity does. Skybox uses the spherical harmonics baked from the
+    /// preset's panorama (DNP Demo/Setup/Bake Environment Lighting) scaled by the intensity, so it needs no capture at
+    /// runtime. As in Unity, the intensity only scales Skybox.
+    /// </summary>
     [Serializable]
     public struct AmbientSettings
     {
@@ -57,14 +62,13 @@ namespace DNPDemo.Environment
     }
 
     /// <summary>
-    /// Environment reflection applied at runtime. Resolution and bounces are only read when lighting is baked, so they are
-    /// left to the scene's Lighting settings.
+    /// Environment reflection, applied as the scene's custom reflection. The cubemap is baked from the preset's panorama in
+    /// the Editor (DNP Demo/Setup/Bake Environment Lighting), so switching presets needs no capture at runtime.
     /// </summary>
     [Serializable]
     public struct ReflectionSettings
     {
-        public DefaultReflectionMode Mode;
-        public Texture CustomReflectionTexture;
+        public Cubemap Cubemap;
         public float Intensity;
     }
 
@@ -95,6 +99,10 @@ namespace DNPDemo.Environment
         [SerializeField] AmbientSettings _ambient;
         [SerializeField] ReflectionSettings _reflection;
         [SerializeField] ShadowQualitySettings _shadowQuality;
+        /// <summary>Spherical harmonics baked from the panorama for the Skybox ambient source: 9 coefficients per RGB channel.</summary>
+        [SerializeField, HideInInspector] float[] _skyboxAmbientProbe = Array.Empty<float>();
+
+        const int ProbeCoefficients = 9;
 
         /// <summary>Name shown to players. Falls back to the asset name when it is not set.</summary>
         public string DisplayName => string.IsNullOrWhiteSpace(_displayName) ? name : _displayName;
@@ -107,6 +115,29 @@ namespace DNPDemo.Environment
         public AmbientSettings Ambient => _ambient;
         public ReflectionSettings Reflection => _reflection;
         public ShadowQualitySettings ShadowQuality => _shadowQuality;
+
+        public bool HasSkyboxAmbientProbe => _skyboxAmbientProbe != null && _skyboxAmbientProbe.Length == 3 * ProbeCoefficients;
+
+        /// <summary>The ambient light of the panorama at intensity 1, for the Skybox ambient source.</summary>
+        public SphericalHarmonicsL2 SkyboxAmbientProbe
+        {
+            get
+            {
+                var probe = new SphericalHarmonicsL2();
+                if (!HasSkyboxAmbientProbe)
+                {
+                    return probe;
+                }
+                for (int channel = 0; channel < 3; channel++)
+                {
+                    for (int coefficient = 0; coefficient < ProbeCoefficients; coefficient++)
+                    {
+                        probe[channel, coefficient] = _skyboxAmbientProbe[channel * ProbeCoefficients + coefficient];
+                    }
+                }
+                return probe;
+            }
+        }
 
         public override string ToString() => DisplayName;
 
@@ -132,6 +163,22 @@ namespace DNPDemo.Environment
             _ambient = ambient;
             _reflection = reflection;
             _shadowQuality = shadowQuality;
+        }
+
+        /// <summary>Assigns the cubemap baked from the panorama, keeping the rest of the preset as authored.</summary>
+        internal void SetReflectionCubemap(Cubemap cubemap) => _reflection.Cubemap = cubemap;
+
+        /// <summary>Stores the spherical harmonics baked from the panorama, keeping the rest of the preset as authored.</summary>
+        internal void SetSkyboxAmbientProbe(SphericalHarmonicsL2 probe)
+        {
+            _skyboxAmbientProbe = new float[3 * ProbeCoefficients];
+            for (int channel = 0; channel < 3; channel++)
+            {
+                for (int coefficient = 0; coefficient < ProbeCoefficients; coefficient++)
+                {
+                    _skyboxAmbientProbe[channel * ProbeCoefficients + coefficient] = probe[channel, coefficient];
+                }
+            }
         }
     }
 }
