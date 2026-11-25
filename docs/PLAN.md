@@ -220,29 +220,31 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 - 本番のツールができるまでは、`DummyInteractionPart`（予定の部品のペンモードと手順文を持つ）と `DummyInteractionTool`（担当者が「完了」ボタンを規定回数押すと完了。エディタとデスクトップでは F8）で代用する。音声指示（ステップ3・7・13・15・21）はすべて `VoicePart`、履歴からの呼び出し（ステップ19）は `HistoryPart` にしている。範囲選択と部位の操作は、対象を像に置いたステップから `SelectionPart` / `ManipulatePart` に置き換える。ステップ0〜18 の操作はすべて本番の部品にしている。
   - ステップ6：林檎（仮の像の `Apple`）を範囲選択し、`Goal_AppleUnderHand` へ平行移動する。仮の林檎は Ver 1.0 の手のひらの位置にあり、ステップ4 の先頭のキューで表示する。ステップが進むと舞台が林檎を元の位置に戻すので、ステップ7 の先頭の `MatchPoseCue` が手の下に置き直す。
   - ステップ7：左手〜前腕（`Zone_LeftForearm`。Ver 1.0・1.1 の前腕から手を覆うカプセル）を範囲選択し、音声指示する。
-  - ステップ9：左肩〜肘（`Zone_LeftUpperArm`）を範囲選択し、腕の代わりの `LeftArmProxy` を `Pivot_LeftShoulder` の上向きの軸のまわりに回す。腕は全身モデルの一部で単独では動かせないので、Ver 1.1 の左腕・手・林檎を半透明で写したプロキシを回し、像そのものは動かさない（§2.5 の「ギズモで動かすのはゴーストだけ」）。プロキシはステップ9 の間だけ表示し、掴む範囲はプロキシに付けた `LeftArmProxy_Grab`。内側（体の方）が負の角度で、範囲は -60〜+10°、-25° を超えて離すと完了する。
+  - ステップ9：左肩〜肘（`Zone_LeftUpperArm`）を範囲選択し、腕の代わりの `LeftArmProxy` を `Pivot_LeftShoulder` の上向きの軸のまわりに回す。腕は全身モデルの一部で単独では動かせないので、Ver 1.1 の左腕・手・林檎を半透明で写したプロキシを回し、像そのものは動かさない（§2.5 の「ギズモで動かすのはゴーストだけ」）。プロキシはステップ9 の間だけ表示し、掴む範囲はプロキシに付けた `LeftArmProxy_Grab`。左腕は像の +X 側にあるので、内側（体の方）が正の角度で、範囲は -10〜+60°、+25° を超えて離すと完了する。
   - ステップ11：ガイド（`Zone_LeftShoulder` から `Zone_ChestFront`）を `StrokePart` にしている。ステップ11 の間は、なぞる形として既定のカーブ（`GuideLine_LeftArm`）を点線で表示する。判定は §2.4 の線画のガイドのとおりで、カーブとの近さは見ない。
   - ステップ13：線画（`StrokePart.Sketch`）を描き、音声指示する。線画の部品が終わった時点の線が `StrokeTool.LastResult` に残る。
   - ステップ14：先頭の `PlaceAtSketchCue` が、手鏡の単体（仮の像の `HandMirror`）を、ステップ13 の線画の外接ボックスの中心に出す（§2.5）。その手鏡を `Goal_MirrorRightHand`（Ver 3.0 が右手に持つ手鏡の位置と向き）へ平行移動する。手鏡は置き場所 `Spawn_HandMirror` から 0.8m 以内に出るので、平行移動の最大距離（2.5m）でどこからでも目標に届く（`ScenarioSceneBindingTests` が確かめる）。
   - ステップ15：右肩〜手鏡（`Zone_RightArmToMirror`。右肩から右手の位置の手鏡までのカプセル）を範囲選択し、音声指示する。ステップが進むと舞台が手鏡を元に戻すので、ステップ15 の先頭の `MatchPoseCue` が右手の位置に置き直す。手鏡はステップ16 の先頭で非表示にし、以後は Ver 3.0 のモデルが持つ。
-  - ステップ17：右手首と手鏡（`Zone_RightHandMirror`）を範囲選択し、Ver 3.0 の右手と手鏡を半透明で写した `RightHandProxy` を、手首の支点 `Pivot_RightWrist` の上向きの軸（前腕の向き）のまわりにひねる。ステップ9 と同じく像そのものは動かさない。プロキシはステップ17 の間だけ表示し、掴む範囲は手鏡のまわりの `RightHandProxy_Grab`。範囲は -80〜+30°、-50° ± 12° で離すとスナップして完了する。-50° は、Ver 3.0 の手鏡が Ver 3.1 の向き（顔の方）になる角度。
+  - ステップ17：右手首と手鏡（`Zone_RightHandMirror`）を範囲選択し、Ver 3.0 の右手と手鏡を半透明で写した `RightHandProxy` を、手首の支点 `Pivot_RightWrist` の上向きの軸（前腕の向き）のまわりにひねる。ステップ9 と同じく像そのものは動かさない。プロキシはステップ17 の間だけ表示し、掴む範囲は手鏡のまわりの `RightHandProxy_Grab`。範囲は -30〜+80°、+50° ± 12° で離すとスナップして完了する。+50° は、Ver 3.0 の手鏡が Ver 3.1 の向き（顔の方）になる角度。
 
 ### 2.5 像と版の管理
 
 コードは `Scripts/Runtime/Venus/`、データは `Data/Venus/`。
+
+像は正面を -Z に向けて立つ。キーや名前、文書の左右（「左腕」「右手首」など）は、シナリオと同じく像自身の左右を指す。像自身の左は +X、右は -X で、正面から見ると左腕は右側に見える。
  
 | 要素 | 内容 |
 |---|---|
 | `VenusStatue` | 版を1つずつ表示する像。本体の像（`Statue_Original/StatueAnchor/Venus`、キー `Statue`）と比較台の像（`ComparisonTable/ModelAnchor`、キー `ComparisonStatue`）の2体がある。起動時にカタログの全版のモデルを子として生成して非表示にしておき、版の切り替えでは表示するモデルを切り替えるだけにする（デモ中に生成しない）。初期状態で表示する版（`Baseline`）を持ち、本体は腕なし、比較台は空。舞台を初期状態に戻すと（`IStageResettable`）この版に戻る。切り替えると `VersionChanged` で、前後の版と演出するかどうか（キューの再生なら演出あり、ジャンプや途中参加での即時適用なら演出なし）を通知する。再生していない間は、シーンビューに `EditorPreview` の版をギズモで描くので、ゾーンや目標の配置に使える |
 | `VenusVersion`（ScriptableObject） | 版ごとに、Id（`armless`、`v1.0` など。変えない）、表示名（「Ver 1.0」など）、全身モデル（プレハブ）への参照を持つ。胴体の位置・スケール・原点は全版でそろえる。履歴パネルの一覧用に、派生元の版（`Parent`。カタログでこの版より前にあること）、新しいブランチかどうか（`StartsBranch`）、サムネイル（`Thumbnail`）も持つ |
 | ブランチ | 腕なし → Ver 1.0、Ver 1.0 から分かれる学者Bの案 Ver 1.1 → Ver 1.2、Ver 1.1 から分かれる Ver 2.0 → Ver 3.0 → Ver 3.1（Ver 1.2 は採用されず、Ver 2.0 は Ver 1.1 から作り直す） |
-| サムネイル | メニュー「DNP Demo/Create/Venus Thumbnails」が、全版のモデルを同じ縮尺で、正面から左に 50° 回り込んで少し見下ろす向きに撮り、`Art/Venus/Thumbnails/` に 256px の PNG（背景は透明）で保存して各版に設定する。モデルを差し替えたら再実行する |
+| サムネイル | メニュー「DNP Demo/Create/Venus Thumbnails」が、全版のモデルを同じ縮尺で、正面から像の左腕の側（+X。正面から見て右）へ 50° 回り込んで少し見下ろす向きに撮り、`Art/Venus/Thumbnails/` に 256px の PNG（背景は透明）で保存して各版に設定する。モデルを差し替えたら再実行する |
 | `VenusVersionCatalog`（ScriptableObject） | 版を到達する順に並べた一覧（`Data/Venus/VenusVersions.asset`）。像が起動時に生成する範囲を決める |
 | 版の一覧 | 腕なし → Ver 1.0 → Ver 1.1 → Ver 1.2 → Ver 2.0 → Ver 3.0 → Ver 3.1（§3） |
 | `StatueVersionCue` | 永続キュー。キーで指した像に版を表示する（空なら何も表示しない）。操作で到達する版は、操作が完了した次のステップの先頭に置く（ステップ0：腕なし、4：Ver 1.0、8：Ver 1.1、10：Ver 1.2、12：Ver 2.0、16：Ver 3.0、18：Ver 3.1。比較台はステップ19の先頭で台を表示し、ステップ20の先頭で Ver 1.0 を表示する）。版はステップ番号から決まるので、同期は不要 |
 | 履歴 | `VenusVersionHistory.Collect(ステップ列, ステップ番号, 像のキー)` が、現在より前のステップの `StatueVersionCue` がその像に表示した版を、初めて出た順に1つずつ返す |
 | `EnvironmentCue` | 永続キュー。キー `Environment` の `EnvironmentController` に環境プリセットを渡し、クロスフェードで切り替える（ステップ22「結び」の先頭で神殿へ）。後続ステップや途中参加では即時に適用する。詳細は §2.6 |
-| 仮モデル | M3 まではプリミティブを組み合わせた仮モデル（`Art/Venus/Placeholders/`）を使う。メニュー「DNP Demo/Create/Venus Versions」で、仮モデル、`VenusVersion`、カタログのうち足りないものを生成する。以後はアセットを直接編集し、本番のモデルは各 `VenusVersion` のモデルを付け替えて差し替える。仮モデルの定義（`VenusAssetBuilder`）を変えたときは、`VenusAssetBuilder.RebuildPlaceholderModel` でその版のプレハブを同じパスに作り直す（版からの参照は保たれる。サムネイルは撮り直さない）。Ver 1.0 の林檎は、ステップ6 で動かすため別オブジェクト（`Statue_Original/StatueAnchor/Targets/Apple`）にしていて、ステップ4〜7 の間だけ表示する。Ver 1.1 以降は林檎をモデルに含める。手鏡も同様に、ステップ14・15 の間は別オブジェクト（`Targets/HandMirror`。仮モデルと同じ形）を表示し、Ver 3.0 以降はモデルに含める。仮の Ver 3.0 と Ver 3.1 は右腕が同じで、手首だけを前腕の軸まわりに -50° ひねった関係にしている（手鏡の柄は前腕の延長上にあり、ひねっても手鏡の中心は動かない） |
+| 仮モデル | M3 まではプリミティブを組み合わせた仮モデル（`Art/Venus/Placeholders/`）を使う。メニュー「DNP Demo/Create/Venus Versions」で、仮モデル、`VenusVersion`、カタログのうち足りないものを生成する。以後はアセットを直接編集し、本番のモデルは各 `VenusVersion` のモデルを付け替えて差し替える。仮モデルの定義（`VenusAssetBuilder`）を変えたときは、`VenusAssetBuilder.RebuildPlaceholderModel` でその版のプレハブを同じパスに作り直す（版からの参照は保たれる。サムネイルは撮り直さない）。Ver 1.0 の林檎は、ステップ6 で動かすため別オブジェクト（`Statue_Original/StatueAnchor/Targets/Apple`）にしていて、ステップ4〜7 の間だけ表示する。Ver 1.1 以降は林檎をモデルに含める。手鏡も同様に、ステップ14・15 の間は別オブジェクト（`Targets/HandMirror`。仮モデルと同じ形）を表示し、Ver 3.0 以降はモデルに含める。仮の Ver 3.0 と Ver 3.1 は右腕が同じで、手首だけを前腕の軸まわりに +50° ひねった関係にしている（手鏡の柄は前腕の延長上にあり、ひねっても手鏡の中心は動かない） |
 | 操作対象のオブジェクト | 部位ゾーン、目標マーカー、支点、仮の林檎、手鏡の単体、腕と手のプロキシ、ガイドのカーブは `Statue_Original/StatueAnchor/Targets` に置き、版のモデルとは分ける |
 | `MatchPoseCue` | 永続キュー。キーで指したオブジェクトを、別のキーのマーカーの位置と向きに置く。ペンで動かした結果を、次のステップ以降に表示するのに使う（ステップ7 の先頭で林檎を手の下へ、ステップ15 の先頭で手鏡を右手の位置へ） |
 | `PlaceAtSketchCue` | 永続キュー。指定したステップ（`SketchStepId`）の線画の外接ボックスの中心に、キーで指したオブジェクトを表示する。向きは置き場所のマーカーに合わせ、位置はマーカーから `MaxOffset` 以内に収める。線画は各端末の `StrokeTool.LastResult` から読む（§2.4）。線画を見ていた端末はどれも同じ線を持つので位置がそろう。線画がない場合（運営のジャンプやスキップ、線画の部品が終わった後の途中参加）はマーカーの位置に出す。再生時は `ScaleInEffect`（子の見た目だけを拡大し、ステップが変わると `IStageResettable` で元の大きさに戻す）で出現させる。ステップ14 の先頭で、手鏡をステップ13 の線画の位置に出すのに使う |
