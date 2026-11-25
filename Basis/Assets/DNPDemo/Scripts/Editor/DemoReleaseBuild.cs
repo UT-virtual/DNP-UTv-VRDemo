@@ -13,7 +13,8 @@ namespace DNPDemo.Editor
     /// 展示で使うリリース APK をビルドする。
     /// プロジェクトのセットアップを適用し、Development Build を外して、リポジトリ直下の Builds/Release に出力する。
     /// APK のファイル名と versionName には、ビルドした日時とコミットを入れる。
-    /// バッチモード:
+    /// メニューから実行したときは、続けてつないでいる Quest にインストールする（<see cref="DemoQuestInstaller"/>）。
+    /// バッチモードではビルドだけ行う:
     /// Unity.exe -batchmode -quit -projectPath Basis -buildTarget Android -executeMethod DNPDemo.Editor.DemoReleaseBuild.BuildFromCommandLine -logFile Logs/release-build.log
     /// </summary>
     public static class DemoReleaseBuild
@@ -44,7 +45,7 @@ namespace DNPDemo.Editor
 
             if (Build(git, out string apkPath))
             {
-                EditorUtility.RevealInFinder(apkPath);
+                DemoQuestInstaller.InstallAsync(RepoRoot, apkPath);
             }
             else
             {

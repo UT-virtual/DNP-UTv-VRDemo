@@ -4,6 +4,8 @@
 
 .DESCRIPTION
   署名が違うアプリ（別の PC でビルドしたもの）が入っているときは、アンインストールしてから入れ直す。
+  終了コード: 0 = すべて成功、1 = 失敗あり、2 = インストールできる Quest がない。
+  Unity のメニュー DNP Demo > Build > Release APK からも、ビルドの後に呼ばれる（DemoQuestInstaller）。
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File tools\install-quest.ps1 Builds\Release\DNPDemo_20261125-1830-0861ec3.apk
@@ -35,7 +37,7 @@ if ($unauthorized.Count -gt 0) {
 }
 if ($serials.Count -eq 0) {
     Write-Host 'インストールできる Quest がありません。USB でつなぎ、USB デバッグを許可してください。' -ForegroundColor Red
-    exit 1
+    exit 2
 }
 
 $failed = 0
