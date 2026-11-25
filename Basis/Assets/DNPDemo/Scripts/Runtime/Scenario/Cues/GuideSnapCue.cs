@@ -42,9 +42,17 @@ namespace DNPDemo.Scenario.Cues
                 yield break;
             }
             effect.Play(TravelSeconds);
+            
+            // If the effect did not start (curve not set), skip waiting and proceed immediately.
+            if (!effect.IsPlaying)
+            {
+                yield break;
+            }
+            
+            // Wait until the line reaches the end, with a timeout to prevent hanging.
             float timeoutSeconds = TravelSeconds + 1f;
             float elapsedSeconds = 0f;
-            while (effect.IsPlaying && elapsedSeconds < timeoutSeconds)
+            while (!effect.HasArrived && elapsedSeconds < timeoutSeconds)
             {
                 yield return null;
                 elapsedSeconds += Time.deltaTime;

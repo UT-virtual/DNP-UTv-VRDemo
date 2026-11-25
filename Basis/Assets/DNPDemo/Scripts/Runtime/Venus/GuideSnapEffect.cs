@@ -36,6 +36,9 @@ namespace DNPDemo.Venus
 
         public bool IsPlaying { get; private set; }
 
+        /// <summary>True when the line has reached the end (progress = 1), before fading.</summary>
+        public bool HasArrived { get; private set; }
+
         GuideCurve Curve => _curve != null ? _curve : _curve = GetComponent<GuideCurve>();
 
         /// <summary>Starts the effect: the line reaches the end after <paramref name="travelSeconds"/>, then fades.</summary>
@@ -68,6 +71,7 @@ namespace DNPDemo.Venus
         public void Stop()
         {
             IsPlaying = false;
+            HasArrived = false;
             if (_glow != null)
             {
                 if (_baseWidth >= 0f)
@@ -102,7 +106,11 @@ namespace DNPDemo.Venus
                 Apply(Mathf.SmoothStep(0f, 1f, _elapsed / _travelSeconds));
                 return;
             }
-            Apply(1f);
+            if (!HasArrived)
+            {
+                HasArrived = true;
+                Apply(1f);
+            }
             float fade = _fadeSeconds > 0f ? (_elapsed - _travelSeconds) / _fadeSeconds : 1f;
             if (fade >= 1f)
             {
