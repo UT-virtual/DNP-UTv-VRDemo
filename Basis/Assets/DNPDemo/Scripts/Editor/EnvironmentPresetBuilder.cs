@@ -50,7 +50,7 @@ namespace DNPDemo.Editor
         public static void BuildAssetsAndPrefabs()
         {
             CreatePresetsIfMissing();
-            EnvironmentReflectionBaker.BakePresets();
+            EnvironmentLightingBaker.BakePresets();
             ConfigureLightingPrefab();
             ConfigureExhibitionRoomPrefab();
             ConfigureTemplePrefab();
@@ -122,7 +122,7 @@ namespace DNPDemo.Editor
                     FlatColor = new Color(0.2f, 0.19f, 0.17f),
                     Intensity = 1f,
                 },
-                // The cubemap is baked from the panorama afterwards (EnvironmentReflectionBaker).
+                // The cubemap is baked from the panorama afterwards (EnvironmentLightingBaker).
                 reflection: new ReflectionSettings { Intensity = 0.6f },
                 shadowQuality: new ShadowQualitySettings { Override = false });
 
@@ -168,11 +168,9 @@ namespace DNPDemo.Editor
                 },
                 ambient: new AmbientSettings
                 {
-                    Mode = AmbientMode.Trilight,
-                    // The hues of the panorama's linear mean over the zenith (45 to 90 degrees), the horizon (within 15
-                    // degrees) and the floor (below -45 degrees); the sunlit marble floor makes the ground the brightest.
-                    // The mean is scaled by 0.6 in linear light and the resulting colour halved, which leaves the side away
-                    // from the sun dark enough to read as shade.
+                    // The light of the panorama itself, baked by EnvironmentLightingBaker. The colours are only used by
+                    // Trilight and Flat.
+                    Mode = AmbientMode.Skybox,
                     SkyColor = new Color(0.24f, 0.265f, 0.31f),
                     EquatorColor = new Color(0.27f, 0.265f, 0.27f),
                     GroundColor = new Color(0.305f, 0.3f, 0.3f),

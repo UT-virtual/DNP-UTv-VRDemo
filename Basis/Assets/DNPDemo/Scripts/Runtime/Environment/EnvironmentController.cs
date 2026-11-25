@@ -55,6 +55,8 @@ namespace DNPDemo.Environment
             public float SpotShadowNormalBias;
             public float SpotShadowNearPlane;
             public AmbientMode AmbientMode;
+            /// <summary>The ambient light as the pipeline sees it; applied directly in <see cref="AmbientMode.Custom"/>.</summary>
+            public SphericalHarmonicsL2 AmbientProbe;
             public Color AmbientSky;
             public Color AmbientEquator;
             public Color AmbientGround;
@@ -67,7 +69,8 @@ namespace DNPDemo.Environment
             public float WallAlpha;
 
             /// <param name="spotEnabled">Spot light activation already resolved from the preset's <see cref="SpotLightMode"/>.</param>
-            public static RuntimeState FromPreset(EnvironmentPreset preset, bool spotEnabled)
+            /// <param name="ambientProbe">The preset's ambient light, resolved by <see cref="ResolveAmbientProbe"/>.</param>
+            public static RuntimeState FromPreset(EnvironmentPreset preset, bool spotEnabled, SphericalHarmonicsL2 ambientProbe)
             {
                 DirectionalLightSettings directional = preset.DirectionalLight;
                 SpotLightSettings spot = preset.SpotLight;
@@ -95,7 +98,9 @@ namespace DNPDemo.Environment
                     SpotShadowBias = spot.ShadowBias,
                     SpotShadowNormalBias = spot.ShadowNormalBias,
                     SpotShadowNearPlane = spot.ShadowNearPlane,
-                    AmbientMode = ambient.Mode,
+                    // The Skybox source is the probe baked from the panorama, which Unity's Skybox mode would not use.
+                    AmbientMode = ambient.Mode == AmbientMode.Skybox ? AmbientMode.Custom : ambient.Mode,
+                    AmbientProbe = ambientProbe,
                     AmbientSky = ambient.SkyColor,
                     AmbientEquator = ambient.EquatorColor,
                     AmbientGround = ambient.GroundColor,
@@ -113,7 +118,8 @@ namespace DNPDemo.Environment
             /// Intermediate state of a transition. A disabled spot light counts as intensity 0, so a light that turns on
             /// fades in from dark and one that turns off fades out before it is deactivated at the end. A reflection cubemap
             /// cannot be blended, so when it changes, the reflection dims to 0 by the midpoint, switches there, and brightens
-            /// to its target.
+            /// to its target. The ambient light blends as spherical harmonics in Custom mode, which fades between any two
+            /// sources, such as a gradient and the sky; the target's own mode takes over at the end.
             /// </summary>
             public static RuntimeState Lerp(RuntimeState from, RuntimeState to, float t)
             {
@@ -147,7 +153,8 @@ namespace DNPDemo.Environment
                     SpotShadowBias = Mathf.Lerp(from.SpotShadowBias, to.SpotShadowBias, t),
                     SpotShadowNormalBias = Mathf.Lerp(from.SpotShadowNormalBias, to.SpotShadowNormalBias, t),
                     SpotShadowNearPlane = Mathf.Lerp(from.SpotShadowNearPlane, to.SpotShadowNearPlane, t),
-                    AmbientMode = t < 0.5f ? from.AmbientMode : to.AmbientMode,
+                    AmbientMode = t <= 0f ? from.AmbientMode : t >= 1f ? to.AmbientMode : AmbientMode.Custom,
+                    AmbientProbe = LerpProbe(from.AmbientProbe, to.AmbientProbe, t),
                     AmbientSky = Color.Lerp(from.AmbientSky, to.AmbientSky, t),
                     AmbientEquator = Color.Lerp(from.AmbientEquator, to.AmbientEquator, t),
                     AmbientGround = Color.Lerp(from.AmbientGround, to.AmbientGround, t),
@@ -159,6 +166,19 @@ namespace DNPDemo.Environment
                     ShadowQuality = t < 0.5f ? from.ShadowQuality : to.ShadowQuality,
                     WallAlpha = Mathf.Lerp(from.WallAlpha, to.WallAlpha, t),
                 };
+            }
+
+            static SphericalHarmonicsL2 LerpProbe(SphericalHarmonicsL2 from, SphericalHarmonicsL2 to, float t)
+            {
+                var probe = new SphericalHarmonicsL2();
+                for (int channel = 0; channel < 3; channel++)
+                {
+                    for (int coefficient = 0; coefficient < 9; coefficient++)
+                    {
+                        probe[channel, coefficient] = Mathf.Lerp(from[channel, coefficient], to[channel, coefficient], t);
+                    }
+                }
+                return probe;
             }
         }
 
@@ -173,8 +193,8 @@ namespace DNPDemo.Environment
         Func<UniversalRenderPipelineAsset> _shadowQualityAssetProvider = ShadowQualityOverride.ActiveAsset;
         ShadowQualityOverride _shadowQuality;
         RuntimeState _transitionStart;
+        RuntimeState _transitionTargetState;
         EnvironmentPreset _transitionTarget;
-        bool _transitionTargetSpotEnabled;
         ScenarioStage _stage;
         float _wallAlpha = 1f;
         float _elapsed;
@@ -214,11 +234,11 @@ namespace DNPDemo.Environment
                 return;
             }
 
-            bool targetSpotEnabled = ResolveSpotEnabled(preset);
+            RuntimeState target = TargetState(preset);
             CaptureCurrentSky();
             _transitionStart = CaptureCurrentState();
             _transitionTarget = preset;
-            _transitionTargetSpotEnabled = targetSpotEnabled;
+            _transitionTargetState = target;
             _elapsed = 0f;
             _duration = duration;
             _isTransitioning = true;
@@ -232,11 +252,10 @@ namespace DNPDemo.Environment
             {
                 return;
             }
-            bool spotEnabled = ResolveSpotEnabled(preset);
+            RuntimeState state = TargetState(preset);
             _isTransitioning = false;
             _transitionTarget = null;
             _elapsed = 0f;
-            RuntimeState state = RuntimeState.FromPreset(preset, spotEnabled);
             ApplyState(state);
             SetSkyboxPreset(preset);
             ReleaseSnapshots();
@@ -268,7 +287,7 @@ namespace DNPDemo.Environment
             _elapsed = Mathf.Min(_elapsed + Mathf.Max(0f, deltaTime), _duration);
             float linear = _duration <= 0f ? 1f : _elapsed / _duration;
             float progress = Mathf.SmoothStep(0f, 1f, linear);
-            RuntimeState target = RuntimeState.FromPreset(_transitionTarget, _transitionTargetSpotEnabled);
+            RuntimeState target = _transitionTargetState;
             ApplyState(RuntimeState.Lerp(_transitionStart, target, progress));
             _skyboxMaterial.SetFloat(BlendId, progress);
 
@@ -291,13 +310,67 @@ namespace DNPDemo.Environment
         /// </summary>
         bool ResolveSpotEnabled(EnvironmentPreset preset)
         {
-            bool current = _isTransitioning ? _transitionTargetSpotEnabled : IsSpotLightOn();
+            bool current = _isTransitioning ? _transitionTargetState.SpotEnabled : IsSpotLightOn();
             return preset.SpotLight.Enabled switch
             {
                 SpotLightMode.On => true,
                 SpotLightMode.Off => false,
                 _ => current,
             };
+        }
+
+        /// <summary>The state a preset shows once applied. Resolved once per request, as the ambient light may touch RenderSettings.</summary>
+        RuntimeState TargetState(EnvironmentPreset preset) =>
+            RuntimeState.FromPreset(preset, ResolveSpotEnabled(preset), ResolveAmbientProbe(preset));
+
+        /// <summary>
+        /// The spherical harmonics the pipeline will light with once the ambient settings are applied. Skybox is the baked
+        /// probe scaled by the intensity. For a gradient or a flat colour, Unity's own conversion is read by applying the
+        /// colours for a moment, so a transition that ends in that mode hands over to it without a jump.
+        /// </summary>
+        static SphericalHarmonicsL2 ResolveAmbientProbe(EnvironmentPreset preset)
+        {
+            AmbientSettings ambient = preset.Ambient;
+            if (ambient.Mode == AmbientMode.Skybox)
+            {
+                return ScaleProbe(preset.SkyboxAmbientProbe, ambient.Intensity);
+            }
+            AmbientMode mode = RenderSettings.ambientMode;
+            SphericalHarmonicsL2 probe = RenderSettings.ambientProbe;
+            Color sky = RenderSettings.ambientSkyColor;
+            Color equator = RenderSettings.ambientEquatorColor;
+            Color ground = RenderSettings.ambientGroundColor;
+            Color flat = RenderSettings.ambientLight;
+
+            RenderSettings.ambientMode = ambient.Mode;
+            RenderSettings.ambientSkyColor = ambient.SkyColor;
+            RenderSettings.ambientEquatorColor = ambient.EquatorColor;
+            RenderSettings.ambientGroundColor = ambient.GroundColor;
+            RenderSettings.ambientLight = ambient.FlatColor;
+            SphericalHarmonicsL2 resolved = RenderSettings.ambientProbe;
+
+            RenderSettings.ambientMode = mode;
+            RenderSettings.ambientSkyColor = sky;
+            RenderSettings.ambientEquatorColor = equator;
+            RenderSettings.ambientGroundColor = ground;
+            RenderSettings.ambientLight = flat;
+            if (mode == AmbientMode.Custom)
+            {
+                RenderSettings.ambientProbe = probe;
+            }
+            return resolved;
+        }
+
+        static SphericalHarmonicsL2 ScaleProbe(SphericalHarmonicsL2 probe, float scale)
+        {
+            for (int channel = 0; channel < 3; channel++)
+            {
+                for (int coefficient = 0; coefficient < 9; coefficient++)
+                {
+                    probe[channel, coefficient] *= scale;
+                }
+            }
+            return probe;
         }
 
         void IStageResettable.ResetToBaseline()
@@ -393,6 +466,7 @@ namespace DNPDemo.Environment
                 SpotShadowNormalBias = _spotLight.shadowNormalBias,
                 SpotShadowNearPlane = _spotLight.shadowNearPlane,
                 AmbientMode = RenderSettings.ambientMode,
+                AmbientProbe = RenderSettings.ambientProbe,
                 AmbientSky = RenderSettings.ambientSkyColor,
                 AmbientEquator = RenderSettings.ambientEquatorColor,
                 AmbientGround = RenderSettings.ambientGroundColor,
@@ -450,6 +524,10 @@ namespace DNPDemo.Environment
             RenderSettings.ambientGroundColor = state.AmbientGround;
             RenderSettings.ambientLight = state.AmbientFlat;
             RenderSettings.ambientIntensity = state.AmbientIntensity;
+            if (state.AmbientMode == AmbientMode.Custom)
+            {
+                RenderSettings.ambientProbe = state.AmbientProbe;
+            }
 
             RenderSettings.defaultReflectionMode = state.ReflectionMode;
             RenderSettings.customReflectionTexture = state.CustomReflection;
@@ -531,7 +609,7 @@ namespace DNPDemo.Environment
             RenderSettings.skybox = _skyboxMaterial;
             _stage = FindStage(gameObject.scene);
             _initialized = true;
-            ApplyState(RuntimeState.FromPreset(_baselinePreset, ResolveSpotEnabled(_baselinePreset)));
+            ApplyState(TargetState(_baselinePreset));
             SetSkyboxPreset(_baselinePreset);
             return true;
         }
@@ -551,7 +629,18 @@ namespace DNPDemo.Environment
             if (preset.Reflection.Cubemap == null)
             {
                 Debug.LogError($"[DNPDemo] Environment preset '{preset.name}' has no reflection cubemap. " +
-                    "Run DNP Demo/Setup/Bake Environment Reflections.", preset);
+                    "Run DNP Demo/Setup/Bake Environment Lighting.", preset);
+                return false;
+            }
+            if (preset.Ambient.Mode == AmbientMode.Custom)
+            {
+                Debug.LogError($"[DNPDemo] Environment preset '{preset.name}' uses the Custom ambient mode; use Skybox for the panorama's light.", preset);
+                return false;
+            }
+            if (preset.Ambient.Mode == AmbientMode.Skybox && !preset.HasSkyboxAmbientProbe)
+            {
+                Debug.LogError($"[DNPDemo] Environment preset '{preset.name}' has no ambient light baked from its panorama. " +
+                    "Run DNP Demo/Setup/Bake Environment Lighting.", preset);
                 return false;
             }
             return true;

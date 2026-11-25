@@ -3,15 +3,18 @@ using System.IO;
 using DNPDemo.Environment;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DNPDemo.Editor
 {
     /// <summary>
-    /// Bakes each environment preset's panorama into the cubemap used as its reflection. The panorama is resampled into a small
-    /// equirectangular PNG with the preset's rotation and exposure applied, and Unity's importer turns it into a cubemap with
-    /// glossy (GGX) convolution, so rougher surfaces sample blurrier mips.
+    /// Bakes each environment preset's panorama into its lighting: the cubemap used as its reflection, and the spherical
+    /// harmonics used as its ambient light when the ambient source is Skybox. The panorama is first resampled into a small
+    /// equirectangular layout in world orientation, with the preset's rotation and exposure applied. Unity's importer turns
+    /// the layout into a cubemap with glossy (GGX) convolution, so rougher surfaces sample blurrier mips, and the same layout
+    /// is projected onto the spherical harmonics.
     /// </summary>
-    public static class EnvironmentReflectionBaker
+    public static class EnvironmentLightingBaker
     {
         public const string ReflectionFolder = DNPDemoProjectSetup.Root + "/Art/Environment/Reflections";
         /// <summary>Edge length of a cubemap face. Glossy reflections need little detail, and Quest samples it on every lit pixel.</summary>
@@ -21,11 +24,11 @@ namespace DNPDemo.Editor
         public const int SourceHeight = FaceSize * 2;
         const int MaxSupersampling = 8;
 
-        [MenuItem("DNP Demo/Setup/Bake Environment Reflections")]
+        [MenuItem("DNP Demo/Setup/Bake Environment Lighting")]
         public static void BakeFromMenu()
         {
             BakePresets();
-            Debug.Log("[DNPDemo] Environment reflections are baked.");
+            Debug.Log("[DNPDemo] Environment lighting is baked.");
         }
 
         public static void BakePresets()
@@ -48,12 +51,57 @@ namespace DNPDemo.Editor
         {
             if (preset.Panorama == null)
             {
-                throw new InvalidOperationException($"Environment preset '{preset.name}' has no panorama to bake a reflection from.");
+                throw new InvalidOperationException($"Environment preset '{preset.name}' has no panorama to bake its lighting from.");
             }
+            Color[] layout = LoadWorldLayout(preset);
+            preset.SetReflectionCubemap(WriteReflection(preset, layout));
+            preset.SetSkyboxAmbientProbe(ProjectAmbient(layout));
+            EditorUtility.SetDirty(preset);
+        }
+
+        /// <summary>
+        /// The panorama in the baked layout, in linear light. It is read from its source file at full resolution, since the
+        /// imported texture is compressed and not readable.
+        /// </summary>
+        static Color[] LoadWorldLayout(EnvironmentPreset preset)
+        {
+            string panoramaPath = AssetDatabase.GetAssetPath(preset.Panorama);
+            var panorama = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: false, linear: false);
+            try
+            {
+                if (!panorama.LoadImage(File.ReadAllBytes(AbsolutePath(panoramaPath))))
+                {
+                    throw new InvalidOperationException($"The panorama could not be decoded: {panoramaPath}");
+                }
+                return Resample(panorama.GetPixels(), panorama.width, panorama.height, preset.Rotation, preset.Exposure);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(panorama);
+            }
+        }
+
+        static Cubemap WriteReflection(EnvironmentPreset preset, Color[] layout)
+        {
             string assetPath = ReflectionPath(preset);
             string fullPath = AbsolutePath(assetPath);
-            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
-            File.WriteAllBytes(fullPath, EncodeReflectionSource(preset));
+            var output = new Texture2D(SourceWidth, SourceHeight, TextureFormat.RGB24, mipChain: false, linear: false);
+            try
+            {
+                var pixels = new Color[layout.Length];
+                for (int i = 0; i < layout.Length; i++)
+                {
+                    pixels[i] = layout[i].gamma;
+                }
+                output.SetPixels(pixels);
+                output.Apply(updateMipmaps: false);
+                Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+                File.WriteAllBytes(fullPath, output.EncodeToPNG());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(output);
+            }
             AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceSynchronousImport);
             ConfigureImport(assetPath);
 
@@ -62,33 +110,43 @@ namespace DNPDemo.Editor
             {
                 throw new InvalidOperationException($"The reflection could not be imported as a cubemap: {assetPath}");
             }
-            preset.SetReflectionCubemap(cubemap);
-            EditorUtility.SetDirty(preset);
+            return cubemap;
         }
 
         /// <summary>
-        /// The panorama read from its source file at full resolution, since the imported texture is compressed and not readable.
+        /// Projects the layout onto spherical harmonics, treating each texel as a directional light weighted by its solid
+        /// angle. AddDirectionalLight has units of its own, so the sum is divided by that of a uniform white sky: a uniform
+        /// sky of radiance L then gives an ambient of L, as Unity's Skybox ambient does. EnvironmentPresetTests compares the
+        /// result with Unity's Skybox ambient.
         /// </summary>
-        static byte[] EncodeReflectionSource(EnvironmentPreset preset)
+        static SphericalHarmonicsL2 ProjectAmbient(Color[] layout)
         {
-            string panoramaPath = AssetDatabase.GetAssetPath(preset.Panorama);
-            var panorama = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: false, linear: false);
-            var output = new Texture2D(SourceWidth, SourceHeight, TextureFormat.RGB24, mipChain: false, linear: false);
-            try
+            var probe = new SphericalHarmonicsL2();
+            var white = new SphericalHarmonicsL2();
+            for (int y = 0; y < SourceHeight; y++)
             {
-                if (!panorama.LoadImage(File.ReadAllBytes(AbsolutePath(panoramaPath))))
+                float latitude = ((y + 0.5f) / SourceHeight - 0.5f) * Mathf.PI;
+                float latitudeCos = Mathf.Cos(latitude);
+                float solidAngle = latitudeCos * (Mathf.PI / SourceHeight) * (2f * Mathf.PI / SourceWidth);
+                for (int x = 0; x < SourceWidth; x++)
                 {
-                    throw new InvalidOperationException($"The panorama could not be decoded: {panoramaPath}");
+                    float longitude = ((x + 0.5f) / SourceWidth - 0.5f) * 2f * Mathf.PI;
+                    var direction = new Vector3(Mathf.Sin(longitude) * latitudeCos, Mathf.Sin(latitude), Mathf.Cos(longitude) * latitudeCos);
+                    probe.AddDirectionalLight(direction, layout[y * SourceWidth + x], solidAngle);
+                    white.AddDirectionalLight(direction, Color.white, solidAngle);
                 }
-                output.SetPixels(Resample(panorama.GetPixels(), panorama.width, panorama.height, preset.Rotation, preset.Exposure));
-                output.Apply(updateMipmaps: false);
-                return output.EncodeToPNG();
             }
-            finally
+            var response = new Color[1];
+            white.Evaluate(new[] { Vector3.up }, response);
+            float normalization = 1f / response[0].r;
+            for (int channel = 0; channel < 3; channel++)
             {
-                UnityEngine.Object.DestroyImmediate(panorama);
-                UnityEngine.Object.DestroyImmediate(output);
+                for (int coefficient = 0; coefficient < 9; coefficient++)
+                {
+                    probe[channel, coefficient] *= normalization;
+                }
             }
+            return probe;
         }
 
         /// <summary>
@@ -121,13 +179,12 @@ namespace DNPDemo.Editor
                             sum += SampleBilinear(linear, sourceWidth, sourceHeight, u, v);
                         }
                     }
-                    Color average = sum / (samples * samples) * scale;
-                    average.a = 1f;
-                    result[y * SourceWidth + x] = ClampToLdr(average).gamma;
+                    result[y * SourceWidth + x] = ClampToLdr(sum / (samples * samples) * scale);
                 }
             }
             return result;
         }
+
 
         /// <summary>Wraps around in longitude and clamps at the poles, like the sky's sampler.</summary>
         static Color SampleBilinear(Color[] pixels, int width, int height, float u, float v)

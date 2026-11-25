@@ -87,7 +87,9 @@ namespace DNPDemo.Tests
             Assert.Greater(_temple.DirectionalLight.Intensity, _exhibition.DirectionalLight.Intensity);
             Assert.AreEqual(LightShadows.Hard, _temple.DirectionalLight.Shadows, "Quest's URP asset has no soft shadows.");
             Assert.Greater(_temple.DirectionalLight.ShadowStrength, 0f);
-            Assert.AreEqual(AmbientMode.Trilight, _temple.Ambient.Mode);
+            Assert.AreEqual(AmbientMode.Skybox, _temple.Ambient.Mode, "The temple is lit by its panorama.");
+            Assert.IsTrue(_temple.HasSkyboxAmbientProbe, "The temple's ambient light is baked from its panorama.");
+            Assert.AreEqual(AmbientMode.Trilight, _exhibition.Ambient.Mode);
             AssertPresetComplete(_exhibition);
             AssertPresetComplete(_temple);
         }
@@ -100,8 +102,8 @@ namespace DNPDemo.Tests
                 Cubemap cubemap = preset.Reflection.Cubemap;
                 Assert.IsNotNull(cubemap, preset.name);
                 string path = AssetDatabase.GetAssetPath(cubemap);
-                Assert.AreEqual(EnvironmentReflectionBaker.ReflectionPath(preset), path, preset.name);
-                Assert.AreEqual(EnvironmentReflectionBaker.FaceSize, cubemap.width, $"{preset.name}: the importer keeps the face size of the baked layout.");
+                Assert.AreEqual(EnvironmentLightingBaker.ReflectionPath(preset), path, preset.name);
+                Assert.AreEqual(EnvironmentLightingBaker.FaceSize, cubemap.width, $"{preset.name}: the importer keeps the face size of the baked layout.");
                 Assert.Greater(cubemap.mipmapCount, 1, $"{preset.name}: rough surfaces sample the blurred mips.");
                 var settings = new TextureImporterSettings();
                 ((TextureImporter)AssetImporter.GetAtPath(path)).ReadTextureSettings(settings);
@@ -149,6 +151,101 @@ namespace DNPDemo.Tests
                 Object.DestroyImmediate(sky);
                 Object.DestroyImmediate(cube);
             }
+        }
+
+        [Test]
+        public void BakedSkyboxAmbientMatchesUnitysSkyboxAmbient()
+        {
+            var sky = new Material(AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.CrossfadeShaderPath));
+            try
+            {
+                sky.SetTexture("_PanoramaA", _temple.Panorama);
+                sky.SetTexture("_PanoramaB", _temple.Panorama);
+                sky.SetFloat("_Blend", 0f);
+                sky.SetFloat("_ExposureA", _temple.Exposure);
+                sky.SetFloat("_ExposureB", _temple.Exposure);
+                sky.SetFloat("_RotationA", _temple.Rotation);
+                sky.SetFloat("_RotationB", _temple.Rotation);
+                RenderSettings.skybox = sky;
+                RenderSettings.ambientMode = AmbientMode.Skybox;
+                RenderSettings.ambientIntensity = 1f;
+                DynamicGI.UpdateEnvironment();
+
+                AssertProbesMatch(RenderSettings.ambientProbe, _temple.SkyboxAmbientProbe, 0.03f);
+            }
+            finally
+            {
+                RenderSettings.skybox = null;
+                Object.DestroyImmediate(sky);
+            }
+        }
+
+        [Test]
+        public void AmbientFadesBetweenTheGradientAndTheSky()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            fixture.Controller.ApplyInstant(_exhibition);
+            Assert.AreEqual(AmbientMode.Trilight, RenderSettings.ambientMode);
+            SphericalHarmonicsL2 exhibition = RenderSettings.ambientProbe;
+            SphericalHarmonicsL2 temple = _temple.SkyboxAmbientProbe;
+            for (int channel = 0; channel < 3; channel++)
+            {
+                for (int coefficient = 0; coefficient < 9; coefficient++)
+                {
+                    temple[channel, coefficient] *= _temple.Ambient.Intensity;
+                }
+            }
+
+            fixture.Controller.TransitionTo(_temple, 2f);
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.AreEqual(AmbientMode.Custom, RenderSettings.ambientMode, "The ambient light blends as spherical harmonics.");
+            Color halfway = EvaluateUp(RenderSettings.ambientProbe);
+            Color expected = Color.Lerp(EvaluateUp(exhibition), EvaluateUp(temple), 0.5f);
+            Assert.AreEqual(expected.b, halfway.b, 0.005f, "Halfway shows the average of the gradient and the sky.");
+
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.AreEqual(AmbientMode.Custom, RenderSettings.ambientMode, "The Skybox source is the probe baked from the panorama.");
+            AssertProbesMatch(temple, RenderSettings.ambientProbe, 0.001f);
+
+            fixture.Controller.TransitionTo(_exhibition, 2f);
+            fixture.Controller.AdvanceTransition(0.5f);
+            SphericalHarmonicsL2 onScreen = RenderSettings.ambientProbe;
+            fixture.Controller.TransitionTo(_temple, 2f);
+            fixture.Controller.AdvanceTransition(0f);
+            AssertProbesMatch(onScreen, RenderSettings.ambientProbe, 0.001f, "A retarget begins from the ambient light on screen.");
+
+            fixture.Controller.TransitionTo(_exhibition, 2f);
+            fixture.Controller.AdvanceTransition(2f);
+            Assert.AreEqual(AmbientMode.Trilight, RenderSettings.ambientMode, "The gradient's own mode takes over at the end.");
+            AssertProbesMatch(exhibition, RenderSettings.ambientProbe, 0.001f, "Handing over to the gradient does not jump.");
+        }
+
+        static readonly Vector3[] ProbeDirections =
+        {
+            Vector3.up, Vector3.down, Vector3.forward, Vector3.back, Vector3.right, Vector3.left,
+            new Vector3(1f, 1f, 1f).normalized, new Vector3(-1f, -1f, 1f).normalized,
+        };
+
+        static void AssertProbesMatch(SphericalHarmonicsL2 expected, SphericalHarmonicsL2 actual, float tolerance, string message = "")
+        {
+            var expectedColors = new Color[ProbeDirections.Length];
+            var actualColors = new Color[ProbeDirections.Length];
+            expected.Evaluate(ProbeDirections, expectedColors);
+            actual.Evaluate(ProbeDirections, actualColors);
+            for (int i = 0; i < ProbeDirections.Length; i++)
+            {
+                string context = $"{message} direction {ProbeDirections[i]}: expected {expectedColors[i]}, was {actualColors[i]}";
+                Assert.AreEqual(expectedColors[i].r, actualColors[i].r, tolerance, context);
+                Assert.AreEqual(expectedColors[i].g, actualColors[i].g, tolerance, context);
+                Assert.AreEqual(expectedColors[i].b, actualColors[i].b, tolerance, context);
+            }
+        }
+
+        static Color EvaluateUp(SphericalHarmonicsL2 probe)
+        {
+            var colors = new Color[1];
+            probe.Evaluate(new[] { Vector3.up }, colors);
+            return colors[0];
         }
 
         static Color RenderSkyAverage(Material skybox, Quaternion view)
@@ -697,6 +794,7 @@ namespace DNPDemo.Tests
                 source.Ambient,
                 source.Reflection,
                 source.ShadowQuality);
+            preset.SetSkyboxAmbientProbe(source.SkyboxAmbientProbe);
             return preset;
         }
 
