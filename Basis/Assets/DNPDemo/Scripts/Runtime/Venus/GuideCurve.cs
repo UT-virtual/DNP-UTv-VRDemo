@@ -13,7 +13,6 @@ namespace DNPDemo.Venus
     /// by the scenario (a key on that object), and <see cref="GuideSnapEffect"/> runs along the same curve.
     /// </para>
     /// </summary>
-    [ExecuteAlways]
     public sealed class GuideCurve : MonoBehaviour
     {
         const int DashTextureWidth = 4;
@@ -34,16 +33,16 @@ namespace DNPDemo.Venus
         [SerializeField] LineRenderer _line;
 
         [Tooltip("Points the line is drawn with.")]
-        [SerializeField, Range(4, 128)] int _lineResolution = 48;
+        [SerializeField, Range(4, 128)] int _resolution = 48;
 
         [Tooltip("Length of one dash and the gap after it, in metres.")]
         [SerializeField, Min(0.005f)] float _dashLength = 0.04f;
 
         Vector3[] _linePoints;
         Texture2D _dashTexture;
-
-        public Transform StartPoint => _start;
-        public Transform EndPoint => _end;
+        Material _lineMaterial;
+        Vector3[] _lastStartPos;
+        Vector3[] _lastEndPos;
 
         /// <summary>Both ends are set.</summary>
         public bool IsValid => _start != null && _end != null;
@@ -64,26 +63,26 @@ namespace DNPDemo.Venus
             return u * u * u * p0 + 3f * u * u * t * p1 + 3f * u * t * t * p2 + t * t * t * p3;
         }
 
-        /// <summary>Fills <paramref name="points"/> with <paramref name="count"/> points evenly spaced in t, from start to end.</summary>
-        public void Sample(int count, List<Vector3> points)
+        void OnEnable()
         {
-            points.Clear();
-            count = Mathf.Max(2, count);
-            for (int i = 0; i < count; i++)
+            if (Application.isPlaying)
             {
-                points.Add(Evaluate(i / (float)(count - 1)));
+                UpdateLine();
             }
         }
 
-        void OnEnable() => UpdateLine();
-
         void LateUpdate()
         {
-            // Update only during play. In editor mode, end points follow zones in OnEnable after editing,
-            // but do not update every frame.
-            if (!Application.isPlaying)
+            if (!Application.isPlaying || _line == null || !IsValid || !_line.gameObject.activeInHierarchy)
             {
                 return;
+            }
+            // Check if the endpoints have moved since last update.
+            Vector3 currentStart = _start.position;
+            Vector3 currentEnd = _end.position;
+            if (_lastStartPos != null && _lastStartPos[0] == currentStart && _lastEndPos != null && _lastEndPos[0] == currentEnd)
+            {
+                return;  // Endpoints haven't moved, skip recalculation.
             }
             UpdateLine();
         }
@@ -94,15 +93,15 @@ namespace DNPDemo.Venus
             {
                 Destroy(_dashTexture);
             }
-            if (_line != null && _line.material != null)
+            if (_lineMaterial != null)
             {
                 if (Application.isPlaying)
                 {
-                    Destroy(_line.material);
+                    Destroy(_lineMaterial);
                 }
                 else
                 {
-                    DestroyImmediate(_line.material);
+                    DestroyImmediate(_lineMaterial);
                 }
             }
         }
@@ -113,9 +112,9 @@ namespace DNPDemo.Venus
             {
                 return;
             }
-            if (_linePoints == null || _linePoints.Length != _lineResolution)
+            if (_linePoints == null || _linePoints.Length != _resolution)
             {
-                _linePoints = new Vector3[_lineResolution];
+                _linePoints = new Vector3[_resolution];
             }
             float length = 0f;
             for (int i = 0; i < _linePoints.Length; i++)
@@ -132,6 +131,17 @@ namespace DNPDemo.Venus
             if (Application.isPlaying)
             {
                 ApplyDashes(length);
+            }
+            // Store current positions for endpoint change detection.
+            if (_lastStartPos == null)
+            {
+                _lastStartPos = new[] { _start.position };
+                _lastEndPos = new[] { _end.position };
+            }
+            else
+            {
+                _lastStartPos[0] = _start.position;
+                _lastEndPos[0] = _end.position;
             }
         }
 
@@ -153,10 +163,18 @@ namespace DNPDemo.Venus
                 }
                 _dashTexture.SetPixels32(pixels);
                 _dashTexture.Apply();
-                // The line's own material instance, so the shared asset keeps no runtime texture.
-                _line.material.mainTexture = _dashTexture;
-                _line.textureMode = LineTextureMode.Tile;
             }
+            if (_lineMaterial == null)
+            {
+                _lineMaterial = new Material(_line.material)
+                {
+                    name = _line.material.name + " (Instance)",
+                };
+                _line.material = _lineMaterial;
+            }
+            // The instanced material holds the texture, so we can destroy it cleanly in OnDestroy.
+            _lineMaterial.mainTexture = _dashTexture;
+            _line.textureMode = LineTextureMode.Tile;
             // In Tile mode one texture repeat spans (line width / textureScale.x) metres.
             float width = Mathf.Max(_line.widthMultiplier, 1e-4f);
             _line.textureScale = new Vector2(width / (_dashLength * 2f), 1f);
