@@ -42,6 +42,7 @@ namespace DNPDemo.Environment
             public Material[] FadeMaterials;
             public Color[] BaseColors;
             public int[] ColorPropertyIds;
+            public ShadowCastingMode OriginalShadowCasting;
         }
 
         struct RuntimeState
@@ -482,6 +483,9 @@ namespace DNPDemo.Environment
                 {
                     continue;
                 }
+                // The shadow caster pass ignores alpha, so a faded room would still shade everything under the next
+                // environment's sun. A room that is no longer fully shown casts no shadow.
+                wall.Renderer.shadowCastingMode = alpha >= 1f ? wall.OriginalShadowCasting : ShadowCastingMode.Off;
                 for (int i = 0; i < wall.FadeMaterials.Length; i++)
                 {
                     Material material = wall.FadeMaterials[i];
@@ -554,6 +558,7 @@ namespace DNPDemo.Environment
                     FadeMaterials = fades,
                     BaseColors = colors,
                     ColorPropertyIds = colorProperties,
+                    OriginalShadowCasting = renderer.shadowCastingMode,
                 });
             }
             return _wallRenderers.Count > 0;
@@ -683,6 +688,7 @@ namespace DNPDemo.Environment
                 if (wall.Renderer != null)
                 {
                     wall.Renderer.sharedMaterials = wall.OriginalMaterials;
+                    wall.Renderer.shadowCastingMode = wall.OriginalShadowCasting;
                 }
                 for (int i = 0; i < wall.FadeMaterials.Length; i++)
                 {

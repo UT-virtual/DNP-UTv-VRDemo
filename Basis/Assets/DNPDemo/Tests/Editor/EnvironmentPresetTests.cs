@@ -269,6 +269,25 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void FadingRoomStopsCastingShadowsAndTheExhibitionRestoresThem()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            var wall = fixture.Room.GetComponentInChildren<Renderer>(true);
+            Assume.That(wall.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On));
+
+            fixture.Controller.TransitionTo(_temple, 2f);
+            fixture.Controller.AdvanceTransition(0.2f);
+            Assert.Less(fixture.WallMaterial().GetColor("_BaseColor").a, 1f);
+            Assert.AreEqual(ShadowCastingMode.Off, wall.shadowCastingMode,
+                "A room that is fading out must not shade the temple once its sun casts shadows.");
+            fixture.Controller.AdvanceTransition(2f);
+            Assert.AreEqual(ShadowCastingMode.Off, wall.shadowCastingMode);
+
+            fixture.Stage.ResetToBaseline();
+            Assert.AreEqual(ShadowCastingMode.On, wall.shadowCastingMode, "The exhibition room casts shadows as authored.");
+        }
+
+        [Test]
         public void PlayingCueFadesAndAnInterruptedTransitionConvergesFromItsCurrentState()
         {
             EnvironmentFixture fixture = CreateFixture();
