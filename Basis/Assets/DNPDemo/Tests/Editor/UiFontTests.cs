@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Background;
 using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Voice;
 using DNPDemo.Menu;
@@ -58,6 +59,22 @@ namespace DNPDemo.Tests
                 HistoryTool.FormatRestored(null),
                 ScenarioDataBuilder.HistoryInstruction("Ver 1.0"),
                 "0123456789 / Ver.",
+            });
+        }
+
+        [Test]
+        public void BackgroundPanelTextsAreInTheCharacterSet()
+        {
+            AssertInCharacterSet(new[]
+            {
+                BackgroundMenuProvider.MenuTitle,
+                BackgroundPanel.ApplyLabel,
+                BackgroundPanel.CurrentSuffix,
+                BackgroundTool.FormatChooseTarget(null),
+                $"{EnvironmentPresetBuilder.TempleDisplayName}を選んでください",
+                EnvironmentPresetBuilder.ExhibitionDisplayName,
+                EnvironmentPresetBuilder.TempleDisplayName,
+                ScenarioDataBuilder.BackgroundInstruction(EnvironmentPresetBuilder.TempleDisplayName),
             });
         }
 

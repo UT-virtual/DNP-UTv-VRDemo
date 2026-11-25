@@ -37,6 +37,7 @@ Transform:
   - {fileID: 1580097561374207203}
   - {fileID: 5834656575315883830}
   - {fileID: 668890911873035417}
+  - {fileID: 9164928916701062053}
   m_Father: {fileID: 7372542472398596075}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2493661690745391217
@@ -64,6 +65,7 @@ MonoBehaviour:
   - {fileID: 7791482679356401528}
   - {fileID: 2241382220683170774}
   - {fileID: 8769896202955677516}
+  - {fileID: 9143404081962618272}
 --- !u!1 &870944090728255067
 GameObject:
   m_ObjectHideFlags: 0
@@ -787,6 +789,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Pen.SpatialPenController
   _radiusFullRangeSeconds: 1.5
+  _extensionFullRangeSeconds: 1.5
 --- !u!114 &7177373001870550533
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2017,6 +2020,87 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee3cb54388a16f14fbfd6caf299b0ca5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Interaction.Voice.VoiceCommandTool
+--- !u!1001 &6647294694358578557
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 7668987521185825665}
+    m_Modifications:
+    - target: {fileID: 2526432549018326744, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2526432549018326744, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2526432549018326744, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2526432549018326744, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2526432549018326744, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2526432549018326744, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2526432549018326744, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2526432549018326744, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2526432549018326744, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2526432549018326744, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7794403931949566681, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+      propertyPath: _stage
+      value: 
+      objectReference: {fileID: 3240398646132276269}
+    - target: {fileID: 7794403931949566681, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+      propertyPath: _director
+      value: 
+      objectReference: {fileID: 1978633991536262902}
+    - target: {fileID: 9212837214100947025, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+      propertyPath: m_Name
+      value: BackgroundTool
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+--- !u!114 &9143404081962618272 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2511894647906367709, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+  m_PrefabInstance: {fileID: 6647294694358578557}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d169ab32247bb6146a158daade4c70a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Interaction.Background.BackgroundTool
+--- !u!4 &9164928916701062053 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2526432549018326744, guid: d70c432114117c44bbd3d9aaf3458bff, type: 3}
+  m_PrefabInstance: {fileID: 6647294694358578557}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6801081578478630611
 PrefabInstance:
   m_ObjectHideFlags: 0

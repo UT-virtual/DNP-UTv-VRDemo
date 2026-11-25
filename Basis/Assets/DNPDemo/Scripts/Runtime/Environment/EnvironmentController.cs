@@ -188,6 +188,9 @@ namespace DNPDemo.Environment
 
         public bool IsTransitioning => _isTransitioning;
 
+        /// <summary>The environment at scene load, which a stage reset returns to.</summary>
+        public EnvironmentPreset BaselinePreset => _baselinePreset;
+
         void Update() => AdvanceTransition(Time.unscaledDeltaTime);
 
         /// <summary>Begins a fade from the currently displayed state; a new request replaces an in-flight destination.</summary>

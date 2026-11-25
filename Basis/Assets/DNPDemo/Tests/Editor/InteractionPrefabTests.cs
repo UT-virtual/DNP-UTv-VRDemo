@@ -1,5 +1,6 @@
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Background;
 using DNPDemo.Interaction.Hint;
 using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
@@ -101,6 +102,69 @@ namespace DNPDemo.Tests
             Assert.AreEqual(HistoryRenderQueues.PanelDepth, depthRenderer.sharedMaterial.renderQueue,
                 "The depth-only panel shape must be drawn after the preview so later transparents behind the panel stay hidden.");
             Assert.Greater(depth.localPosition.z, 0f, "The depth shape sits just behind the labels so it does not hide them.");
+        }
+
+        [Test]
+        public void BackgroundPanelCanvasIsOnUILayerAndWired()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(InteractionPrefabBuilder.BackgroundToolPath);
+            Assert.IsNotNull(prefab, $"{InteractionPrefabBuilder.BackgroundToolPath} (create it from DNP Demo/Create/Interaction Prefabs)");
+            var panel = prefab.GetComponentInChildren<BackgroundPanel>(true);
+            Assert.IsNotNull(panel);
+            var so = new SerializedObject(panel);
+            foreach (string field in new[]
+            {
+                "_content", "_closeButton", "_cardContainer", "_cardTemplate", "_preview", "_nameText", "_statusText", "_applyButton",
+            })
+            {
+                Assert.IsNotNull(so.FindProperty(field).objectReferenceValue, $"BackgroundPanel.{field} is not set.");
+            }
+
+            var content = (GameObject)so.FindProperty("_content").objectReferenceValue;
+            Assert.IsNotNull(content.GetComponent<Canvas>());
+            int uiLayer = LayerMask.NameToLayer(WorldUiBuilder.UILayerName);
+            foreach (Transform t in content.GetComponentsInChildren<Transform>(true))
+            {
+                Assert.AreEqual(uiLayer, t.gameObject.layer,
+                    $"'{t.name}' must be on the {WorldUiBuilder.UILayerName} layer so the Basis laser can hit it.");
+            }
+
+            var template = (BackgroundCard)so.FindProperty("_cardTemplate").objectReferenceValue;
+            var container = (RectTransform)so.FindProperty("_cardContainer").objectReferenceValue;
+            Assert.IsFalse(template.gameObject.activeSelf, "The card template stays hidden; the panel clones it.");
+            Assert.IsFalse(template.transform.IsChildOf(container), "The template must stay out of the layout of the cards.");
+            var card = new SerializedObject(template);
+            foreach (string field in new[] { "_button", "_thumbnail", "_label", "_currentFrame", "_selectedMark" })
+            {
+                Assert.IsNotNull(card.FindProperty(field).objectReferenceValue, $"BackgroundCard.{field} is not set.");
+            }
+
+            Assert.AreSame(panel, new SerializedObject(prefab.GetComponent<BackgroundTool>()).FindProperty("_panel").objectReferenceValue);
+        }
+
+        [Test]
+        public void DemoSystemsBackgroundToolIsWired()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioInstaller.DemoSystemsPrefabPath);
+            Assert.IsNotNull(prefab);
+            var runner = prefab.GetComponentInChildren<InteractionRunner>(true);
+            Assert.IsNotNull(runner);
+            var background = runner.GetComponentInChildren<BackgroundTool>(true);
+            Assert.IsNotNull(background, "Install it from DNP Demo/Setup/Install Scenario Into DemoSystems Prefab.");
+
+            var panel = (BackgroundPanel)new SerializedObject(background).FindProperty("_panel").objectReferenceValue;
+            Assert.IsNotNull(panel, "BackgroundTool needs its panel.");
+            var so = new SerializedObject(panel);
+            Assert.IsNotNull(so.FindProperty("_director").objectReferenceValue, "BackgroundPanel needs the director.");
+            Assert.IsNotNull(so.FindProperty("_stage").objectReferenceValue, "BackgroundPanel needs the stage to find the baseline.");
+
+            SerializedProperty tools = new SerializedObject(runner).FindProperty("_tools");
+            bool registered = false;
+            for (int i = 0; i < tools.arraySize; i++)
+            {
+                registered |= tools.GetArrayElementAtIndex(i).objectReferenceValue == background;
+            }
+            Assert.IsTrue(registered, "BackgroundTool is not registered with the runner.");
         }
 
         [Test]

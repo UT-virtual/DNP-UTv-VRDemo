@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DNPDemo.Interaction
 {
     /// <summary>
-    /// Base class of the pen tools (selection, stroke, manipulate, voice, history panel). <see cref="InteractionRunner"/>
+    /// Base class of the pen tools (selection, stroke, manipulate, voice, history panel, background panel). <see cref="InteractionRunner"/>
     /// drives every tool through the same lifecycle on every device, the actor's and the observer's:
     /// <list type="number">
     /// <item><see cref="Begin"/> when a part the tool <see cref="CanRun"/> becomes current. On the actor's device

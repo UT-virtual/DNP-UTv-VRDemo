@@ -234,9 +234,10 @@ MonoBehaviour:
     Title: "Phase 3 [A] \u80CC\u666F\u3092\u795E\u6BBF\u306B"
     Actor: 1
     Completion: 2
-    TaskText: "\u300C\u80CC\u666F\u3092\u795E\u6BBF\u306B\u5909\u66F4\u300D\u3068\u97F3\u58F0\u6307\u793A\u305B\u3088\u3002"
+    TaskText: "\u300C\u30F4\u30A3\u30FC\u30CA\u30B9\u50CF\u306B\u4F3C\u5408\u3046\u795E\u6BBF\u306E\u80CC\u666F\u3092\u751F\u6210\u300D\u3068\u97F3\u58F0\u6307\u793A\u3057\u3001\u80CC\u666F\u30D1\u30CD\u30EB\u3067\u795E\u6BBF\u3092\u9078\u3093\u3067\u300C\u80CC\u666F\u3092\u9069\u7528\u300D\u3092\u62BC\u305B\u3002"
     Interaction:
     - rid: 1662061916731736544
+    - rid: 1662061916731736555
     Cues: []
   - Id: closing
     Title: "\u7D50\u3073"
@@ -773,13 +774,23 @@ MonoBehaviour:
     - rid: 1662061916731736544
       type: {class: VoicePart, ns: DNPDemo.Interaction.Voice, asm: DNPDemo.Runtime}
       data:
-        Instruction: "\u300C\u80CC\u666F\u3092\u795E\u6BBF\u306B\u5909\u66F4\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
+        Instruction: "\u300C\u30F4\u30A3\u30FC\u30CA\u30B9\u50CF\u306B\u4F3C\u5408\u3046\u795E\u6BBF\u306E\u80CC\u666F\u3092\u751F\u6210\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
         Hint:
           DelaySeconds: 20
           Text: "\u30C8\u30EA\u30AC\u30FC\u3092\u62BC\u3057\u3066\u3044\u308B\u9593\u306B\u3001\u6307\u793A\u306E\u6587\u3092\u306F\u3063\u304D\u308A\u8AAD\u307F\u4E0A\u3052\u3066\u304F\u3060\u3055\u3044"
           ZoneKeys: []
-        Transcript: "\u80CC\u666F\u3092\u795E\u6BBF\u306B\u5909\u66F4"
+        Transcript: "\u30F4\u30A3\u30FC\u30CA\u30B9\u50CF\u306B\u4F3C\u5408\u3046\u795E\u6BBF\u306E\u80CC\u666F\u3092\u751F\u6210"
         RequiredSpeechSeconds: 1
+    - rid: 1662061916731736555
+      type: {class: BackgroundPart, ns: DNPDemo.Interaction.Background, asm: DNPDemo.Runtime}
+      data:
+        Instruction: "\u80CC\u666F\u30D1\u30CD\u30EB\u3067\u795E\u6BBF\u3092\u9078\u3073\u3001\u300C\u80CC\u666F\u3092\u9069\u7528\u300D\u3092\u62BC\u3059"
+        Hint:
+          DelaySeconds: 20
+          Text: "\u80CC\u666F\u30D1\u30CD\u30EB\u3092\u9589\u3058\u305F\u3068\u304D\u306F\u3001\u30E1\u30CB\u30E5\u30FC\u306E\u300C\u80CC\u666F\u300D\u3067\u958B\u3051\u307E\u3059\u3002\u795E\u6BBF\u306E\u30AB\u30FC\u30C9\u3092\u62BC\u3057\u3001\u300C\u80CC\u666F\u3092\u9069\u7528\u300D\u3092\u62BC\u3057\u3066\u304F\u3060\u3055\u3044"
+          ZoneKeys: []
+        TargetPreset: {fileID: 11400000, guid: e0956dc4b6bd04340be655738996d8c3, type: 2}
+        OpensPanel: 1
     - rid: 1662061916731736545
       type: {class: EnvironmentCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:

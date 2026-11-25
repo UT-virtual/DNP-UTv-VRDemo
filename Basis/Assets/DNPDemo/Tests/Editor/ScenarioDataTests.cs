@@ -225,7 +225,7 @@ namespace DNPDemo.Tests
                 ["s3-grip-mirror"] = new[] { PenMode.Select, PenMode.Voice },
                 ["s3-adjust-wrist"] = new[] { PenMode.Select, PenMode.Manipulate },
                 ["p2-compare"] = new[] { PenMode.Panel },
-                ["p3-temple"] = new[] { PenMode.Voice },
+                ["p3-temple"] = new[] { PenMode.Voice, PenMode.Panel },
             };
             foreach (ScenarioStep step in DefaultSteps)
             {
