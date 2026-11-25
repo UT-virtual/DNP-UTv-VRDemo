@@ -89,9 +89,7 @@ StepCompletion（完了条件）
    ├ Interaction  … 担当ロールの端末で操作定義の部品がすべて完了すると、InteractionRunner が ScenarioDirector.ReportInteractionComplete() を呼んで進む
    └ Manual       … 運営の操作でのみ進む（結び）
    運営スキップはどの条件でも常に使える
-ScenarioCue（キュー）… LineCue（話者＋字幕＋音声）/ WaitCue / SoundCue / SetObjectActiveCue / BannerCue / StatueVersionCue（§2.5）/ MatchPoseCue / GuideSnapCue（§2.5）
-   └ 見た目を後に残すキュー（永続キュー）は ApplyInstant を実装する。環境のキューも同じ形で足す
-ScenarioCue（キュー）… LineCue（話者＋字幕＋音声）/ WaitCue / SoundCue / SetObjectActiveCue / BannerCue / StatueVersionCue（§2.5）/ EnvironmentCue（§2.6）
+ScenarioCue（キュー）… LineCue（話者＋字幕＋音声）/ WaitCue / SoundCue / SetObjectActiveCue / BannerCue / StatueVersionCue / MatchPoseCue / GuideSnapCue（§2.5）/ EnvironmentCue（§2.6）
    └ 見た目を後に残すキュー（永続キュー）は ApplyInstant を実装する
 ScenarioPlayer … ステップに入るたびに、舞台を初期状態に戻し、それまでのステップの永続キューを即時に適用してから、
                  現在のステップのキューを頭から再生する
