@@ -161,7 +161,7 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
   - 制約の計算は `ManipulateConstraint`。部品が始まった時点の対象のワールドの姿勢を起点にし、動かした量を `ManipulateValue`（平行移動は変位、回転は角度）で表す。平行移動は、掴んでからのペン先の変位を最大距離の球に収める。回転は、ペン先を軸に垂直な平面へ投影し、フレームごとの角度の差を積み上げる（±180° をまたいでも途切れない）。ペン先が軸から 2cm 以内のときは角度を更新しない。
   - 入力は `ManipulateGrabber`。押している途中でメニューからモードを変えると、その位置で離したものとして扱い、判定はしない。
   - 送信形式は `ManipulateMessage`（20 バイト）。Unreliable と Reliable は到着順が保証されないので、送信カウンタを付け、受信側は古いものを捨てる。受信側はドラッグの値へ補間しながら動かし、スナップは同じ時間（0.25 秒）で吸着させる。
-  - ゴーストは `ManipulateGhostView` が、対象の MeshRenderer のメッシュを目標の姿勢に `Graphics.RenderMesh` で描く（`Art/Interaction/Manipulate/ManipulateGhost.mat`、水色の半透明）。両方の端末に出し、部品が終わったら消す。掴める間と掴んでいる間は、対象を Basis のハイライトで強調する（相手の端末では掴んでいる間）。
+  - ゴーストは `ManipulateGhostView` が、対象の MeshRenderer のメッシュを目標の姿勢に `Graphics.RenderMesh` で描く（`Art/Interaction/Manipulate/ManipulateGhost.mat`、水色の半透明）。各メッシュは毎フレーム、その時点で対象に付いている姿勢と大きさで描くので、部品の開始時に出現の演出で拡大中の対象（ステップ14 の手鏡）にも追従する。両方の端末に出し、部品が終わったら消す。掴める間と掴んでいる間は、対象を Basis のハイライトで強調する（相手の端末では掴んでいる間）。
   - ツールは対象を元の位置へ戻さない。ステップが変わると `ScenarioStage` が初期状態へ戻す。`ScenarioPlayer` は OnEnable、`InteractionRunner` は Start でステップの変化を購読するので、部品の開始時には舞台がそのステップの状態になっている。
 - 音声指示の実装（`Scripts/Runtime/Interaction/Voice/`）
   - `VoicePart` は、認識結果として表示する台本の文（`Transcript`）と、必要な有音時間（`RequiredSpeechSeconds`、初期値 1 秒）を持つ。有音時間は押している間の合計で、途切れてもよい（`VoiceActivityMeter`）。
