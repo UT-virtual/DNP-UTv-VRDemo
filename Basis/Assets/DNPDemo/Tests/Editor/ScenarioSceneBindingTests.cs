@@ -109,6 +109,17 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void SceneCameraClearsToTheSkybox()
+        {
+            UnityEngine.Camera sceneCamera = _scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<UnityEngine.Camera>(true))
+                .SingleOrDefault(camera => camera.name == "SceneCamera");
+            Assert.IsNotNull(sceneCamera, "DNPDemo_Main has no SceneCamera.");
+            Assert.AreEqual(UnityEngine.CameraClearFlags.Skybox, sceneCamera.clearFlags,
+                "EnvironmentController shows each environment through RenderSettings.skybox, so a solid colour background would hide the panorama.");
+        }
+
+        [Test]
         public void TempleFloorKeyResolvesToTheHiddenTempleWithAShadowReceivingFloor()
         {
             ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
