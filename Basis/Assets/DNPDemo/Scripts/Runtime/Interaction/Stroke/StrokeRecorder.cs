@@ -9,7 +9,7 @@ namespace DNPDemo.Interaction.Stroke
     /// <item>One press of the trigger is one line: it starts on <see cref="SpatialPenController.TriggerPressed"/>, grows
     /// every <see cref="Tick"/> once the tip has moved <see cref="StrokeSet.MinPointSpacing"/>, and ends on
     /// <see cref="SpatialPenController.TriggerReleased"/> with <see cref="Finished"/>. If the pen's mode changes during a
-    /// press (the menu ends the press), the line is dropped with <see cref="Abandoned"/>.</item>
+    /// press (switching modes ends the press), the line is dropped with <see cref="Abandoned"/>.</item>
     /// <item>While the pen is held in the listened mode and the trigger is up, every finished line the eraser sphere
     /// (<see cref="PenGeometry.EraserRadius"/>) touches is removed with <see cref="Erased"/>. The eraser is off while
     /// drawing so the butt cannot wipe a line by accident.</item>

@@ -75,15 +75,31 @@ namespace DNPDemo.Menu
                 _buttons.Add((button, item));
             }
             RefreshIndicators();
+            OnBarOpened();
         }
 
         public override void OnReleaseEvent()
         {
+            OnBarClosed();
             _buttons.Clear();
             base.OnReleaseEvent();
         }
 
-        void RefreshIndicators()
+        /// <summary>
+        /// Called after the bar has been built. Override to watch a choice that can change while the bar is open (from
+        /// another input than the bar), and call <see cref="RefreshIndicators"/> when it does.
+        /// </summary>
+        protected virtual void OnBarOpened()
+        {
+        }
+
+        /// <summary>Called when the bar is released. Undo what <see cref="OnBarOpened"/> set up.</summary>
+        protected virtual void OnBarClosed()
+        {
+        }
+
+        /// <summary>Moves the active indicator to the buttons whose <see cref="BarItem.IsSelected"/> is now true.</summary>
+        protected void RefreshIndicators()
         {
             foreach ((PanelButton button, BarItem item) in _buttons)
             {

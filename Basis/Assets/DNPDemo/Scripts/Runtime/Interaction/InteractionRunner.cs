@@ -53,6 +53,12 @@ namespace DNPDemo.Interaction
         /// </summary>
         public string Status => _status;
 
+        /// <summary>
+        /// The running part's session, or null when nothing is waiting. A new session begins every time a part starts
+        /// (including a restart of the same part after the local role changed), so comparing it tells when a part began.
+        /// </summary>
+        public InteractionSession CurrentSession => _session;
+
         /// <summary>The step whose parts are running, or null when nothing is waiting (same lifetime as <see cref="CurrentPart"/>).</summary>
         public ScenarioStep CurrentStep => _session?.Step;
 

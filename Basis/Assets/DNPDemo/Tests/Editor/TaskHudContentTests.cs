@@ -32,7 +32,7 @@ namespace DNPDemo.Tests
             Assert.AreEqual("林檎を選んで手の下へ動かせ。", content.TaskText);
             Assert.AreEqual(2, content.Lines.Count);
             Assert.AreEqual("林檎を範囲選択する（範囲選択モード）", content.Lines[0].Text);
-            Assert.AreEqual("林檎を手の下へ移動する（操作モード）", content.Lines[1].Text);
+            Assert.AreEqual("林檎を手の下へ移動する（物体移動モード）", content.Lines[1].Text);
         }
 
         [Test]
@@ -72,7 +72,7 @@ namespace DNPDemo.Tests
             TaskHudContent wrongMode = TaskHudContent.Build(step, 1, isLocalActor: true, PenMode.Select);
             TaskHudContent rightMode = TaskHudContent.Build(step, 1, isLocalActor: true, PenMode.Manipulate);
 
-            Assert.AreEqual("メニューの「空間ペン」で「操作」を選んでください", wrongMode.ModeHint);
+            Assert.AreEqual("メニューの「空間ペン」で「物体移動」を選んでください", wrongMode.ModeHint);
             Assert.AreEqual(string.Empty, rightMode.ModeHint);
         }
 
@@ -115,6 +115,24 @@ namespace DNPDemo.Tests
             Assert.AreEqual("音声入力中…", withStatus.Status);
             Assert.AreEqual(string.Empty, withoutStatus.Status);
             Assert.AreEqual(string.Empty, TaskHudContent.Hidden.Status);
+        }
+
+        [Test]
+        public void HintIsShownToBothPlayersWithItsPrefix()
+        {
+            TaskHudContent actor = TaskHudContent.Build(SelectThenManipulate(), 0, isLocalActor: true, PenMode.Select, null, " 林檎をなぞる ");
+            TaskHudContent observer = TaskHudContent.Build(SelectThenManipulate(), 0, isLocalActor: false, PenMode.Select, null, "林檎をなぞる");
+
+            Assert.AreEqual(TaskHudContent.HintPrefix + "林檎をなぞる", actor.Hint);
+            Assert.AreEqual(TaskHudContent.HintPrefix + "林檎をなぞる", observer.Hint);
+        }
+
+        [Test]
+        public void NoHintLineWithoutAHint()
+        {
+            Assert.AreEqual(string.Empty, TaskHudContent.Build(SelectThenManipulate(), 0, isLocalActor: true, PenMode.Select).Hint);
+            Assert.AreEqual(string.Empty, TaskHudContent.Build(SelectThenManipulate(), 0, isLocalActor: true, PenMode.Select, null, " ").Hint);
+            Assert.AreEqual(string.Empty, TaskHudContent.Hidden.Hint);
         }
 
         [TestCase(-1)]

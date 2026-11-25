@@ -88,6 +88,32 @@ namespace DNPDemo.Tests
             AssertInCharacterSet(texts);
         }
 
+        [Test]
+        public void HintTextsAreInTheCharacterSet()
+        {
+            var texts = new List<string> { TaskHudContent.HintPrefix, ScenarioDataBuilder.HistoryHint("Ver 1.0") };
+            AddHintTexts(texts, ScenarioDataBuilder.CreateDefaultSteps());
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data, ScenarioDataBuilder.AssetPath);
+            AddHintTexts(texts, data.Steps);
+
+            AssertInCharacterSet(texts);
+        }
+
+        static void AddHintTexts(List<string> texts, IReadOnlyList<ScenarioStep> steps)
+        {
+            foreach (ScenarioStep step in steps)
+            {
+                foreach (InteractionPart part in step?.Interaction ?? new List<InteractionPart>())
+                {
+                    if (!string.IsNullOrEmpty(part?.Hint?.Text))
+                    {
+                        texts.Add(part.Hint.Text);
+                    }
+                }
+            }
+        }
+
         static void AssertInCharacterSet(IEnumerable<string> texts)
         {
             string characters = File.ReadAllText(CharacterSetPath);

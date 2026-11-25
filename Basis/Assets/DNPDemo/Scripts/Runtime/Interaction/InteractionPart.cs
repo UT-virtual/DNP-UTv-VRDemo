@@ -20,8 +20,42 @@ namespace DNPDemo.Interaction
         [TextArea(1, 3)]
         public string Instruction;
 
+        [Tooltip("Hint shown to both players when this operation is not done after a while.")]
+        public InteractionHint Hint = new();
+
         /// <summary>Pen mode the actor needs for this part. The tool takes pen input only while the pen is in this mode.</summary>
         public abstract PenMode Mode { get; }
+
+        /// <summary>
+        /// Adds the keys of the zones that light up with the hint: <see cref="InteractionHint.ZoneKeys"/> when set,
+        /// otherwise the part's own zones (<see cref="CollectDefaultHintZoneKeys"/>).
+        /// </summary>
+        public void CollectHintZoneKeys(List<string> keys)
+        {
+            if (Hint != null && Hint.HasCustomZones)
+            {
+                foreach (string key in Hint.ZoneKeys)
+                {
+                    AddHintZoneKey(keys, key);
+                }
+                return;
+            }
+            CollectDefaultHintZoneKeys(keys);
+        }
+
+        /// <summary>Adds the keys of the zones the operation is about, which light up with the hint unless it names its own.</summary>
+        protected virtual void CollectDefaultHintZoneKeys(List<string> keys)
+        {
+        }
+
+        /// <summary>Adds <paramref name="key"/> to <paramref name="keys"/> unless it is blank or already there.</summary>
+        protected static void AddHintZoneKey(List<string> keys, string key)
+        {
+            if (!string.IsNullOrWhiteSpace(key) && !keys.Contains(key))
+            {
+                keys.Add(key);
+            }
+        }
 
         /// <summary>Adds the scene bindings (object keys) this part addresses, so the scene can be checked for them.</summary>
         public virtual void CollectRequirements(Scenario.ScenarioRequirements requirements)

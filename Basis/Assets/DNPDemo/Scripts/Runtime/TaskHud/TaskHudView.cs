@@ -1,5 +1,6 @@
 using System.Text;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Hint;
 using DNPDemo.Pen;
 using DNPDemo.Presentation;
 using TMPro;
@@ -10,8 +11,8 @@ namespace DNPDemo.TaskHud
     /// <summary>
     /// The task HUD: a small panel above the player's free hand that shows the running step (<see cref="TaskHudContent"/>)
     /// while it waits for an operation, on both devices. It redraws when the runner's state (including the running tool's
-    /// status line), the pen's mode or the hand that last grabbed the pen changes, and follows the other hand
-    /// (<see cref="HandFollower"/>).
+    /// status line), the hint (<see cref="InteractionHintPresenter"/>), the pen's mode or the hand that last grabbed the pen
+    /// changes, and follows the other hand (<see cref="HandFollower"/>).
     /// </summary>
     public sealed class TaskHudView : MonoBehaviour
     {
@@ -21,6 +22,9 @@ namespace DNPDemo.TaskHud
         public const string PendingMark = "・";
 
         [SerializeField] InteractionRunner _runner;
+
+        [Tooltip("Shows the running part's hint after a while. Without it the HUD shows no hint.")]
+        [SerializeField] InteractionHintPresenter _hints;
 
         [Tooltip("Local pen. The HUD follows the hand opposite to the one that last grabbed it. Without it the HUD stays on the follower's initial hand.")]
         [SerializeField] SpatialPenController _pen;
@@ -36,6 +40,9 @@ namespace DNPDemo.TaskHud
         [SerializeField] TMP_Text _statusText;
 
         [SerializeField] TMP_Text _modeHintText;
+
+        [Tooltip("The running part's hint, once it is out. Hidden while empty.")]
+        [SerializeField] TMP_Text _hintText;
 
         [SerializeField] Color _actorHeadingColor = new(1f, 0.8f, 0.3f);
         [SerializeField] Color _observerHeadingColor = new(0.6f, 0.8f, 1f);
@@ -56,6 +63,10 @@ namespace DNPDemo.TaskHud
             {
                 _runner.StateChanged += Refresh;
             }
+            if (_hints != null)
+            {
+                _hints.Changed += Refresh;
+            }
             if (_pen != null)
             {
                 _pen.LastGrabHandChanged += HandleLastGrabHandChanged;
@@ -70,6 +81,10 @@ namespace DNPDemo.TaskHud
             if (_runner != null)
             {
                 _runner.StateChanged -= Refresh;
+            }
+            if (_hints != null)
+            {
+                _hints.Changed -= Refresh;
             }
             if (_pen != null)
             {
@@ -91,7 +106,8 @@ namespace DNPDemo.TaskHud
         void Refresh()
         {
             TaskHudContent content = _runner != null
-                ? TaskHudContent.Build(_runner.CurrentStep, _runner.PartIndex, _runner.IsLocalActor, PenModeSelection.Current, _runner.Status)
+                ? TaskHudContent.Build(_runner.CurrentStep, _runner.PartIndex, _runner.IsLocalActor, PenModeSelection.Current, _runner.Status,
+                    _hints != null ? _hints.Text : null)
                 : TaskHudContent.Hidden;
             SetVisible(content.IsVisible);
             if (!content.IsVisible)
@@ -122,6 +138,11 @@ namespace DNPDemo.TaskHud
             {
                 _modeHintText.text = content.ModeHint;
                 _modeHintText.gameObject.SetActive(content.ModeHint.Length > 0);
+            }
+            if (_hintText != null)
+            {
+                _hintText.text = content.Hint;
+                _hintText.gameObject.SetActive(content.Hint.Length > 0);
             }
         }
 

@@ -77,6 +77,17 @@ namespace DNPDemo.Interaction.Stroke
             }
         }
 
+        /// <summary>A guide's hint lights up the zones the line must join. A sketch has no zone.</summary>
+        protected override void CollectDefaultHintZoneKeys(List<string> keys)
+        {
+            if (Goal != StrokeGoal.Guide)
+            {
+                return;
+            }
+            AddHintZoneKey(keys, StartZoneKey);
+            AddHintZoneKey(keys, EndZoneKey);
+        }
+
         public override void Validate(List<string> problems)
         {
             switch (Goal)
