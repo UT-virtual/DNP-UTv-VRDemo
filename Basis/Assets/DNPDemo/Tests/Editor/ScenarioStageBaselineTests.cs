@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
 
 namespace DNPDemo.Tests
@@ -45,10 +44,7 @@ namespace DNPDemo.Tests
             root.transform.position = new Vector3(1f, 0f, 2f);
             GameObject target = Create(Key);
             target.transform.SetParent(root.transform, false);
-            var binding = target.AddComponent<ScenarioObjectBinding>();
-            var so = new SerializedObject(binding);
-            so.FindProperty("_key").stringValue = Key;
-            so.ApplyModifiedPropertiesWithoutUndo();
+            TestBinding.Bind(target, Key);
             target.transform.SetLocalPositionAndRotation(new Vector3(0f, 1.5f, -0.5f), Quaternion.Euler(0f, 30f, 0f));
             target.SetActive(false);
 
@@ -72,9 +68,9 @@ namespace DNPDemo.Tests
         {
             const string markerKey = Key + "_Marker";
             GameObject target = Create(Key);
-            Bind(target, Key);
+            TestBinding.Bind(target, Key);
             GameObject marker = Create(markerKey);
-            Bind(marker, markerKey);
+            TestBinding.Bind(marker, markerKey);
             marker.transform.SetPositionAndRotation(new Vector3(0.2f, 1.4f, -0.6f), Quaternion.Euler(0f, 45f, 0f));
 
             var stage = Create("Stage").AddComponent<ScenarioStage>();
@@ -94,14 +90,6 @@ namespace DNPDemo.Tests
 
             Assert.Less(Vector3.Distance(marker.transform.position, target.transform.position), 1e-5f);
             Assert.Less(Quaternion.Angle(marker.transform.rotation, target.transform.rotation), 0.01f);
-        }
-
-        static void Bind(GameObject target, string key)
-        {
-            var binding = target.AddComponent<ScenarioObjectBinding>();
-            var so = new SerializedObject(binding);
-            so.FindProperty("_key").stringValue = key;
-            so.ApplyModifiedPropertiesWithoutUndo();
         }
     }
 }

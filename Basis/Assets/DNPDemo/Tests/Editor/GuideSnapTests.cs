@@ -1,5 +1,7 @@
+using System.Collections;
 using System.Collections.Generic;
 using DNPDemo.Scenario;
+using DNPDemo.Scenario.Cues;
 using DNPDemo.Venus;
 using NUnit.Framework;
 using UnityEditor;
@@ -110,39 +112,40 @@ namespace DNPDemo.Tests
         }
 
         [Test]
-        public void EffectArrivesAtEndThenFades()
+        public void EffectArrivesBeforeTheFadeEnds()
         {
             GuideSnapEffect effect = CreateEffect(out _, out _, out LineRenderer glow, out _);
             effect.Play(0.8f);
+            effect.Tick(0.4f);
             Assert.IsFalse(effect.HasArrived);
 
-            // Travel through the entire curve.
-            effect.Tick(0.8f);
-            Assert.IsTrue(effect.HasArrived, "HasArrived should be true once the curve is complete");
-            Assert.IsTrue(glow.gameObject.activeSelf, "Glow should still be active during fade");
+            effect.Tick(0.4f);
+            Assert.IsTrue(effect.HasArrived);
+            Assert.IsTrue(effect.IsPlaying, "The line is still fading when it arrives.");
+            Assert.IsTrue(glow.gameObject.activeSelf);
 
-            // Fade out completes.
-            effect.Tick(0.5f);
+            effect.Tick(1f);
             Assert.IsFalse(effect.IsPlaying);
-            Assert.IsFalse(glow.gameObject.activeSelf);
+            Assert.IsFalse(effect.HasArrived);
         }
 
         [Test]
-        public void EffectArrivesBeforeFadeEnds()
+        public void CueFinishesWhenTheLineArrivesWithoutWaitingForTheFade()
         {
-            GuideSnapEffect effect = CreateEffect(out _, out _, out LineRenderer glow, out _);
-            effect.Play(1f);
-            Assert.IsFalse(effect.HasArrived);
+            GuideSnapEffect effect = CreateEffect(out _, out _, out _, out _);
+            TestBinding.Bind(effect.gameObject, "GuideSnapTests_Guide");
+            var stage = Track(new GameObject("GuideSnapTests_Stage")).AddComponent<ScenarioStage>();
+            Assume.That(stage.gameObject.scene.isLoaded, "The stage collects bindings only from a loaded scene.");
+            var context = new ScenarioCueContext(stage, Track(ScriptableObject.CreateInstance<ScenarioData>()));
 
-            // Tick to arrival time (1 second into a 1 second travel).
-            effect.Tick(1f);
-            Assert.IsTrue(effect.HasArrived, "Should arrive after travel time");
+            IEnumerator cue = new GuideSnapCue("GuideSnapTests_Guide", 0.8f).Play(context);
+            Assert.IsTrue(cue.MoveNext());
+            effect.Tick(0.4f);
+            Assert.IsTrue(cue.MoveNext(), "The cue waits while the line travels.");
 
-            // Glow is still visible during fade.
-            int beforeCount = glow.positionCount;
-            effect.Tick(0.2f);
-            Assert.Greater(beforeCount, 0, "Glow was visible at arrival");
-            Assert.IsFalse(effect.IsPlaying, "Effect should still be fading after travel");
+            effect.Tick(0.4f);
+            Assert.IsFalse(cue.MoveNext(), "The cue ends as the line arrives.");
+            Assert.IsTrue(effect.IsPlaying, "The fade continues after the cue has ended.");
         }
     }
 }

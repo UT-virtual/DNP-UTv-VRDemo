@@ -213,7 +213,7 @@ namespace DNPDemo.Tests
 
             var room = fixture.Track(new GameObject("ExhibitionRoom"));
             fixture.Room = room;
-            SetBindingKey(room.AddComponent<ScenarioObjectBinding>(), "ExhibitionRoom");
+            TestBinding.Bind(room, "ExhibitionRoom");
             fixture.WallCollider = room.AddComponent<BoxCollider>();
             var wall = new GameObject("WallDisplay");
             wall.transform.SetParent(room.transform, false);
@@ -221,7 +221,7 @@ namespace DNPDemo.Tests
             renderer.sharedMaterial = _wallMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
 
             var environment = fixture.Track(new GameObject("Environment"));
-            SetBindingKey(environment.AddComponent<ScenarioObjectBinding>(), "Environment");
+            TestBinding.Bind(environment, "Environment");
             fixture.Controller = environment.AddComponent<EnvironmentController>();
             var serialized = new SerializedObject(fixture.Controller);
             serialized.FindProperty("_baselinePreset").objectReferenceValue = _exhibition;
@@ -230,13 +230,6 @@ namespace DNPDemo.Tests
             serialized.FindProperty("_crossfadeShader").objectReferenceValue = Shader.Find("DNPDemo/Environment Crossfade Panorama");
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return fixture;
-        }
-
-        static void SetBindingKey(ScenarioObjectBinding binding, string key)
-        {
-            var serialized = new SerializedObject(binding);
-            serialized.FindProperty("_key").stringValue = key;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         static void AssertPresetComplete(EnvironmentPreset preset)

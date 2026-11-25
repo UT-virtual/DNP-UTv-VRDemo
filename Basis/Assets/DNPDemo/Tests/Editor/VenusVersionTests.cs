@@ -52,10 +52,7 @@ namespace DNPDemo.Tests
         VenusStatue CreateStatue()
         {
             GameObject go = Track(new GameObject(StatueKey));
-            var binding = go.AddComponent<ScenarioObjectBinding>();
-            var so = new SerializedObject(binding);
-            so.FindProperty("_key").stringValue = StatueKey;
-            so.ApplyModifiedPropertiesWithoutUndo();
+            TestBinding.Bind(go, StatueKey);
             return go.AddComponent<VenusStatue>();
         }
 
