@@ -106,6 +106,7 @@ namespace DNPDemo.Tests
             Assert.IsTrue(bindings.TryGetObject(EnvironmentController.ExhibitionRoomKey, out UnityEngine.GameObject room),
                 $"No object has the key \"{EnvironmentController.ExhibitionRoomKey}\" (Env_ExhibitionRoom prefab). EnvironmentController fades it.");
             Assert.IsNotEmpty(room.GetComponentsInChildren<UnityEngine.Renderer>(true), "The exhibition room has nothing to fade.");
+            Assert.IsNotNull(room.GetComponent<EnvironmentFadeGroup>(), "EnvironmentController fades the room through its EnvironmentFadeGroup.");
         }
 
         [Test]
