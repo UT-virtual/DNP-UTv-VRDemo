@@ -49,3 +49,6 @@ CLAUDE.md
 
 # DNP demo: Blender backup files
 *.blend1
+
+# DNP demo: sound effects may not be redistributed; obtain them as listed in THIRD_PARTY_NOTICES.md (the .meta files stay tracked)
+/Basis/Assets/DNPDemo/Audio/SE/*.mp3
