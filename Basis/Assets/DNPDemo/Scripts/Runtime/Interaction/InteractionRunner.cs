@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Basis;
 using Basis.Network.Core;
+using DNPDemo.Audio;
 using DNPDemo.Roles;
 using DNPDemo.Scenario;
 using UnityEngine;
@@ -34,6 +35,9 @@ namespace DNPDemo.Interaction
         [Tooltip("Tools available for running parts. The first one whose CanRun accepts a part runs it.")]
         [SerializeField] List<InteractionTool> _tools = new();
 
+        [Tooltip("Plays the interaction sounds on this device. Without it the interaction is silent.")]
+        [SerializeField] SePlayer _sounds;
+
         readonly InteractionProgress _progress = new();
         readonly List<InteractionTool> _startedTools = new();
         readonly HashSet<string> _reportedMissingTools = new();
@@ -43,6 +47,11 @@ namespace DNPDemo.Interaction
         InteractionTool _currentTool;
         string _status = string.Empty;
         bool _ready;
+
+        // The part whose task sound was played last, so restarting the same part (the local role changed) stays quiet.
+        ushort _announcedSequence;
+        int _announcedStep = -1;
+        int _announcedPart = -1;
 
         /// <summary>Raised when the current part, the actor flag, the required pen mode or the status may have changed.</summary>
         public event Action StateChanged;
@@ -156,11 +165,24 @@ namespace DNPDemo.Interaction
 
         internal bool IsCurrent(InteractionSession session) => session != null && session == _session;
 
-        internal void Complete(InteractionSession session)
+        /// <summary>
+        /// Moves on after the actor completed <paramref name="session"/>'s part. The last part plays
+        /// <see cref="SeEvent.Complete"/> and nothing else, so it is not drowned by the operation's own sound
+        /// (<paramref name="feedback"/>), which only plays for the parts before it.
+        /// </summary>
+        internal void Complete(InteractionSession session, SeEvent? feedback)
         {
             if (!IsCurrent(session) || !session.IsLocalActor || !_progress.CompletePart(session.PartIndex))
             {
                 return;
+            }
+            if (_progress.IsFinished)
+            {
+                PlaySound(SeEvent.Complete);
+            }
+            else if (feedback.HasValue)
+            {
+                PlaySound(feedback.Value);
             }
             Send(new InteractionMessage(InteractionMessageType.PartAdvanced, _progress.Sequence, _progress.StepIndex, _progress.PartIndex),
                 null, DeliveryMethod.ReliableOrdered, null);
@@ -178,6 +200,38 @@ namespace DNPDemo.Interaction
                 Send(new InteractionMessage(InteractionMessageType.Progress, _progress.Sequence, _progress.StepIndex, session.PartIndex),
                     payload, deliveryMethod, null);
             }
+        }
+
+        internal void PlaySound(InteractionSession session, SeEvent seEvent, bool actorOnly)
+        {
+            if (IsCurrent(session) && (!actorOnly || session.IsLocalActor))
+            {
+                PlaySound(seEvent);
+            }
+        }
+
+        void PlaySound(SeEvent seEvent)
+        {
+            if (_sounds != null)
+            {
+                _sounds.Play(seEvent);
+            }
+        }
+
+        /// <summary>
+        /// Plays <see cref="SeEvent.TaskShow"/> on every device when a part begins that has not been announced yet. A
+        /// restart of the same part (the local role changed) stays quiet.
+        /// </summary>
+        void AnnounceCurrentPart()
+        {
+            if (_announcedSequence == _progress.Sequence && _announcedStep == _progress.StepIndex && _announcedPart == _progress.PartIndex)
+            {
+                return;
+            }
+            _announcedSequence = _progress.Sequence;
+            _announcedStep = _progress.StepIndex;
+            _announcedPart = _progress.PartIndex;
+            PlaySound(SeEvent.TaskShow);
         }
 
         internal void SetStatus(InteractionSession session, string status)
@@ -256,6 +310,7 @@ namespace DNPDemo.Interaction
             }
             InteractionPart part = step.Interaction[_progress.PartIndex];
             _session = new InteractionSession(this, step, part, _progress.PartIndex, _progress.PartCount, step.Actor, IsActorForCurrentStep());
+            AnnounceCurrentPart();
             _currentTool = FindTool(part);
             if (_currentTool == null)
             {

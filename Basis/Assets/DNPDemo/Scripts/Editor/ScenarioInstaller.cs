@@ -1,3 +1,4 @@
+using DNPDemo.Audio;
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.Hint;
 using DNPDemo.Interaction.History;
@@ -19,7 +20,7 @@ namespace DNPDemo.Editor
     /// <summary>
     /// Builds the scenario engine into the DemoSystems prefab and wires every reference inside it: director, stage,
     /// player, operator input and panel, narrator voice and subtitle, effects and banner, the interaction runner
-    /// with its tools and hints, and the task HUD. Only what is missing is added, so running it again after an update installs the new parts and
+    /// with its tools, hints and sound effects (<see cref="SePlayer"/>), and the task HUD. Only what is missing is added, so running it again after an update installs the new parts and
     /// leaves hand edits alone. Afterwards the prefab is the source of truth and is edited by hand.
     /// Scholars and keyed objects are not wired here; they declare themselves with
     /// <see cref="ScenarioSpeakerBinding"/> / <see cref="ScenarioObjectBinding"/> in their own prefabs.
@@ -29,6 +30,7 @@ namespace DNPDemo.Editor
         public const string DemoSystemsPrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/DemoSystems.prefab";
         public const string ScenarioObjectName = "Scenario";
         public const string InteractionObjectName = "Interaction";
+        public const string SoundEffectsObjectName = "SoundEffects";
 
         [MenuItem("DNP Demo/Setup/Install Scenario Into DemoSystems Prefab")]
         public static void Install()
@@ -65,6 +67,7 @@ namespace DNPDemo.Editor
                 changed |= InstallMissingTools(root.transform, scenario, interaction);
                 changed |= InstallMissingTaskHud(root.transform, scenario, interaction);
                 changed |= InstallMissingHints(scenario, interaction);
+                changed |= InstallMissingSoundEffects(scenario, interaction);
                 if (changed)
                 {
                     PrefabUtility.SaveAsPrefabAsset(root, DemoSystemsPrefabPath);
@@ -227,6 +230,40 @@ namespace DNPDemo.Editor
                 }
             }
             return changed;
+        }
+
+        /// <summary>
+        /// Places the sound effect player (<see cref="SePlayer"/>, with a source of its own) under <paramref name="scenario"/>
+        /// unless it is there, and wires its catalog and the runner. Returns true when anything was added or wired.
+        /// </summary>
+        static bool InstallMissingSoundEffects(Transform scenario, Transform interaction)
+        {
+            bool changed = false;
+            var player = scenario.GetComponentInChildren<SePlayer>(true);
+            if (player == null)
+            {
+                AudioSource source = CreateAudioSource(SoundEffectsObjectName, scenario);
+                player = source.gameObject.AddComponent<SePlayer>();
+                WorldUiBuilder.Assign(player, "_source", source);
+                changed = true;
+            }
+            changed |= AssignIfEmpty(player, "_catalog", () => SoundEffectsSetup.CreateOrUpdateCatalog());
+            changed |= AssignIfEmpty(interaction.GetComponent<InteractionRunner>(), "_sounds", () => player);
+            return changed;
+        }
+
+        /// <summary>Sets <paramref name="property"/> of <paramref name="target"/> when it is empty. Returns true when it was set.</summary>
+        static bool AssignIfEmpty(Object target, string property, System.Func<Object> value)
+        {
+            var so = new SerializedObject(target);
+            SerializedProperty prop = so.FindProperty(property);
+            if (prop.objectReferenceValue != null)
+            {
+                return false;
+            }
+            prop.objectReferenceValue = value();
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return true;
         }
 
         /// <summary>Places a tool that reads the pen and resolves zone keys, and wires its <c>_pen</c> and <c>_stage</c>.</summary>

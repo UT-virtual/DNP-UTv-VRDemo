@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using DNPDemo.Audio;
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
@@ -125,6 +126,86 @@ namespace DNPDemo.Editor
         }
 
         /// <summary>
+        /// Steps whose statue change has a sound, played by a <see cref="SoundCue"/> just before the step's first
+        /// <see cref="StatueVersionCue"/>. A part added to the statue is <see cref="SeEvent.Generate"/>, a reshape is
+        /// <see cref="SeEvent.Morph"/>. The comparison table (p3-temple-proposal) and the temple (closing) have none.
+        /// </summary>
+        public static readonly IReadOnlyList<(string StepId, SeEvent Sound)> VersionSounds = new[]
+        {
+            ("s1-concerns", SeEvent.Generate),
+            ("s2-natural-curve", SeEvent.Morph),
+            ("s2-mismatch", SeEvent.Morph),
+            ("s3-hand-mirror", SeEvent.Morph),
+            ("s3-mirror-angle", SeEvent.Generate),
+            ("p2-review", SeEvent.Morph),
+        };
+
+        /// <summary>
+        /// Adds the sound cues of <see cref="VersionSounds"/> to the existing asset, or fills their empty clips, and saves
+        /// it. Run from "DNP Demo/Setup/Install Sound Effects".
+        /// </summary>
+        public static void EnsureVersionSoundsInExistingAsset()
+        {
+            ScenarioData data = AssetDatabase.LoadAssetAtPath<ScenarioData>(AssetPath);
+            if (data == null)
+            {
+                Debug.LogWarning($"[DNPDemo] {AssetPath} がないため、効果音のキューを追加できません。");
+                return;
+            }
+            Undo.RecordObject(data, "Add SE Cues");
+            if (EnsureVersionSounds(data.Steps))
+            {
+                EditorUtility.SetDirty(data);
+                AssetDatabase.SaveAssetIfDirty(data);
+                Debug.Log($"[DNPDemo] {AssetPath} に効果音のキューを追加しました。", data);
+            }
+        }
+
+        /// <summary>
+        /// Puts the sound cue of <see cref="VersionSounds"/> before the first statue cue of each listed step. A sound cue
+        /// already there keeps its clip and volume unless the clip is empty. Returns true when anything changed.
+        /// </summary>
+        public static bool EnsureVersionSounds(IReadOnlyList<ScenarioStep> steps)
+        {
+            bool changed = false;
+            foreach ((string stepId, SeEvent sound) in VersionSounds)
+            {
+                ScenarioStep step = FindStep(steps, stepId);
+                int index = step?.Cues?.FindIndex(cue => cue is StatueVersionCue) ?? -1;
+                if (index < 0)
+                {
+                    Debug.LogWarning($"[DNPDemo] ステップ {stepId} に像の版のキューがないため、効果音のキューを置けません。");
+                    continue;
+                }
+                AudioClip clip = SoundEffectsSetup.LoadClip(sound);
+                if (index > 0 && step.Cues[index - 1] is SoundCue existing)
+                {
+                    if (existing.Clip == null && clip != null)
+                    {
+                        existing.Clip = clip;
+                        changed = true;
+                    }
+                    continue;
+                }
+                step.Cues.Insert(index, new SoundCue { Clip = clip });
+                changed = true;
+            }
+            return changed;
+        }
+
+        static ScenarioStep FindStep(IReadOnlyList<ScenarioStep> steps, string id)
+        {
+            foreach (ScenarioStep step in steps)
+            {
+                if (step != null && step.Id == id)
+                {
+                    return step;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
         /// The steps of docs/PLAN.md §3. A version reached by an operation is shown by a cue at the head of the next step,
         /// so it appears as the step completes and every later step applies it instantly. The version assets are loaded
         /// from <see cref="VenusAssetBuilder.CatalogPath"/> and the temple preset from
@@ -133,7 +214,7 @@ namespace DNPDemo.Editor
         public static List<ScenarioStep> CreateDefaultSteps()
         {
             EnvironmentPreset templePreset = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.TemplePresetPath);
-            return new List<ScenarioStep>
+            var steps = new List<ScenarioStep>
             {
                 new()
                 {
@@ -255,6 +336,8 @@ namespace DNPDemo.Editor
                     },
                 },
             };
+            EnsureVersionSounds(steps);
+            return steps;
         }
 
         static ScenarioStep Auto(string id, string title, params ScenarioCue[] cues) => new()

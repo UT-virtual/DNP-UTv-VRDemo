@@ -1,4 +1,5 @@
 using Basis.Network.Core;
+using DNPDemo.Audio;
 
 namespace DNPDemo.Interaction
 {
@@ -42,7 +43,22 @@ namespace DNPDemo.Interaction
         public bool IsCurrent => _runner.IsCurrent(this);
 
         /// <summary>Actor only: the operation of this part succeeded. Moves on to the next part, or finishes the step.</summary>
-        public void Complete() => _runner.Complete(this);
+        public void Complete() => _runner.Complete(this, null);
+
+        /// <summary>
+        /// Like <see cref="Complete()"/>, with the sound of the operation that succeeded. The sound is played on this
+        /// device unless the part was the step's last one, which plays <see cref="SeEvent.Complete"/> instead.
+        /// </summary>
+        public void Complete(SeEvent feedback) => _runner.Complete(this, feedback);
+
+        /// <summary>Actor only: plays the sound of how the operation is going (a rejected attempt, the start of listening) on this device.</summary>
+        public void PlayFeedback(SeEvent seEvent) => _runner.PlaySound(this, seEvent, actorOnly: true);
+
+        /// <summary>
+        /// Plays a sound on this device whether or not it is the actor, for what every device sees happen (a snap
+        /// received from the actor).
+        /// </summary>
+        public void PlaySound(SeEvent seEvent) => _runner.PlaySound(this, seEvent, actorOnly: false);
 
         /// <summary>
         /// Actor only: sends in-progress state to the other devices, which receive it in
