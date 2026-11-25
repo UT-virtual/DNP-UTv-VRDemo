@@ -22,7 +22,6 @@ namespace DNPDemo.Environment
         public float Intensity;
         public Vector3 Rotation;
         public LightShadows Shadows;
-        public LightShadowResolution ShadowResolution;
         public float ShadowStrength;
         public float ShadowBias;
         public float ShadowNormalBias;
@@ -40,7 +39,6 @@ namespace DNPDemo.Environment
         public float SpotAngle;
         public float InnerSpotAngle;
         public LightShadows Shadows;
-        public LightShadowResolution ShadowResolution;
         public float ShadowStrength;
         public float ShadowBias;
         public float ShadowNormalBias;
@@ -70,6 +68,19 @@ namespace DNPDemo.Environment
         public float Intensity;
     }
 
+    /// <summary>
+    /// Main light shadow quality written to the active URP asset while the preset is shown. Override off leaves the values
+    /// that Basis' shadow quality setting chose; Override on replaces them until a preset without it is applied.
+    /// </summary>
+    [Serializable]
+    public struct ShadowQualitySettings
+    {
+        public bool Override;
+        public int MainLightShadowmapResolution;
+        public float ShadowDistance;
+        [Range(1, 4)] public int CascadeCount;
+    }
+
     [CreateAssetMenu(menuName = "DNP Demo/Environment Preset", fileName = "EnvironmentPreset")]
     public sealed class EnvironmentPreset : ScriptableObject
     {
@@ -83,6 +94,7 @@ namespace DNPDemo.Environment
         [SerializeField] SpotLightSettings _spotLight;
         [SerializeField] AmbientSettings _ambient;
         [SerializeField] ReflectionSettings _reflection;
+        [SerializeField] ShadowQualitySettings _shadowQuality;
 
         /// <summary>Name shown to players. Falls back to the asset name when it is not set.</summary>
         public string DisplayName => string.IsNullOrWhiteSpace(_displayName) ? name : _displayName;
@@ -94,6 +106,7 @@ namespace DNPDemo.Environment
         public SpotLightSettings SpotLight => _spotLight;
         public AmbientSettings Ambient => _ambient;
         public ReflectionSettings Reflection => _reflection;
+        public ShadowQualitySettings ShadowQuality => _shadowQuality;
 
         public override string ToString() => DisplayName;
 
@@ -106,7 +119,8 @@ namespace DNPDemo.Environment
             DirectionalLightSettings directionalLight,
             SpotLightSettings spotLight,
             AmbientSettings ambient,
-            ReflectionSettings reflection)
+            ReflectionSettings reflection,
+            ShadowQualitySettings shadowQuality)
         {
             _displayName = displayName;
             _panorama = panorama;
@@ -117,6 +131,7 @@ namespace DNPDemo.Environment
             _spotLight = spotLight;
             _ambient = ambient;
             _reflection = reflection;
+            _shadowQuality = shadowQuality;
         }
     }
 }

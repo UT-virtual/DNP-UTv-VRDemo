@@ -22,7 +22,6 @@ MonoBehaviour:
     Intensity: 0.15
     Rotation: {x: 50, y: -30, z: 0}
     Shadows: 0
-    ShadowResolution: 1
     ShadowStrength: 0
     ShadowBias: 0.05
     ShadowNormalBias: 0.4
@@ -36,7 +35,6 @@ MonoBehaviour:
     SpotAngle: 40
     InnerSpotAngle: 22
     Shadows: 0
-    ShadowResolution: 1
     ShadowStrength: 0
     ShadowBias: 0.05
     ShadowNormalBias: 0.4

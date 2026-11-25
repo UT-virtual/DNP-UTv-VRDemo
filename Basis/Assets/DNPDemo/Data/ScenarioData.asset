@@ -247,6 +247,7 @@ MonoBehaviour:
     Interaction: []
     Cues:
     - rid: 1662061916731736545
+    - rid: 1662061916731736556
     - rid: 1662061916731736546
     - rid: 1662061916731736547
     - rid: 1662061916731736548
@@ -797,6 +798,11 @@ MonoBehaviour:
         EnvironmentKey: Environment
         Preset: {fileID: 11400000, guid: e0956dc4b6bd04340be655738996d8c3, type: 2}
         Duration: 2
+    - rid: 1662061916731736556
+      type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Key: TempleFloor
+        Active: 1
     - rid: 1662061916731736546
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:

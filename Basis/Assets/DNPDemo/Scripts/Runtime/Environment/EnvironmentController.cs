@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DNPDemo.Scenario;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 
 namespace DNPDemo.Environment
@@ -31,6 +32,7 @@ namespace DNPDemo.Environment
         [SerializeField] Light _directionalLight;
         [SerializeField] Light _spotLight;
         [SerializeField] Shader _crossfadeShader;
+        [SerializeField] Shader _snapshotShader;
         [SerializeField, Min(0f)] float _transitionDuration = 2f;
 
         /// <summary>
@@ -64,7 +66,6 @@ namespace DNPDemo.Environment
             public float DirectionalIntensity;
             public Quaternion DirectionalRotation;
             public LightShadows DirectionalShadows;
-            public LightShadowResolution DirectionalShadowResolution;
             public float DirectionalShadowStrength;
             public float DirectionalShadowBias;
             public float DirectionalShadowNormalBias;
@@ -77,7 +78,6 @@ namespace DNPDemo.Environment
             public float SpotAngle;
             public float SpotInnerAngle;
             public LightShadows SpotShadows;
-            public LightShadowResolution SpotShadowResolution;
             public float SpotShadowStrength;
             public float SpotShadowBias;
             public float SpotShadowNormalBias;
@@ -91,6 +91,7 @@ namespace DNPDemo.Environment
             public DefaultReflectionMode ReflectionMode;
             public Texture CustomReflection;
             public float ReflectionIntensity;
+            public ShadowQualitySettings ShadowQuality;
             public float WallAlpha;
 
             /// <param name="spotEnabled">Spot light activation already resolved from the preset's <see cref="SpotLightMode"/>.</param>
@@ -106,7 +107,6 @@ namespace DNPDemo.Environment
                     DirectionalIntensity = directional.Intensity,
                     DirectionalRotation = Quaternion.Euler(directional.Rotation),
                     DirectionalShadows = directional.Shadows,
-                    DirectionalShadowResolution = directional.ShadowResolution,
                     DirectionalShadowStrength = directional.ShadowStrength,
                     DirectionalShadowBias = directional.ShadowBias,
                     DirectionalShadowNormalBias = directional.ShadowNormalBias,
@@ -119,7 +119,6 @@ namespace DNPDemo.Environment
                     SpotAngle = spot.SpotAngle,
                     SpotInnerAngle = spot.InnerSpotAngle,
                     SpotShadows = spot.Shadows,
-                    SpotShadowResolution = spot.ShadowResolution,
                     SpotShadowStrength = spot.ShadowStrength,
                     SpotShadowBias = spot.ShadowBias,
                     SpotShadowNormalBias = spot.ShadowNormalBias,
@@ -133,6 +132,7 @@ namespace DNPDemo.Environment
                     ReflectionMode = reflection.Mode,
                     CustomReflection = reflection.CustomReflectionTexture,
                     ReflectionIntensity = reflection.Intensity,
+                    ShadowQuality = preset.ShadowQuality,
                     WallAlpha = preset.ExhibitionRoomVisible ? 1f : 0f,
                 };
             }
@@ -151,7 +151,6 @@ namespace DNPDemo.Environment
                     DirectionalIntensity = Mathf.Lerp(from.DirectionalIntensity, to.DirectionalIntensity, t),
                     DirectionalRotation = Quaternion.Slerp(from.DirectionalRotation, to.DirectionalRotation, t),
                     DirectionalShadows = t < 0.5f ? from.DirectionalShadows : to.DirectionalShadows,
-                    DirectionalShadowResolution = t < 0.5f ? from.DirectionalShadowResolution : to.DirectionalShadowResolution,
                     DirectionalShadowStrength = Mathf.Lerp(from.DirectionalShadowStrength, to.DirectionalShadowStrength, t),
                     DirectionalShadowBias = Mathf.Lerp(from.DirectionalShadowBias, to.DirectionalShadowBias, t),
                     DirectionalShadowNormalBias = Mathf.Lerp(from.DirectionalShadowNormalBias, to.DirectionalShadowNormalBias, t),
@@ -164,7 +163,6 @@ namespace DNPDemo.Environment
                     SpotAngle = Mathf.Lerp(from.SpotAngle, to.SpotAngle, t),
                     SpotInnerAngle = Mathf.Lerp(from.SpotInnerAngle, to.SpotInnerAngle, t),
                     SpotShadows = t < 0.5f ? from.SpotShadows : to.SpotShadows,
-                    SpotShadowResolution = t < 0.5f ? from.SpotShadowResolution : to.SpotShadowResolution,
                     SpotShadowStrength = Mathf.Lerp(from.SpotShadowStrength, to.SpotShadowStrength, t),
                     SpotShadowBias = Mathf.Lerp(from.SpotShadowBias, to.SpotShadowBias, t),
                     SpotShadowNormalBias = Mathf.Lerp(from.SpotShadowNormalBias, to.SpotShadowNormalBias, t),
@@ -178,6 +176,7 @@ namespace DNPDemo.Environment
                     ReflectionMode = t < 0.5f ? from.ReflectionMode : to.ReflectionMode,
                     CustomReflection = t < 0.5f ? from.CustomReflection : to.CustomReflection,
                     ReflectionIntensity = Mathf.Lerp(from.ReflectionIntensity, to.ReflectionIntensity, t),
+                    ShadowQuality = t < 0.5f ? from.ShadowQuality : to.ShadowQuality,
                     WallAlpha = Mathf.Lerp(from.WallAlpha, to.WallAlpha, t),
                 };
             }
@@ -185,11 +184,14 @@ namespace DNPDemo.Environment
 
         readonly List<WallRenderer> _wallRenderers = new();
         Material _skyboxMaterial;
+        Material _snapshotMaterial;
         RenderTexture _skySnapshotA;
         RenderTexture _skySnapshotB;
         RenderTexture _activeSkySnapshot;
         Material _originalSkybox;
         RuntimeState _originalState;
+        Func<UniversalRenderPipelineAsset> _shadowQualityAssetProvider = ShadowQualityOverride.ActiveAsset;
+        ShadowQualityOverride _shadowQuality;
         RuntimeState _transitionStart;
         EnvironmentPreset _transitionTarget;
         bool _transitionTargetSpotEnabled;
@@ -209,6 +211,13 @@ namespace DNPDemo.Environment
         public EnvironmentPreset BaselinePreset => _baselinePreset;
 
         void Update() => AdvanceTransition(Time.unscaledDeltaTime);
+
+        void LateUpdate() => MaintainShadowQuality();
+
+        void OnEnable() => _shadowQuality?.Resume();
+
+        /// <summary>The URP asset is a project asset, so the shadow override must not outlive this component.</summary>
+        void OnDisable() => _shadowQuality?.Suspend();
 
         /// <summary>Begins a fade from the currently displayed state; a new request replaces an in-flight destination.</summary>
         public void TransitionTo(EnvironmentPreset preset, float duration = -1f)
@@ -253,6 +262,22 @@ namespace DNPDemo.Environment
             ApplyState(state);
             SetSkyboxPreset(preset);
             ReleaseSnapshots();
+        }
+
+        /// <summary>
+        /// Re-applies the preset's shadow quality if Basis rewrote the URP asset. Runs after the frame's other updates so the
+        /// override is in place before rendering. Internal so EditMode tests can drive it.
+        /// </summary>
+        internal void MaintainShadowQuality() => _shadowQuality?.Maintain();
+
+        /// <summary>Replaces the URP asset the shadow override writes to. Tests call it before the controller initializes.</summary>
+        internal void SetShadowQualityAssetProvider(Func<UniversalRenderPipelineAsset> provider)
+        {
+            if (_initialized)
+            {
+                throw new InvalidOperationException("The shadow quality asset must be set before the controller initializes.");
+            }
+            _shadowQualityAssetProvider = provider ?? throw new ArgumentNullException(nameof(provider));
         }
 
         /// <summary>Advances the transition clock. Internal so EditMode tests can drive it deterministically.</summary>
@@ -329,7 +354,13 @@ namespace DNPDemo.Environment
                     _skySnapshotA = snapshot;
                 }
             }
-            Graphics.Blit(null, snapshot, _skyboxMaterial, 1);
+            // The snapshot shader samples the same properties as the sky, so it bakes exactly what the sky shows.
+            _snapshotMaterial.CopyPropertiesFromMaterial(_skyboxMaterial);
+            // Blit leaves its destination as the active render texture; put the previous one back so the snapshot is not
+            // still active when it is released at the end of the transition.
+            RenderTexture previousActive = RenderTexture.active;
+            Graphics.Blit(null, snapshot, _snapshotMaterial);
+            RenderTexture.active = previousActive;
             _activeSkySnapshot = snapshot;
         }
 
@@ -357,6 +388,9 @@ namespace DNPDemo.Environment
             _skyboxMaterial.SetFloat(ExposureBId, preset.Exposure);
             _skyboxMaterial.SetFloat(RotationAId, preset.Rotation);
             _skyboxMaterial.SetFloat(RotationBId, preset.Rotation);
+            // The Skybox reflection is a cubemap captured from the sky, not the live sky. Recapture it once the panorama has
+            // settled so reflective materials show the new environment.
+            DynamicGI.UpdateEnvironment();
         }
 
         RuntimeState CaptureCurrentState()
@@ -367,7 +401,6 @@ namespace DNPDemo.Environment
                 DirectionalIntensity = _directionalLight.intensity,
                 DirectionalRotation = _directionalLight.transform.rotation,
                 DirectionalShadows = _directionalLight.shadows,
-                DirectionalShadowResolution = _directionalLight.shadowResolution,
                 DirectionalShadowStrength = _directionalLight.shadowStrength,
                 DirectionalShadowBias = _directionalLight.shadowBias,
                 DirectionalShadowNormalBias = _directionalLight.shadowNormalBias,
@@ -380,7 +413,6 @@ namespace DNPDemo.Environment
                 SpotAngle = _spotLight.spotAngle,
                 SpotInnerAngle = _spotLight.innerSpotAngle,
                 SpotShadows = _spotLight.shadows,
-                SpotShadowResolution = _spotLight.shadowResolution,
                 SpotShadowStrength = _spotLight.shadowStrength,
                 SpotShadowBias = _spotLight.shadowBias,
                 SpotShadowNormalBias = _spotLight.shadowNormalBias,
@@ -394,6 +426,7 @@ namespace DNPDemo.Environment
                 ReflectionMode = RenderSettings.defaultReflectionMode,
                 CustomReflection = RenderSettings.customReflectionTexture,
                 ReflectionIntensity = RenderSettings.reflectionIntensity,
+                ShadowQuality = _shadowQuality != null ? _shadowQuality.Requested : default,
                 WallAlpha = _wallAlpha,
             };
         }
@@ -413,7 +446,6 @@ namespace DNPDemo.Environment
                 _directionalLight.intensity = state.DirectionalIntensity;
                 _directionalLight.transform.rotation = state.DirectionalRotation;
                 _directionalLight.shadows = state.DirectionalShadows;
-                _directionalLight.shadowResolution = state.DirectionalShadowResolution;
                 _directionalLight.shadowStrength = state.DirectionalShadowStrength;
                 _directionalLight.shadowBias = state.DirectionalShadowBias;
                 _directionalLight.shadowNormalBias = state.DirectionalShadowNormalBias;
@@ -431,7 +463,6 @@ namespace DNPDemo.Environment
                 _spotLight.spotAngle = state.SpotAngle;
                 _spotLight.innerSpotAngle = state.SpotInnerAngle;
                 _spotLight.shadows = state.SpotShadows;
-                _spotLight.shadowResolution = state.SpotShadowResolution;
                 _spotLight.shadowStrength = state.SpotShadowStrength;
                 _spotLight.shadowBias = state.SpotShadowBias;
                 _spotLight.shadowNormalBias = state.SpotShadowNormalBias;
@@ -448,6 +479,8 @@ namespace DNPDemo.Environment
             RenderSettings.defaultReflectionMode = state.ReflectionMode;
             RenderSettings.customReflectionTexture = state.CustomReflection;
             RenderSettings.reflectionIntensity = state.ReflectionIntensity;
+
+            _shadowQuality?.Request(state.ShadowQuality);
         }
 
         void SetWallAlpha(float alpha)
@@ -618,11 +651,23 @@ namespace DNPDemo.Environment
                 Debug.LogError($"[DNPDemo] Skybox shader '{PanoramaShaderName}' was not found.", this);
                 return false;
             }
+            // A Hidden shader is only in a build when something references it, so it is never looked up by name.
+            if (_snapshotShader == null)
+            {
+                Debug.LogError("[DNPDemo] EnvironmentController needs the panorama snapshot shader.", this);
+                return false;
+            }
             _originalSkybox = RenderSettings.skybox;
             _originalState = CaptureCurrentState();
+            _shadowQuality = new ShadowQualityOverride(_shadowQualityAssetProvider);
             _skyboxMaterial = new Material(_crossfadeShader)
             {
                 name = "Environment Crossfade Runtime",
+                hideFlags = HideFlags.DontSave,
+            };
+            _snapshotMaterial = new Material(_snapshotShader)
+            {
+                name = "Environment Snapshot Runtime",
                 hideFlags = HideFlags.DontSave,
             };
             RenderSettings.skybox = _skyboxMaterial;
@@ -716,6 +761,7 @@ namespace DNPDemo.Environment
 
         void OnDestroy()
         {
+            _shadowQuality?.Suspend();
             if (_initialized)
             {
                 RestoreWallMaterials();
@@ -729,6 +775,10 @@ namespace DNPDemo.Environment
             if (_skyboxMaterial != null)
             {
                 DestroyRuntimeObject(_skyboxMaterial);
+            }
+            if (_snapshotMaterial != null)
+            {
+                DestroyRuntimeObject(_snapshotMaterial);
             }
         }
 
