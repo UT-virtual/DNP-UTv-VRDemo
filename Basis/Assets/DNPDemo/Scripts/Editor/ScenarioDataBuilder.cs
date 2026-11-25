@@ -353,10 +353,10 @@ namespace DNPDemo.Editor
                     A("うーん、やはりこうしてみると現在の案が一番美しく見えますね。"),
                     B("ええ、とてもいいかんじです。"),
                     A("最後に復元案のヴィーナスが神殿を背景にしても自然かどうか確かめてみましょう")),
+                // The background (the skybox and the lighting) applies to the whole space, so no statue is selected.
                 Operation("p3-temple", "Phase 3 [A] 背景を神殿に", DemoRole.PlayerA,
-                    "復元案のヴィーナス像を領域選択。「選択した像の背景を神殿に変更」と音声指示せよ。",
-                    Select("像全体を範囲選択する", "像全体を、トリガーを押したままペン先で大きくなぞってください"),
-                    Voice("「選択した像の背景を神殿に変更」と音声指示する", "選択した像の背景を神殿に変更")),
+                    "「背景を神殿に変更」と音声指示せよ。",
+                    Voice("「背景を神殿に変更」と音声指示する", "背景を神殿に変更")),
                 new()
                 {
                     Id = "closing",
@@ -429,10 +429,6 @@ namespace DNPDemo.Editor
             part.GrabZoneKey = RightHandProxyGrabKey;
             return part;
         }
-
-        // Stand-in for a selection whose zone is not placed in the scene yet.
-        static InteractionPart Select(string instruction, string hint) =>
-            WithHint(new DummyInteractionPart(PenMode.Select, instruction), hint);
 
         static VoicePart Voice(string instruction, string transcript) => WithHint(new VoicePart(instruction, transcript), VoiceHint);
 

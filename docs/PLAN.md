@@ -217,7 +217,7 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 - 各ツールは `InteractionPart` のサブクラスと `InteractionTool` のサブクラスを1組で実装し、`InteractionRunner` のツール一覧に登録する。
 - 部品は、パラメータの検証（`Validate`）と、シーンに必要なキーの申告（`CollectRequirements`）を実装できる。`ScenarioData` の検証とキーの収集はこれを呼ぶ。
 - ツールは `ScenarioInstaller`（メニュー「DNP Demo/Setup/Install Scenario Into DemoSystems Prefab」）で DemoSystems に組み込む。インストーラーは足りないツールだけを追加するので、ツールを増やしたら再実行すればよい。
-- 本番のツールができるまでは、`DummyInteractionPart`（予定の部品のペンモードと手順文を持つ）と `DummyInteractionTool`（担当者が「完了」ボタンを規定回数押すと完了。エディタとデスクトップでは F8）で代用する。音声指示（ステップ3・7・13・15・21）はすべて `VoicePart`、履歴からの呼び出し（ステップ19）は `HistoryPart` にしている。範囲選択と部位の操作は、対象を像に置いたステップから `SelectionPart` / `ManipulatePart` に置き換える。ステップ0〜18 の操作はすべて本番の部品にしている。
+- 全ステップの操作を本番の部品にしている。音声指示（ステップ3・7・13・15・21）はすべて `VoicePart`、履歴からの呼び出し（ステップ19）は `HistoryPart`。シナリオの改訂で、ツールがまだない操作を試すときは、`DummyInteractionPart`（予定の部品のペンモードと手順文を持つ）と `DummyInteractionTool`（担当者が「完了」ボタンを規定回数押すと完了。エディタとデスクトップでは F8）で代用できる。
   - ステップ6：林檎（仮の像の `Apple`）を範囲選択し、`Goal_AppleUnderHand` へ平行移動する。仮の林檎は Ver 1.0 の手のひらの位置にあり、ステップ4 の先頭のキューで表示する。ステップが進むと舞台が林檎を元の位置に戻すので、ステップ7 の先頭の `MatchPoseCue` が手の下に置き直す。
   - ステップ7：左手〜前腕（`Zone_LeftForearm`。Ver 1.0・1.1 の前腕から手を覆うカプセル）を範囲選択し、音声指示する。
   - ステップ9：左肩〜肘（`Zone_LeftUpperArm`）を範囲選択し、腕の代わりの `LeftArmProxy` を `Pivot_LeftShoulder` の上向きの軸のまわりに回す。腕は全身モデルの一部で単独では動かせないので、Ver 1.1 の左腕・手・林檎を半透明で写したプロキシを回し、像そのものは動かさない（§2.5 の「ギズモで動かすのはゴーストだけ」）。プロキシはステップ9 の間だけ表示し、掴む範囲はプロキシに付けた `LeftArmProxy_Grab`。左腕は像の +X 側にあるので、内側（体の方）が正の角度で、範囲は -10〜+60°、+25° を超えて離すと完了する。
@@ -226,6 +226,7 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
   - ステップ14：先頭の `PlaceAtSketchCue` が、手鏡の単体（仮の像の `HandMirror`）を、ステップ13 の線画の外接ボックスの中心に出す（§2.5）。その手鏡を `Goal_MirrorRightHand`（Ver 3.0 が右手に持つ手鏡の位置と向き）へ平行移動する。手鏡は置き場所 `Spawn_HandMirror` から 0.8m 以内に出るので、平行移動の最大距離（2.5m）でどこからでも目標に届く（`ScenarioSceneBindingTests` が確かめる）。
   - ステップ15：右肩〜手鏡（`Zone_RightArmToMirror`。右肩から右手の位置の手鏡までのカプセル）を範囲選択し、音声指示する。ステップが進むと舞台が手鏡を元に戻すので、ステップ15 の先頭の `MatchPoseCue` が右手の位置に置き直す。手鏡はステップ16 の先頭で非表示にし、以後は Ver 3.0 のモデルが持つ。
   - ステップ17：右手首と手鏡（`Zone_RightHandMirror`）を範囲選択し、Ver 3.0 の右手と手鏡を半透明で写した `RightHandProxy` を、手首の支点 `Pivot_RightWrist` の上向きの軸（前腕の向き）のまわりにひねる。ステップ9 と同じく像そのものは動かさない。プロキシはステップ17 の間だけ表示し、掴む範囲は手鏡のまわりの `RightHandProxy_Grab`。範囲は -30〜+80°、+50° ± 12° で離すとスナップして完了する。+50° は、Ver 3.0 の手鏡が Ver 3.1 の向き（顔の方）になる角度。
+  - ステップ21：「背景を神殿に変更」と音声指示する。背景（スカイボックスと照明）は空間全体に適用するものなので、像は選ばず、音声指示だけで切り替える。神殿への切り替えは、ステップ22 の先頭の `EnvironmentCue` が行う（§2.6）。
 
 ### 2.5 像と版の管理
 
@@ -337,7 +338,7 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 | 18 | Scene 3〜Phase 2 | 学者Aの納得、学者Bが過程の振り返りを提案 | — | 台詞終了 | |
 | 19 | Phase 2 [B] | 履歴一覧から Ver 1.0 を呼び出し、完成案の隣に並べる | History | Ver 1.0 を復元した | 比較台に Ver 1.0 |
 | 20 | Phase 2〜3 | 比較の感想、学者Aが神殿での確認を提案 | — | 台詞終了 | |
-| 21 | Phase 3 [A] | 像を範囲選択し、「選択した像の背景を神殿に変更」 | Selection（像全体）→ Voice | 音声指示が完了 | 展示室の壁がフェードアウトし、神殿のパノラマと自然光に切り替わる |
+| 21 | Phase 3 [A] | 「背景を神殿に変更」 | Voice | 音声指示が完了 | 展示室の壁がフェードアウトし、神殿のパノラマと自然光に切り替わる |
 | 22 | 結び | 学者の締め、ナレーター | — | 台詞終了 | 「WORKSHOP COMPLETE」→ フェードアウト → リセット待機 |
 
 - 操作を待つステップには、タイムアウト時のヒント表示と運営スキップを用意し、体験者が詰まってもデモが止まらないようにする。
