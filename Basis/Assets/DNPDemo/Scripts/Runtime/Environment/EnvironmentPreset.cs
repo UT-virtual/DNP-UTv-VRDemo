@@ -84,6 +84,8 @@ namespace DNPDemo.Environment
     [CreateAssetMenu(menuName = "DNP Demo/Environment Preset", fileName = "EnvironmentPreset")]
     public sealed class EnvironmentPreset : ScriptableObject
     {
+        [Tooltip("Name shown to players, such as on the background panel.")]
+        [SerializeField] string _displayName;
         [SerializeField] Texture2D _panorama;
         [SerializeField] float _exposure;
         [SerializeField] float _rotation;
@@ -94,6 +96,8 @@ namespace DNPDemo.Environment
         [SerializeField] ReflectionSettings _reflection;
         [SerializeField] ShadowQualitySettings _shadowQuality;
 
+        /// <summary>Name shown to players. Falls back to the asset name when it is not set.</summary>
+        public string DisplayName => string.IsNullOrWhiteSpace(_displayName) ? name : _displayName;
         public Texture2D Panorama => _panorama;
         public float Exposure => _exposure;
         public float Rotation => _rotation;
@@ -104,7 +108,10 @@ namespace DNPDemo.Environment
         public ReflectionSettings Reflection => _reflection;
         public ShadowQualitySettings ShadowQuality => _shadowQuality;
 
+        public override string ToString() => DisplayName;
+
         internal void Configure(
+            string displayName,
             Texture2D panorama,
             float exposure,
             float rotation,
@@ -115,7 +122,7 @@ namespace DNPDemo.Environment
             ReflectionSettings reflection,
             ShadowQualitySettings shadowQuality)
         {
-            _shadowQuality = shadowQuality;
+            _displayName = displayName;
             _panorama = panorama;
             _exposure = exposure;
             _rotation = rotation;
@@ -124,6 +131,7 @@ namespace DNPDemo.Environment
             _spotLight = spotLight;
             _ambient = ambient;
             _reflection = reflection;
+            _shadowQuality = shadowQuality;
         }
     }
 }

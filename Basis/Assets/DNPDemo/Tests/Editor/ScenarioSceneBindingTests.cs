@@ -257,6 +257,77 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void SketchPlacedObjectsReadTheSketchAndCanReachTheirGoal()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data);
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            int checkedCues = 0;
+            foreach (ScenarioStep step in data.Steps)
+            {
+                foreach (ScenarioCue cue in step.Cues)
+                {
+                    if (cue is not PlaceAtSketchCue place)
+                    {
+                        continue;
+                    }
+                    Assert.IsTrue(bindings.TryGetObject(place.StrokesKey, out UnityEngine.GameObject tool), $"'{place.StrokesKey}' is not bound.");
+                    Assert.IsTrue(tool.TryGetComponent(out StrokeTool _), $"'{place.StrokesKey}' should be the StrokeTool that keeps the sketch.");
+
+                    // The step that shows the object moves it to a goal; from anywhere it can appear, the goal must be in reach.
+                    ManipulatePart move = step.Interaction.OfType<ManipulatePart>()
+                        .FirstOrDefault(part => part.Constraint == ManipulateConstraintKind.Translate && part.TargetKey == place.Key);
+                    Assert.IsNotNull(move, $"{step.Id} should move '{place.Key}'.");
+                    Assert.IsTrue(bindings.TryGetObject(place.MarkerKey, out UnityEngine.GameObject marker), $"'{place.MarkerKey}' is not bound.");
+                    Assert.IsTrue(bindings.TryGetObject(move.GoalKey, out UnityEngine.GameObject goal), $"'{move.GoalKey}' is not bound.");
+                    float farthest = UnityEngine.Vector3.Distance(marker.transform.position, goal.transform.position) + place.MaxOffset;
+                    Assert.LessOrEqual(farthest, move.MaxDistance - move.SnapDistance,
+                        $"{step.Id}: '{place.Key}' can appear {farthest:0.##} m from '{move.GoalKey}', farther than it may move.");
+                    checkedCues++;
+                }
+            }
+            Assert.Greater(checkedCues, 0, "Step 14 should put the hand mirror where the sketch was drawn.");
+        }
+
+        [Test]
+        public void LeftAndRightKeysOnTheStatueAreHerOwnSides()
+        {
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(VenusStatueKeys.Main, out UnityEngine.GameObject statue));
+            // The statue faces -Z of its anchor, so her left is +X and her right is -X (docs/PLAN.md §2.5).
+            UnityEngine.Transform anchor = statue.transform.parent;
+            int left = 0;
+            int right = 0;
+            foreach (KeyValuePair<string, UnityEngine.GameObject> pair in bindings.Objects)
+            {
+                if (pair.Value == null || !pair.Value.transform.IsChildOf(anchor))
+                {
+                    continue;
+                }
+                // A curve sits at the origin and lies where its points are; other objects on the centre line (such as the
+                // dashed line under the curve) are containers that tell no side.
+                UnityEngine.Vector3 point = pair.Value.TryGetComponent(out GuideCurve curve) ? curve.Evaluate(0.5f) : pair.Value.transform.position;
+                float x = anchor.InverseTransformPoint(point).x;
+                if (UnityEngine.Mathf.Abs(x) < 0.01f)
+                {
+                    continue;
+                }
+                if (pair.Key.Contains("Left"))
+                {
+                    Assert.Greater(x, 0f, $"'{pair.Key}' should be on her left, the +X side.");
+                    left++;
+                }
+                else if (pair.Key.Contains("Right"))
+                {
+                    Assert.Less(x, 0f, $"'{pair.Key}' should be on her right, the -X side.");
+                    right++;
+                }
+            }
+            Assert.Greater(left, 0, "The statue should have keys for her left arm.");
+            Assert.Greater(right, 0, "The statue should have keys for her right arm.");
+        }
+
+        [Test]
         public void CollectingAnUnloadedSceneGivesAnEmptySet()
         {
             // A scene that is still loading (as in Awake) counts as not loaded, and has nothing to collect yet.

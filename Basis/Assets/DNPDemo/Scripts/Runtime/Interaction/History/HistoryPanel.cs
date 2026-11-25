@@ -28,25 +28,16 @@ namespace DNPDemo.Interaction.History
     /// the same on both devices and is rebuilt whenever the step changes.
     /// </para>
     /// </summary>
-    public sealed class HistoryPanel : MonoBehaviour
+    public sealed class HistoryPanel : DemoWorldPanel
     {
         public const string RestoreLabel = "モデルを復元";
         public const string EmptyMessage = "まだ履歴がありません";
         public const string BackLabel = "一覧へ";
 
-        /// <summary>Opacity of the label or icon on a disabled button.</summary>
-        const float DisabledContentAlpha = 0.35f;
-
         [SerializeField] ScenarioDirector _director;
 
         [Tooltip("Key of the statue whose versions are listed.")]
         [SerializeField] string _statueKey = VenusStatueKeys.Main;
-
-        [SerializeField, Min(0.2f)] float _openDistance = 0.8f;
-        [SerializeField] float _openHeightOffset = -0.15f;
-
-        [Tooltip("The canvas, shown while the panel is open.")]
-        [SerializeField] GameObject _content;
 
         [Tooltip("Keep it outside the canvas object and active at scene load, so its statue builds the models then rather than on the first open.")]
         [SerializeField] HistoryPreview _preview;
@@ -62,7 +53,6 @@ namespace DNPDemo.Interaction.History
         [SerializeField] TMP_Text _pageText;
         [SerializeField] TMP_Text _emptyText;
         [SerializeField] TMP_Text _statusText;
-        [SerializeField] Button _closeButton;
         [SerializeField] Button _previousButton;
         [SerializeField] Button _nextButton;
         [SerializeField] Button _restoreButton;
@@ -75,8 +65,6 @@ namespace DNPDemo.Interaction.History
         /// <summary>The panel in the loaded scene, for the main menu entry. Null when there is none.</summary>
         public static HistoryPanel Active { get; private set; }
 
-        public bool IsOpen => _content != null && _content.activeSelf;
-
         public HistoryPanelPage Page => _page;
 
         /// <summary>The version on show, or null when there is no history yet.</summary>
@@ -88,9 +76,9 @@ namespace DNPDemo.Interaction.History
         /// <summary>The player pressed「モデルを復元」while it was allowed. Carries the version on show.</summary>
         public event Action<VenusVersion> RestoreRequested;
 
-        void Awake()
+        protected override void Awake()
         {
-            AddListener(_closeButton, Close);
+            base.Awake();
             AddListener(_previousButton, GoBack);
             AddListener(_nextButton, GoForward);
             AddListener(_restoreButton, Restore);
@@ -99,7 +87,6 @@ namespace DNPDemo.Interaction.History
             {
                 _treeView.VersionPressed += HandleVersionPressed;
             }
-            SetContentVisible(false);
         }
 
         void OnEnable()
@@ -123,9 +110,9 @@ namespace DNPDemo.Interaction.History
             }
         }
 
-        void OnDestroy()
+        protected override void OnDestroy()
         {
-            RemoveListener(_closeButton, Close);
+            base.OnDestroy();
             RemoveListener(_previousButton, GoBack);
             RemoveListener(_nextButton, GoForward);
             RemoveListener(_restoreButton, Restore);
@@ -142,19 +129,13 @@ namespace DNPDemo.Interaction.History
         /// </summary>
         public void Open()
         {
-            if (HeadPose.IsAvailable)
-            {
-                HeadPose.Place(transform, HeadPose.GetYaw(transform.eulerAngles.y), _openDistance, _openHeightOffset);
-            }
             _browser.SetVersions(CollectVersions());
             _browser.SelectLatest();
             _page = HistoryPanelPage.Tree;
             _status = string.Empty;
-            SetContentVisible(true);
+            ShowInFrontOfView();
             Refresh();
         }
-
-        public void Close() => SetContentVisible(false);
 
         /// <summary>Shows <paramref name="version"/> on the detail page. Does nothing when it is not in the history.</summary>
         public void ShowDetail(VenusVersion version)
@@ -244,12 +225,8 @@ namespace DNPDemo.Interaction.History
             }
         }
 
-        void SetContentVisible(bool visible)
+        protected override void OnVisibilityChanged(bool visible)
         {
-            if (_content != null)
-            {
-                _content.SetActive(visible);
-            }
             if (!visible && _preview != null)
             {
                 _preview.Show(null);
@@ -295,50 +272,6 @@ namespace DNPDemo.Interaction.History
             if (_preview != null)
             {
                 _preview.Show(detail ? selected : null);
-            }
-        }
-
-        static void SetText(TMP_Text text, string value)
-        {
-            if (text != null)
-            {
-                text.text = value;
-            }
-        }
-
-        /// <summary>
-        /// Sets <paramref name="button"/>'s state. Its colour tint greys out only the target graphic, so the label or icon
-        /// on it is faded here as well.
-        /// </summary>
-        static void SetInteractable(Button button, bool interactable)
-        {
-            if (button == null)
-            {
-                return;
-            }
-            button.interactable = interactable;
-            foreach (Graphic graphic in button.GetComponentsInChildren<Graphic>(true))
-            {
-                if (graphic != button.targetGraphic)
-                {
-                    graphic.canvasRenderer.SetAlpha(interactable ? 1f : DisabledContentAlpha);
-                }
-            }
-        }
-
-        static void AddListener(Button button, UnityEngine.Events.UnityAction action)
-        {
-            if (button != null)
-            {
-                button.onClick.AddListener(action);
-            }
-        }
-
-        static void RemoveListener(Button button, UnityEngine.Events.UnityAction action)
-        {
-            if (button != null)
-            {
-                button.onClick.RemoveListener(action);
             }
         }
     }

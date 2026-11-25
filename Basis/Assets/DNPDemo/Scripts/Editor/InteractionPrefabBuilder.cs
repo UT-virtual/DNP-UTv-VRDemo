@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Background;
 using DNPDemo.Interaction.Hint;
 using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
@@ -32,10 +33,14 @@ namespace DNPDemo.Editor
         public const string ManipulateToolPath = Folder + "/ManipulateTool.prefab";
         public const string VoiceCommandToolPath = Folder + "/VoiceCommandTool.prefab";
         public const string HistoryToolPath = Folder + "/HistoryTool.prefab";
+        public const string BackgroundToolPath = Folder + "/BackgroundTool.prefab";
         public const string HintPresenterPath = Folder + "/InteractionHint.prefab";
 
         /// <summary>Name of the child of <see cref="HistoryToolPath"/> that holds the <see cref="HistoryPanel"/>.</summary>
         public const string HistoryPanelObjectName = "HistoryPanel";
+
+        /// <summary>Name of the child of <see cref="BackgroundToolPath"/> that holds the <see cref="BackgroundPanel"/>.</summary>
+        public const string BackgroundPanelObjectName = "BackgroundPanel";
         public const string StrokeTestPanelPath = Folder + "/Testing/StrokeTestPanel.prefab";
 
         public const string SelectionVolumeShaderName = "DNPDemo/SelectionVolume";
@@ -74,6 +79,7 @@ namespace DNPDemo.Editor
             CreateManipulateTool();
             CreateVoiceCommandTool();
             CreateHistoryTool();
+            CreateBackgroundTool();
             CreateHintPresenter();
         }
 
@@ -130,7 +136,8 @@ namespace DNPDemo.Editor
 
         /// <summary>
         /// Tool for <see cref="StrokePart"/>, with the view that draws the lines. The pen and the stage live in
-        /// DemoSystems, so <see cref="ScenarioInstaller"/> wires them when it places the tool there.
+        /// DemoSystems, so <see cref="ScenarioInstaller"/> wires them when it places the tool there. The tool carries the
+        /// key <see cref="StrokeTool.BindingKey"/>, through which cues read the last sketch.
         /// </summary>
         public static GameObject CreateStrokeTool()
         {
@@ -147,6 +154,7 @@ namespace DNPDemo.Editor
                 Assign(view, "_material", material);
                 var tool = root.AddComponent<StrokeTool>();
                 Assign(tool, "_view", view);
+                ScenarioBindingEditor.Bind(root, StrokeTool.BindingKey);
                 Directory.CreateDirectory(Path.GetDirectoryName(StrokeToolPath));
                 GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, StrokeToolPath);
                 Debug.Log($"[DNPDemo] Created {StrokeToolPath}");
@@ -542,6 +550,119 @@ namespace DNPDemo.Editor
             Assign(view, "_cards", cards);
             Assign(view, "_cardTemplate", card);
             return view;
+        }
+
+        /// <summary>Size of the background panel in canvas pixels (millimetres), the same as the history panel.</summary>
+        public static readonly Vector2 BackgroundPanelSize = new(960, 620);
+
+        /// <summary>Size of a background card in canvas pixels: a 2:1 panorama above the name.</summary>
+        public static readonly Vector2 BackgroundCardSize = new(240, 156);
+
+        /// <summary>
+        /// Tool for <see cref="BackgroundPart"/> with the background panel as its child, styled like the history panel
+        /// (<see cref="BasisUiStyle"/>). The panel is a plain transform placed in front of the view when it opens; under it,
+        /// the canvas, switched off while closed. The director and the stage live in DemoSystems, so
+        /// <see cref="ScenarioInstaller"/> wires them when it places the tool there.
+        /// <para>
+        /// The canvas holds the title and the close button, the column of cards on the left (a vertical layout and an
+        /// inactive card template beside it), and on the right the selected panorama, its name,「背景を適用」and the status
+        /// line. Everything is ordinary UI drawn on the canvas, so the default UI material is used throughout.
+        /// </para>
+        /// </summary>
+        /// <param name="path">Where to save the prefab; another path builds a fresh copy to compare with or replace it.</param>
+        public static GameObject CreateBackgroundTool(string path = BackgroundToolPath) =>
+            CreatePrefabIfMissing(path, "BackgroundTool", root =>
+            {
+                var panelObject = new GameObject(BackgroundPanelObjectName);
+                panelObject.transform.SetParent(root.transform, false);
+
+                GameObject canvas = CreateChild("Canvas", panelObject.transform);
+                SetupWorldCanvas(canvas, BackgroundPanelSize, interactive: true);
+                Transform ui = canvas.transform;
+                BasisUiStyle.CreatePanelImage("Background", ui, BasisUiStyle.PanelColor, 28f);
+
+                Button close = BasisUiStyle.CreateButton("CloseButton", ui, BasisUiStyle.SecondaryButtonColor, cornerRadius: 32);
+                Anchor((RectTransform)close.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-88, -88), new Vector2(-24, -24));
+                BasisUiStyle.AddIcon(close, BasisUiStyle.CloseIconPath, inset: 18);
+                TMP_Text title = CreateText("Title", ui, BackgroundMenuProvider.MenuTitle, 34, TextAlignmentOptions.MidlineLeft);
+                Anchor(title.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(32, -84), new Vector2(-120, -24));
+
+                // Cards in a column on the left, below the title.
+                GameObject cards = CreateChild("Cards", ui);
+                Anchor((RectTransform)cards.transform, new Vector2(0, 0), new Vector2(0, 1), new Vector2(32, 32), new Vector2(32 + BackgroundCardSize.x, -104));
+                var layout = cards.AddComponent<VerticalLayoutGroup>();
+                layout.spacing = 20;
+                layout.padding = new RectOffset(0, 0, 10, 0);
+                layout.childAlignment = TextAnchor.UpperCenter;
+                layout.childControlWidth = false;
+                layout.childControlHeight = false;
+                layout.childForceExpandWidth = false;
+                layout.childForceExpandHeight = false;
+                BackgroundCard template = CreateBackgroundCardTemplate(ui);
+
+                // The selected panorama and its controls on the right, from x = 316 to 916 (2:1, 600 x 300).
+                var preview = CreateChild("Preview", ui).AddComponent<RawImage>();
+                preview.raycastTarget = false;
+                Anchor(preview.rectTransform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(316, -404), new Vector2(916, -104));
+                TMP_Text name = CreateText("Name", ui, string.Empty, 32, TextAlignmentOptions.Center);
+                Anchor(name.rectTransform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(316, -458), new Vector2(916, -412));
+                Button apply = BasisUiStyle.CreateButton("ApplyButton", ui, BasisUiStyle.PrimaryButtonColor, cornerRadius: 40);
+                Anchor((RectTransform)apply.transform, new Vector2(0, 0), new Vector2(0, 0), new Vector2(446, 70), new Vector2(786, 150));
+                BasisUiStyle.AddLabel(apply, BackgroundPanel.ApplyLabel, 32);
+                TMP_Text status = CreateText("Status", ui, string.Empty, 22, TextAlignmentOptions.Center);
+                Anchor(status.rectTransform, new Vector2(0, 0), new Vector2(0, 0), new Vector2(316, 20), new Vector2(916, 64));
+
+                SetLayerRecursively(canvas.transform, LayerMask.NameToLayer(UILayerName));
+
+                var panel = panelObject.AddComponent<BackgroundPanel>();
+                Assign(panel, "_content", canvas);
+                Assign(panel, "_closeButton", close);
+                Assign(panel, "_cardContainer", cards.transform);
+                Assign(panel, "_cardTemplate", template);
+                Assign(panel, "_preview", preview);
+                Assign(panel, "_nameText", name);
+                Assign(panel, "_statusText", status);
+                Assign(panel, "_applyButton", apply);
+
+                var tool = root.AddComponent<BackgroundTool>();
+                Assign(tool, "_panel", panel);
+            }, rectTransformRoot: false);
+
+        /// <summary>
+        /// The inactive card template of the background panel. Behind a button holding the panorama and the name, a blue
+        /// frame shows the background on show and, inside it, a white one the selected background.
+        /// </summary>
+        static BackgroundCard CreateBackgroundCardTemplate(Transform parent)
+        {
+            GameObject template = CreateChild("CardTemplate", parent);
+            var templateRect = (RectTransform)template.transform;
+            templateRect.anchorMin = templateRect.anchorMax = templateRect.pivot = new Vector2(0f, 1f);
+            templateRect.sizeDelta = BackgroundCardSize;
+            Image current = BasisUiStyle.CreatePanelImage("CurrentFrame", template.transform, BasisUiStyle.PrimaryButtonColor, 26f);
+            Anchor(current.rectTransform, Vector2.zero, Vector2.one, new Vector2(-10, -10), new Vector2(10, 10));
+            current.raycastTarget = false;
+            Image selected = BasisUiStyle.CreatePanelImage("SelectedMark", template.transform, Color.white, 22f);
+            Anchor(selected.rectTransform, Vector2.zero, Vector2.one, new Vector2(-5, -5), new Vector2(5, 5));
+            selected.raycastTarget = false;
+            Button button = BasisUiStyle.CreateButton("Button", template.transform, BasisUiStyle.SecondaryButtonColor, cornerRadius: 18);
+            Anchor((RectTransform)button.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            var thumbnail = CreateChild("Thumbnail", button.transform).AddComponent<RawImage>();
+            thumbnail.raycastTarget = false;
+            float thumbnailHeight = (BackgroundCardSize.x - 16f) / 2f;
+            Anchor(thumbnail.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(8, -8 - thumbnailHeight), new Vector2(-8, -8));
+            TMP_Text label = CreateText("Label", button.transform, string.Empty, 24, TextAlignmentOptions.Center);
+            Anchor(label.rectTransform, Vector2.zero, new Vector2(1, 0), new Vector2(4, 2), new Vector2(-4, 34));
+            label.raycastTarget = false;
+            var card = template.AddComponent<BackgroundCard>();
+            Assign(card, "_button", button);
+            Assign(card, "_thumbnail", thumbnail);
+            Assign(card, "_label", label);
+            Assign(card, "_currentFrame", current.gameObject);
+            Assign(card, "_selectedMark", selected.gameObject);
+            current.gameObject.SetActive(false);
+            selected.gameObject.SetActive(false);
+            template.SetActive(false);
+            return card;
         }
 
         /// <summary>

@@ -89,7 +89,7 @@ StepCompletion（完了条件）
    ├ Interaction  … 担当ロールの端末で操作定義の部品がすべて完了すると、InteractionRunner が ScenarioDirector.ReportInteractionComplete() を呼んで進む
    └ Manual       … 運営の操作でのみ進む（結び）
    運営スキップはどの条件でも常に使える
-ScenarioCue（キュー）… LineCue（話者＋字幕＋音声）/ WaitCue / SoundCue / SetObjectActiveCue / BannerCue / StatueVersionCue / MatchPoseCue / GuideSnapCue（§2.5）/ EnvironmentCue（§2.6）
+ScenarioCue（キュー）… LineCue（話者＋字幕＋音声）/ WaitCue / SoundCue / SetObjectActiveCue / BannerCue / StatueVersionCue / MatchPoseCue / PlaceAtSketchCue / GuideSnapCue（§2.5）/ EnvironmentCue（§2.6）
    └ 見た目を後に残すキュー（永続キュー）は ApplyInstant を実装する
 ScenarioPlayer … ステップに入るたびに、舞台を初期状態に戻し、それまでのステップの永続キューを即時に適用してから、
                  現在のステップのキューを頭から再生する
@@ -126,7 +126,7 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
 | 入力の窓口 | `SpatialPenController` が、保持中のトリガー（`IsTriggerHeld`、`TriggerPressed` / `TriggerReleased`）、ペン先の位置、半径、モードを各ツールに渡す。トリガーは持っている手のものを読む。レーザーがメニューやパネルに当たっている状態で押し始めたときは無視し、押している途中でレーザーが UI に当たっても押したままとして扱う（線が途切れない）。Basis からの入力の読み取りは `PenInputReader` に集約する。デスクトップでは Basis のピックアップの操作（クリックで掴み、右クリックで離す）で持ち、T（トリガー）、N/M（右スティックの上下）、G（モード切り替えのボタン）で代用する |
 | 同期 | ペンの姿勢は Basis の `BasisPickupSyncNetworking` が同期する（保持中は相手側でもプレイヤーの手に付く。掴んだ端末が所有権を取る）。それ以外は `SpatialPenSync` が、自分のペンのモード、半径、長さ、保持とトリガーの状態を、半径か長さが変化している間は最大 20Hz（Unreliable）で送る。モード・保持・トリガーの変化はすぐに送る。止まって 0.3 秒たったら最終状態を Reliable で送る。途中参加した端末には現在の状態を直接送る |
 | 既存機能との競合 | Basis の機能のうちデモで使わないものは、起動時に `Scripts/Runtime/BasisPolicy/` で無効化する。X（ミュート切り替え）、A（ジャンプ）、グリップ（飛行中の下降）の割り当てを外し（A と X はペンのモード切り替えに使う）、マイクは常にミュートに固定し（音声指示の取り込みは使える）、マイクアイコンは表示しない。アバターを掴む機能と、空間を掴んで移動する機能は設定でオフにする。配置物を掴む機能（`DisablePropPickup`）はペンに使うのでオンに固定する。ワールドに置くピックアップはデモのものだけで（配置物を出すライブラリとカメラはメニューから外している）、掴める端末はピックアップごとに絞る |
-| メニュー | Y で開く Basis のメインメニューは、Basis 標準の項目をすべて外し、デモの項目（`Scripts/Runtime/Menu/` の `DemoMenuProvider` 派生）だけを置く。ペンと風景の選択、履歴パネルを開くのに使う。項目は、ホットバーの上に選択肢を並べる `DemoBarMenuProvider`、横に縦長のページを開く `DemoPageMenuProvider`、メニューを閉じて処理を実行する `DemoMenuProvider` の直接の派生（「モデルの履歴」）の3種類 |
+| メニュー | Y で開く Basis のメインメニューは、Basis 標準の項目をすべて外し、デモの項目（`Scripts/Runtime/Menu/` の `DemoMenuProvider` 派生）だけを置く。ペンのモードの選択と、背景パネル・履歴パネルを開くのに使う。項目は、ホットバーの上に選択肢を並べる `DemoBarMenuProvider`、横に縦長のページを開く `DemoPageMenuProvider`、メニューを閉じて処理を実行する `DemoMenuProvider` の直接の派生（「背景」「モデルの履歴」）の3種類 |
 
 ### 2.4 ペン操作の共通部品
 
@@ -139,6 +139,7 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
 | `ManipulateTool` | 物体移動モードのペン先を部位に当て、トリガーを押している間だけ掴んで、ステップごとの制約の範囲で動かす。制約は「平行移動（範囲つき）」または「支点まわりの回転（軸と角度範囲つき）」。目標の姿勢を半透明のゴーストで示す | 離すたびに判定する。目標の姿勢から許容範囲内なら、目標へスナップして完了。回転では、しきい値を超えた角度で離したら完了とする指定もできる（ステップ9）。満たさなければ離した位置に残り、もう一度掴める | 操作中は制約パラメータを最大 20Hz（Unreliable）で送り、離したときとスナップを Reliable で送る。途中参加した端末には現在の値を送る |
 | `VoiceCommandTool` | 音声入力モードのペンでトリガーを押している間、タスク HUD に「音声入力中…」と表示する。その間だけ `BasisLocalMicrophoneDriver.AddCaptureHold()` でマイクを取り込み（ミュートのままなので送信はされない）、`averageRms` がしきい値を超えた時間で発話を検知する。離したら `ReleaseCaptureHold()` | 押している間の有音が一定時間に達した時点で、台本の文を認識結果としてタスク HUD に表示する（「トリガーを離すと決定します」）。その状態でトリガーを離すと完了する。達する前に離したら、やり直すよう表示する | 完了イベントのみ（表示は担当の端末だけ） |
 | `HistoryTool` | メインメニューの「モデルの履歴」で開く履歴パネル（`HistoryPanel`）で版を選び、「モデルを復元」を押すと、その版を比較台に表示する | ステップで指定した版を復元した | 復元した版の ID |
+| `BackgroundTool` | 音声指示で生成した背景が、背景パネル（`BackgroundPanel`）に加わる。その背景を選んで「背景を適用」を押す | ステップで指定した背景を適用した | 完了イベントのみ |
 
 - 各部品は、トリガーなどの入力を `SpatialPenController` から受け取る（§2.3）。グリップはペンの保持に使うので、`ManipulateTool` で部位を掴むのもペンのトリガーで行う。
 - 部品の内部表現：選択範囲はスフィアのサンプル列（位置＋半径）で記録し、サンプル間隔は半径に比例させる。ストロークは点列で記録し、LineRenderer で描く。
@@ -155,13 +156,13 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
   - 送信形式は `StrokeMessage`（1点 6 バイト）。描画中の点の追加、線の確定、消去、全体（途中参加用）の4種類を、すべて ReliableOrdered で送る。
   - 表示は `StrokeView` が、線ごとにプールした LineRenderer（幅 6mm、`Art/Interaction/Stroke/StrokeLine.mat`）で描く。フェードアウトは線を細くして表現する。
   - 線は次の部品（音声指示など）の間も表示し、ステップが進むと消す。
-  - 部品が終わったときに残っている確定済みの線は、`StrokeTool.LastResult`（`StrokeResult`。部品のステップと線ごとの点列）にコピーして保持する。ガイドで外れた線はその時点で消えているので含まれない。担当の端末でも相手の端末でも同じ手順で保持するので、通信は増えない。ステップが進んでも消さず、次の線画の部品が始まると置き換える。途中参加した端末では、その部品に入っていなければ空のままになる。後の演出から参照するための口で、ステップ12の腕のスナップは既定の形（§2.5 の `GuideCurve`）を使う。
+  - 部品が終わったときに残っている確定済みの線は、`StrokeTool.LastResult`（`StrokeResult`。部品のステップと線ごとの点列）にコピーして保持する。部品が終わるのは、同じステップの次の部品に移ったときか、ステップが進んだとき。ガイドで外れた線はその時点で消えているので含まれない。担当の端末でも相手の端末でも同じ手順で保持するので、通信は増えない。ステップが進んでも消さず、次の線画の部品が始まると置き換える。部品が終わった後に途中参加した端末では空のままになる。キューは StrokeTool に付けたキー `Strokes`（`StrokeTool.BindingKey`）から読む。ステップ14 の手鏡の位置（§2.5 の `PlaceAtSketchCue`）に使う。ステップ12 の腕のスナップは既定の形（§2.5 の `GuideCurve`）を使い、描いた線は使わない。
 - 部位の操作の実装（`Scripts/Runtime/Interaction/Manipulate/`）
   - `ManipulatePart` は、動かす対象のキー（`TargetKey`）、掴む範囲のゾーンのキー（`GrabZoneKey`。空なら対象自身のゾーン）、制約（`Constraint`）を持つ。平行移動は目標マーカーのキー（`GoalKey`）、開始位置からの最大距離（`MaxDistance`）、スナップ距離（`SnapDistance`）を持ち、スナップすると目標マーカーの位置と向きに合わせる。回転は支点のキー（`PivotKey`）、支点のローカル空間の軸（`Axis`）、角度の範囲（`MinAngle` / `MaxAngle`。部品の開始時の姿勢を 0° とする）、完了条件（`Completion`：目標角度 `TargetAngle` ± `SnapAngle` でスナップ、または `ThresholdAngle` を超えて離す）を持つ。キーは範囲選択と同じく `ScenarioObjectBinding` で解決し、解決できないキーがあると操作できない（運営スキップで進める）。
   - 制約の計算は `ManipulateConstraint`。部品が始まった時点の対象のワールドの姿勢を起点にし、動かした量を `ManipulateValue`（平行移動は変位、回転は角度）で表す。平行移動は、掴んでからのペン先の変位を最大距離の球に収める。回転は、ペン先を軸に垂直な平面へ投影し、フレームごとの角度の差を積み上げる（±180° をまたいでも途切れない）。ペン先が軸から 2cm 以内のときは角度を更新しない。
   - 入力は `ManipulateGrabber`。押している途中でメニューからモードを変えると、その位置で離したものとして扱い、判定はしない。
   - 送信形式は `ManipulateMessage`（20 バイト）。Unreliable と Reliable は到着順が保証されないので、送信カウンタを付け、受信側は古いものを捨てる。受信側はドラッグの値へ補間しながら動かし、スナップは同じ時間（0.25 秒）で吸着させる。
-  - ゴーストは `ManipulateGhostView` が、対象の MeshRenderer のメッシュを目標の姿勢に `Graphics.RenderMesh` で描く（`Art/Interaction/Manipulate/ManipulateGhost.mat`、水色の半透明）。両方の端末に出し、部品が終わったら消す。掴める間と掴んでいる間は、対象を Basis のハイライトで強調する（相手の端末では掴んでいる間）。
+  - ゴーストは `ManipulateGhostView` が、対象の MeshRenderer のメッシュを目標の姿勢に `Graphics.RenderMesh` で描く（`Art/Interaction/Manipulate/ManipulateGhost.mat`、水色の半透明）。各メッシュは毎フレーム、その時点で対象に付いている姿勢と大きさで描くので、部品の開始時に出現の演出で拡大中の対象（ステップ14 の手鏡）にも追従する。両方の端末に出し、部品が終わったら消す。掴める間と掴んでいる間は、対象を Basis のハイライトで強調する（相手の端末では掴んでいる間）。
   - ツールは対象を元の位置へ戻さない。ステップが変わると `ScenarioStage` が初期状態へ戻す。`ScenarioPlayer` は OnEnable、`InteractionRunner` は Start でステップの変化を購読するので、部品の開始時には舞台がそのステップの状態になっている。
 - 音声指示の実装（`Scripts/Runtime/Interaction/Voice/`）
   - `VoicePart` は、認識結果として表示する台本の文（`Transcript`）と、必要な有音時間（`RequiredSpeechSeconds`、初期値 1 秒）を持つ。有音時間は押している間の合計で、途切れてもよい（`VoiceActivityMeter`）。
@@ -192,6 +193,14 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
     - ラベルとボタンは通常の UI マテリアルで描くので、像の上に重なり、手やペンには隠れる。
     - Basis のメニューの UI マテリアル（`BasisUI_main`）や背景のシェーダーは常に最前面に描くため使わない。背景は近い暗色で代用している。
     - 既知の問題として、エディタのプレハブ編集画面（Prefab Mode）では、`Depth` の板が有効な間、キャンバス全体が表示されない。ゲーム画面と通常のシーンビューでは正しく表示される。
+- メニューから開くパネルの共通部分（目の前に置いてとどめる、× で閉じる、閉じている間はキャンバスごと無効にする、無効のボタンの文字やアイコンを薄くする）は `DemoWorldPanel`（`Scripts/Runtime/Presentation/`）にまとめ、`HistoryPanel` と `BackgroundPanel` が継承する。
+- 背景パネルの実装（`Scripts/Runtime/Interaction/Background/`）
+  - `BackgroundPanel` は、メインメニューの「背景」（`BackgroundMenuProvider`）を押すと、メニューを閉じて目の前に開く。どちらのプレイヤーもいつでも開ける。大きさと見た目は履歴パネルと同じ（960×620mm）。
+  - 左の列に背景をカード（`BackgroundCard`。パノラマを 2:1 で縮小した画像と表示名）で並べる。今の背景のカードは青い枠、選んでいるカードは白い枠で囲む。右側に選んでいる背景のパノラマを大きく出し、その下に表示名（今の背景なら「（表示中）」を添える）、「背景を適用」、状態の文を置く。カードはテンプレートから複製し、縦のレイアウトで並べる。
+  - 一覧は、初期の背景（環境コントローラーの `BaselinePreset`）、現在のステップまでの `EnvironmentCue` が適用した背景、実行中の `BackgroundPart` が示す生成結果の順（`BackgroundList.Collect`）。今の背景は、現在のステップまでの最後の `EnvironmentCue` の背景で、なければ初期の背景（`BackgroundList.FindCurrent`）。どちらもステップ番号から決まるので、両方の端末で同じになる。開いている間にステップが変わったら一覧を作り直す。
+  - 「背景を適用」は、`BackgroundPart` の間だけ担当の端末で押せる。今の背景を選んでいるときも押せない。
+  - `BackgroundPart` は、適用させる背景（`TargetPreset`）と、部品の開始時に担当の端末でパネルを開くかどうか（`OpensPanel`、初期値は開く）を持つ。`BackgroundTool` は、部品の開始時に、両方の端末でパネルの一覧に `TargetPreset` を加える。担当の端末では、`TargetPreset` を選んだ状態でパネルを開く。`TargetPreset` を適用するとパネルを閉じて完了する。それ以外の背景なら「神殿を選んでください」と出す。
+  - 背景そのものは、次のステップの先頭の `EnvironmentCue` が切り替える（§2.6）。ツールは環境を変えず、完了のほかは何も送らない。部品の `TargetPreset` と次のステップの `EnvironmentCue` の背景が一致していることは、Editor テスト（`BackgroundTests`）で確かめる。
 - 1つのステップで複数の部品を順に使う場合（例：範囲選択 → 音声指示）は、操作定義に部品を順番に並べる。HUD は今どの手順にいるかを示す。
 
 #### 部品の共通インターフェース（`Scripts/Runtime/Interaction/`）
@@ -217,31 +226,38 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 - 各ツールは `InteractionPart` のサブクラスと `InteractionTool` のサブクラスを1組で実装し、`InteractionRunner` のツール一覧に登録する。
 - 部品は、パラメータの検証（`Validate`）と、シーンに必要なキーの申告（`CollectRequirements`）を実装できる。`ScenarioData` の検証とキーの収集はこれを呼ぶ。
 - ツールは `ScenarioInstaller`（メニュー「DNP Demo/Setup/Install Scenario Into DemoSystems Prefab」）で DemoSystems に組み込む。インストーラーは足りないツールだけを追加するので、ツールを増やしたら再実行すればよい。
-- 本番のツールができるまでは、`DummyInteractionPart`（予定の部品のペンモードと手順文を持つ）と `DummyInteractionTool`（担当者が「完了」ボタンを規定回数押すと完了。エディタとデスクトップでは F8）で代用する。音声指示（ステップ3・7・13・15・21）はすべて `VoicePart`、履歴からの呼び出し（ステップ19）は `HistoryPart` にしている。範囲選択と部位の操作は、対象を像に置いたステップから `SelectionPart` / `ManipulatePart` に置き換える。ステップ0〜12 の操作はすべて本番の部品にしている。
+- 全ステップの操作を本番の部品にしている。音声指示（ステップ3・7・13・15・21）はすべて `VoicePart`、履歴からの呼び出し（ステップ19）は `HistoryPart`、背景の適用（ステップ21）は `BackgroundPart`。シナリオの改訂で、ツールがまだない操作を試すときは、`DummyInteractionPart`（予定の部品のペンモードと手順文を持つ）と `DummyInteractionTool`（担当者が「完了」ボタンを規定回数押すと完了。エディタとデスクトップでは F8）で代用できる。
   - ステップ6：林檎（仮の像の `Apple`）を範囲選択し、`Goal_AppleUnderHand` へ平行移動する。仮の林檎は Ver 1.0 の手のひらの位置にあり、ステップ4 の先頭のキューで表示する。ステップが進むと舞台が林檎を元の位置に戻すので、ステップ7 の先頭の `MatchPoseCue` が手の下に置き直す。
   - ステップ7：左手〜前腕（`Zone_LeftForearm`。Ver 1.0・1.1 の前腕から手を覆うカプセル）を範囲選択し、音声指示する。
-  - ステップ9：左肩〜肘（`Zone_LeftUpperArm`）を範囲選択し、腕の代わりの `LeftArmProxy` を `Pivot_LeftShoulder` の上向きの軸のまわりに回す。腕は全身モデルの一部で単独では動かせないので、Ver 1.1 の左腕・手・林檎を半透明で写したプロキシを回し、像そのものは動かさない（§2.5 の「ギズモで動かすのはゴーストだけ」）。プロキシはステップ9 の間だけ表示し、掴む範囲はプロキシに付けた `LeftArmProxy_Grab`。内側（体の方）が負の角度で、範囲は -60〜+10°、-25° を超えて離すと完了する。
+  - ステップ9：左肩〜肘（`Zone_LeftUpperArm`）を範囲選択し、腕の代わりの `LeftArmProxy` を `Pivot_LeftShoulder` の上向きの軸のまわりに回す。腕は全身モデルの一部で単独では動かせないので、Ver 1.1 の左腕・手・林檎を半透明で写したプロキシを回し、像そのものは動かさない（§2.5 の「ギズモで動かすのはゴーストだけ」）。プロキシはステップ9 の間だけ表示し、掴む範囲はプロキシに付けた `LeftArmProxy_Grab`。左腕は像の +X 側にあるので、内側（体の方）が正の角度で、範囲は -10〜+60°、+25° を超えて離すと完了する。
   - ステップ11：ガイド（`Zone_LeftShoulder` から `Zone_ChestFront`）を `StrokePart` にしている。ステップ11 の間は、なぞる形として既定のカーブ（`GuideLine_LeftArm`）を点線で表示する。判定は §2.4 の線画のガイドのとおりで、カーブとの近さは見ない。
-  - 線画（ステップ13）も `StrokePart` にしている。
+  - ステップ13：線画（`StrokePart.Sketch`）を描き、音声指示する。線画の部品が終わった時点の線が `StrokeTool.LastResult` に残る。
+  - ステップ14：先頭の `PlaceAtSketchCue` が、手鏡の単体（仮の像の `HandMirror`）を、ステップ13 の線画の外接ボックスの中心に出す（§2.5）。その手鏡を `Goal_MirrorRightHand`（Ver 3.0 が右手に持つ手鏡の位置と向き）へ平行移動する。手鏡は置き場所 `Spawn_HandMirror` から 0.8m 以内に出るので、平行移動の最大距離（2.5m）でどこからでも目標に届く（`ScenarioSceneBindingTests` が確かめる）。
+  - ステップ15：右肩〜手鏡（`Zone_RightArmToMirror`。右肩から右手の位置の手鏡までのカプセル）を範囲選択し、音声指示する。ステップが進むと舞台が手鏡を元に戻すので、ステップ15 の先頭の `MatchPoseCue` が右手の位置に置き直す。手鏡はステップ16 の先頭で非表示にし、以後は Ver 3.0 のモデルが持つ。
+  - ステップ17：右手首と手鏡（`Zone_RightHandMirror`）を範囲選択し、Ver 3.0 の右手と手鏡を半透明で写した `RightHandProxy` を、手首の支点 `Pivot_RightWrist` の上向きの軸（前腕の向き）のまわりにひねる。ステップ9 と同じく像そのものは動かさない。プロキシはステップ17 の間だけ表示し、掴む範囲は手鏡のまわりの `RightHandProxy_Grab`。範囲は -30〜+80°、+50° ± 12° で離すとスナップして完了する。+50° は、Ver 3.0 の手鏡が Ver 3.1 の向き（顔の方）になる角度。
+  - ステップ21：「ヴィーナス像に似合う神殿の背景を生成」と音声指示すると、認識した時点で背景パネルが目の前に開き、生成された神殿が一覧に加わる。神殿を選んで「背景を適用」を押すと完了する。背景（スカイボックスと照明）は空間全体に適用するものなので、像は選ばない。神殿への切り替えは、ステップ22 の先頭の `EnvironmentCue` が行う（§2.6）。
 
 ### 2.5 像と版の管理
 
 コードは `Scripts/Runtime/Venus/`、データは `Data/Venus/`。
+
+像は正面を -Z に向けて立つ。キーや名前、文書の左右（「左腕」「右手首」など）は、シナリオと同じく像自身の左右を指す。像自身の左は +X、右は -X で、正面から見ると左腕は右側に見える。
  
 | 要素 | 内容 |
 |---|---|
 | `VenusStatue` | 版を1つずつ表示する像。本体の像（`Statue_Original/StatueAnchor/Venus`、キー `Statue`）と比較台の像（`ComparisonTable/ModelAnchor`、キー `ComparisonStatue`）の2体がある。起動時にカタログの全版のモデルを子として生成して非表示にしておき、版の切り替えでは表示するモデルを切り替えるだけにする（デモ中に生成しない）。初期状態で表示する版（`Baseline`）を持ち、本体は腕なし、比較台は空。舞台を初期状態に戻すと（`IStageResettable`）この版に戻る。切り替えると `VersionChanged` で、前後の版と演出するかどうか（キューの再生なら演出あり、ジャンプや途中参加での即時適用なら演出なし）を通知する。再生していない間は、シーンビューに `EditorPreview` の版をギズモで描くので、ゾーンや目標の配置に使える |
 | `VenusVersion`（ScriptableObject） | 版ごとに、Id（`armless`、`v1.0` など。変えない）、表示名（「Ver 1.0」など）、全身モデル（プレハブ）への参照を持つ。胴体の位置・スケール・原点は全版でそろえる。履歴パネルの一覧用に、派生元の版（`Parent`。カタログでこの版より前にあること）、新しいブランチかどうか（`StartsBranch`）、サムネイル（`Thumbnail`）も持つ |
 | ブランチ | 腕なし → Ver 1.0、Ver 1.0 から分かれる学者Bの案 Ver 1.1 → Ver 1.2、Ver 1.1 から分かれる Ver 2.0 → Ver 3.0 → Ver 3.1（Ver 1.2 は採用されず、Ver 2.0 は Ver 1.1 から作り直す） |
-| サムネイル | メニュー「DNP Demo/Create/Venus Thumbnails」が、全版のモデルを同じ縮尺で、正面から左に 50° 回り込んで少し見下ろす向きに撮り、`Art/Venus/Thumbnails/` に 256px の PNG（背景は透明）で保存して各版に設定する。モデルを差し替えたら再実行する |
+| サムネイル | メニュー「DNP Demo/Create/Venus Thumbnails」が、全版のモデルを同じ縮尺で、正面から像の左腕の側（+X。正面から見て右）へ 50° 回り込んで少し見下ろす向きに撮り、`Art/Venus/Thumbnails/` に 256px の PNG（背景は透明）で保存して各版に設定する。モデルを差し替えたら再実行する |
 | `VenusVersionCatalog`（ScriptableObject） | 版を到達する順に並べた一覧（`Data/Venus/VenusVersions.asset`）。像が起動時に生成する範囲を決める |
 | 版の一覧 | 腕なし → Ver 1.0 → Ver 1.1 → Ver 1.2 → Ver 2.0 → Ver 3.0 → Ver 3.1（§3） |
 | `StatueVersionCue` | 永続キュー。キーで指した像に版を表示する（空なら何も表示しない）。操作で到達する版は、操作が完了した次のステップの先頭に置く（ステップ0：腕なし、4：Ver 1.0、8：Ver 1.1、10：Ver 1.2、12：Ver 2.0、16：Ver 3.0、18：Ver 3.1。比較台はステップ19の先頭で台を表示し、ステップ20の先頭で Ver 1.0 を表示する）。版はステップ番号から決まるので、同期は不要 |
 | 履歴 | `VenusVersionHistory.Collect(ステップ列, ステップ番号, 像のキー)` が、現在より前のステップの `StatueVersionCue` がその像に表示した版を、初めて出た順に1つずつ返す |
 | `EnvironmentCue` | 永続キュー。キー `Environment` の `EnvironmentController` に環境プリセットを渡し、クロスフェードで切り替える（ステップ22「結び」の先頭で神殿へ）。後続ステップや途中参加では即時に適用する。詳細は §2.6 |
-| 仮モデル | M3 まではプリミティブを組み合わせた仮モデル（`Art/Venus/Placeholders/`）を使う。メニュー「DNP Demo/Create/Venus Versions」で、仮モデル、`VenusVersion`、カタログのうち足りないものを生成する。以後はアセットを直接編集し、本番のモデルは各 `VenusVersion` のモデルを付け替えて差し替える。Ver 1.0 の林檎は、ステップ6 で動かすため別オブジェクト（`Statue_Original/StatueAnchor/Targets/Apple`）にしていて、ステップ4〜7 の間だけ表示する。Ver 1.1 以降は林檎をモデルに含める |
-| 操作対象のオブジェクト | 部位ゾーン、目標マーカー、支点、仮の林檎、腕のプロキシ、ガイドのカーブは `Statue_Original/StatueAnchor/Targets` に置き、版のモデルとは分ける |
-| `MatchPoseCue` | 永続キュー。キーで指したオブジェクトを、別のキーのマーカーの位置と向きに置く。ペンで動かした結果を、次のステップ以降に表示するのに使う（ステップ7 の先頭で林檎を手の下へ） |
+| 仮モデル | M3 まではプリミティブを組み合わせた仮モデル（`Art/Venus/Placeholders/`）を使う。メニュー「DNP Demo/Create/Venus Versions」で、仮モデル、`VenusVersion`、カタログのうち足りないものを生成する。以後はアセットを直接編集し、本番のモデルは各 `VenusVersion` のモデルを付け替えて差し替える。仮モデルの定義（`VenusAssetBuilder`）を変えたときは、`VenusAssetBuilder.RebuildPlaceholderModel` でその版のプレハブを同じパスに作り直す（版からの参照は保たれる。サムネイルは撮り直さない）。Ver 1.0 の林檎は、ステップ6 で動かすため別オブジェクト（`Statue_Original/StatueAnchor/Targets/Apple`）にしていて、ステップ4〜7 の間だけ表示する。Ver 1.1 以降は林檎をモデルに含める。手鏡も同様に、ステップ14・15 の間は別オブジェクト（`Targets/HandMirror`。仮モデルと同じ形）を表示し、Ver 3.0 以降はモデルに含める。仮の Ver 3.0 と Ver 3.1 は右腕が同じで、手首だけを前腕の軸まわりに +50° ひねった関係にしている（手鏡の柄は前腕の延長上にあり、ひねっても手鏡の中心は動かない） |
+| 操作対象のオブジェクト | 部位ゾーン、目標マーカー、支点、仮の林檎、手鏡の単体、腕と手のプロキシ、ガイドのカーブは `Statue_Original/StatueAnchor/Targets` に置き、版のモデルとは分ける |
+| `MatchPoseCue` | 永続キュー。キーで指したオブジェクトを、別のキーのマーカーの位置と向きに置く。ペンで動かした結果を、次のステップ以降に表示するのに使う（ステップ7 の先頭で林檎を手の下へ、ステップ15 の先頭で手鏡を右手の位置へ） |
+| `PlaceAtSketchCue` | 永続キュー。指定したステップ（`SketchStepId`）の線画の外接ボックスの中心に、キーで指したオブジェクトを表示する。向きは置き場所のマーカーに合わせ、位置はマーカーから `MaxOffset` 以内に収める。線画は各端末の `StrokeTool.LastResult` から読む（§2.4）。線画を見ていた端末はどれも同じ線を持つので位置がそろう。線画がない場合（運営のジャンプやスキップ、線画の部品が終わった後の途中参加）はマーカーの位置に出す。再生時は `ScaleInEffect`（子の見た目だけを拡大し、ステップが変わると `IStageResettable` で元の大きさに戻す）で出現させる。ステップ14 の先頭で、手鏡をステップ13 の線画の位置に出すのに使う |
 | `GuideCurve` | ステップ11の「ガイドを描く」でプレイヤーが描く「軌跡」の表示用カーブ（3次ベジェ曲線）。判定は始点・終点ゾーンで行い、このカーブは判定に使わない。端点は常にガイドの始点・終点ゾーンの Transform を参照するので、ゾーンの中心と一致する（カーブが保つのは中間の制御点2つだけ）。子オブジェクト `GuideLine`（キー `GuideLine_LeftArm`）が点線として視覚的なガイドを表示し、ステップ11の先頭で表示、ステップ12の先頭で非表示になる |
 | `GuideSnapEffect` / `GuideSnapCue` | ステップ12の「ガイドの軌跡に沿って腕がスナップする」演出。ステップ12の先頭の `GuideSnapCue` が、`GuideCurve` に沿って光る線を肩から胸元へ伸ばし（先端に光る球）、届いた時点で次の `StatueVersionCue` が Ver 1.2 → Ver 2.0 を左腕の範囲で切り替える。線はその後細くなって消える。演出は既定のカーブで走らせ、描いた線は使わない（ガイドの判定は両ゾーンに届いたことなので、同じゾーンを結ぶカーブと整合する）。一時的な演出なので、ジャンプや途中参加では表示しない。ステップが変わると `IStageResettable` で止める |
 | 操作対象の定義 | 部位ゾーン（林檎、腕、手鏡など）、ギズモの原点（重心）、始点・終点ポーズ、制約（平行移動の範囲、回転の軸と角度範囲）、ゴーストの形状と大きさはステップ定義側に持つ。モデルには ID やピボットを持たせない |
@@ -249,7 +265,7 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 | `GestureGizmo` | 操作用の取っ手。ステップに応じて、確定した部位の重心に移動ギズモ（XYZ 矢印）または回転ギズモ（XYZ 3リング）のどちらか一方を出す。中心は重心固定（中心可変は今回のスコープ外）。制約で使わない軸は出さない。部位の形とは無関係 |
 | `GhostPart` | 操作対象の目標表示（半透明）。ギズモで動かすのはゴーストだけで、元の像は動かさない。許容範囲内で離すと目標へスナップして完了する。標準の見た目は実物大の簡易プロキシ（林檎ならスフィア、手鏡なら板など）。実物の部位のゴーストは任意（下記） |
 | `GuideLine` | 始点から終点へ向かう直線（またはガイド線）を表示し、どこへ動かすかが一目でわかるようにする。移動のステップで使う。回転のステップでは、回転軸と目標角度の目印に置き換える |
-| `ModelTransition` | 版の切り替え演出（ディゾルブ、スキャンライン、パーティクル）。どの版の遷移でも同じ仕組みを使い、全身モデルを切り替える。変化した部位の範囲を中心に演出をかける：`StatueVersionCue` の `FocusKey` で指したオブジェクトの範囲（`DetectionZone` ならその形、それ以外は描画の範囲）を、その切り替えにだけ渡す（`ModelTransition.SetBounds`）。空なら像全体。ステップ4・8・10・12 は左腕の範囲（`Focus_LeftArm`）を使う |
+| `ModelTransition` | 版の切り替え演出（ディゾルブ、スキャンライン、パーティクル）。どの版の遷移でも同じ仕組みを使い、全身モデルを切り替える。変化した部位の範囲を中心に演出をかける：`StatueVersionCue` の `FocusKey` で指したオブジェクトの範囲（`DetectionZone` ならその形、それ以外は描画の範囲）を、その切り替えにだけ渡す（`ModelTransition.SetBounds`）。空なら像全体。ステップ4・8・10・12 は左腕の範囲（`Focus_LeftArm`）、ステップ16・18 は右腕と手鏡の範囲（`Focus_RightArm`）を使う |
 | 比較表示 | 比較台の `VenusStatue` に、指定した版を表示する |
 | 履歴の表示 | `HistoryPanel` が、本体の像の履歴をブランチの一覧と、1版ずつの3Dモデルで表示する（§2.4） |
  
@@ -272,9 +288,9 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 
 ### 2.6 環境の切り替え
 
-`EnvironmentPreset`（ScriptableObject）に、2:1 の Skybox パノラマと露出・回転、展示室の壁の表示、Directional / Spot Light、Ambient、Reflection の設定をまとめて持たせる。`EnvironmentController` は描画中のパノラマをスナップショットしてから次の環境へクロスフェードするため、遷移中の再指定でも画面を飛ばさず目標へ収束する。遷移先のパノラマは最初から自分の露出・回転で描き、混ぜる割合だけを変える。無効のスポットライトは強度 0 として補間するので、点くときは暗い状態から、消えるときは暗くなってから切り替わる。スポットライトの点灯は Keep / On / Off で指定し、Keep は点灯状態を変えない（遷移中に再指定されたときは進行中の遷移先の点灯状態を引き継ぐ）。色・強度・向きなどはどの指定でも適用する。展示室は Keep、神殿は Off。Reflection の解像度とバウンス数はベイク時にしか使われないため、プリセットには持たせずシーンの Lighting 設定に任せる。壁の表示は透明度だけを変え、移動用 Collider は維持する。シャドウキャスターのパスは透明度を見ないため、透明度が 1 未満の間は壁の Renderer に影を落とさせず、表示しきったら元の設定に戻す。
+`EnvironmentPreset`（ScriptableObject）に、2:1 の Skybox パノラマと露出・回転、展示室の壁の表示、Directional / Spot Light、Ambient、Reflection の設定をまとめて持たせる。`EnvironmentController` は描画中のパノラマをスナップショットしてから次の環境へクロスフェードするため、遷移中の再指定でも画面を飛ばさず目標へ収束する。遷移先のパノラマは最初から自分の露出・回転で描き、混ぜる割合だけを変える。無効のスポットライトは強度 0 として補間するので、点くときは暗い状態から、消えるときは暗くなってから切り替わる。スポットライトの点灯は Keep / On / Off で指定し、Keep は点灯状態を変えない（遷移中に再指定されたときは進行中の遷移先の点灯状態を引き継ぐ）。色・強度・向きなどはどの指定でも適用する。展示室は Keep、神殿は Off。Reflection の解像度とバウンス数はベイク時にしか使われないため、プリセットには持たせずシーンの Lighting 設定に任せる。壁は表示中は元の不透明マテリアルで描き、フェード中だけ深度を書く透明マテリアルのコピーに差し替え、消えたら Renderer を無効にする（影も落とさない）。透明マテリアルは自身の面どうしや文字などの透明物と正しく前後判定できないため、フェード中以外では使わない。移動用 Collider はどの状態でも維持する。
 
-プリセットは「展示室」と「神殿（エーゲ海の青空と自然光）」の2つ。神殿のパノラマは JPEG（LDR）で、太陽の明るさを持たないため、背景と反射にだけ使う。像の陰影はディレクショナルライトと Ambient で作る。ディレクショナルライトは、パノラマ上の太陽の位置（u, v）から向きを決める。Skybox は u を方位 `360·(u−0.5) − 回転` 度（+Z から +X 方向）に、v を高度 `180·(v−0.5)` 度に置くので、ライトの Euler は（高度, 方位 − 180, 0）になる。Android の URP アセットはソフトシャドウに対応しないため、神殿の影は Hard にする。Skybox の Reflection は空から作ったキューブマップなので、パノラマが確定したとき（遷移の終わりと即時適用）に `DynamicGI.UpdateEnvironment` で作り直す。Unity は Skybox マテリアルのすべてのパスを描くので、空のシェーダー（`EnvironmentCrossfadePanorama.shader`）は1パスだけにし、遷移のスナップショットは別のシェーダー（`Hidden/DNPDemo/Environment Panorama Snapshot`）で撮る。パノラマの読み取りは両者で `EnvironmentPanorama.cginc` を共有する。DNPDemo_Main の SceneCamera は背景（Clear Flags）を Skybox にし、`EnvironmentController` が差し替える空がそのまま映るようにする。スナップショット用のシェーダーは名前で探さず、Lighting Prefab の `EnvironmentController` に参照を持たせる。
+プリセットは「展示室」と「神殿（エーゲ海の青空と自然光）」の2つ。プリセットは表示名（`DisplayName`）を持ち、背景パネル（§2.4）のカードに使う。神殿のパノラマは JPEG（LDR）で、太陽の明るさを持たないため、背景と反射にだけ使う。像の陰影はディレクショナルライトと Ambient で作る。ディレクショナルライトは、パノラマ上の太陽の位置（u, v）から向きを決める。Skybox は u を方位 `360·(u−0.5) − 回転` 度（+Z から +X 方向）に、v を高度 `180·(v−0.5)` 度に置くので、ライトの Euler は（高度, 方位 − 180, 0）になる。Android の URP アセットはソフトシャドウに対応しないため、神殿の影は Hard にする。Skybox の Reflection は空から作ったキューブマップなので、パノラマが確定したとき（遷移の終わりと即時適用）に `DynamicGI.UpdateEnvironment` で作り直す。Unity は Skybox マテリアルのすべてのパスを描くので、空のシェーダー（`EnvironmentCrossfadePanorama.shader`）は1パスだけにし、遷移のスナップショットは別のシェーダー（`Hidden/DNPDemo/Environment Panorama Snapshot`）で撮る。パノラマの読み取りは両者で `EnvironmentPanorama.cginc` を共有する。DNPDemo_Main の SceneCamera は背景（Clear Flags）を Skybox にし、`EnvironmentController` が差し替える空がそのまま映るようにする。スナップショット用のシェーダーは名前で探さず、Lighting Prefab の `EnvironmentController` に参照を持たせる。
 
 `DNP Demo/Setup/Build Environment Presets` は、展示室の仮パノラマとプリセットを生成し、神殿パノラマのインポート設定（2D、sRGB、Mipmap、Wrap U=Repeat / V=Clamp、2の累乗に縮めない、Android は最大 4096・ASTC 6x6）を適用し、Lighting / Env_ExhibitionRoom Prefab に `Environment` / `ExhibitionRoom` のバインディングを設定する。Env_Temple Prefab には大理石の床（半径 10m の円盤、`M_TempleFloor`、影を受ける）を置き、ルートに `TempleFloor` のバインディングを設定する。パノラマの床は無限遠にあり影も受けないため、像の足元にはこの床が要る。床の上面は、フェードアウト中の展示室の床（y = 0）と奥行きを争わないよう 1mm 下げる。神殿のパノラマ（`Art/Environment/Environment_Temple_Panorama.jpg`）は生成せず、ないときはエラーにする。共有シーンは編集しない。
 
@@ -335,7 +351,7 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 | 18 | Scene 3〜Phase 2 | 学者Aの納得、学者Bが過程の振り返りを提案 | — | 台詞終了 | |
 | 19 | Phase 2 [B] | 履歴一覧から Ver 1.0 を呼び出し、完成案の隣に並べる | History | Ver 1.0 を復元した | 比較台に Ver 1.0 |
 | 20 | Phase 2〜3 | 比較の感想、学者Aが神殿での確認を提案 | — | 台詞終了 | |
-| 21 | Phase 3 [A] | 像を範囲選択し、「選択した像の背景を神殿に変更」 | Selection（像全体）→ Voice | 音声指示が完了 | 展示室の壁がフェードアウトし、神殿のパノラマと自然光に切り替わる |
+| 21 | Phase 3 [A] | 「ヴィーナス像に似合う神殿の背景を生成」と音声指示し、背景パネルで神殿を適用 | Voice → Background（背景パネル） | 神殿を適用した | 展示室の壁がフェードアウトし、神殿のパノラマと自然光に切り替わる |
 | 22 | 結び | 学者の締め、ナレーター | — | 台詞終了 | 「WORKSHOP COMPLETE」→ フェードアウト → リセット待機 |
 
 - 操作を待つステップには、タイムアウト時のヒント表示と運営スキップを用意し、体験者が詰まってもデモが止まらないようにする。
@@ -359,7 +375,7 @@ M3 まではプリミティブを組み合わせた仮モデルで進め、M4 �
 | 環境 | 古代ギリシア風神殿の360度パノラマ | Skybox 用。2:1 の JPEG（LDR）。陰影はライトで作る。エーゲ海の青空と自然光 |
 | 音声 | ナレーター、学者A、学者B の台詞 | 生声または合成音声で台詞ごとに1ファイル。台本を字幕データにする |
 | SE | 生成、変形、選択確定、スナップ、音声入力の開始と終了、タスク表示、完了 | |
-| UI | 日本語フォント（TMP SDF。Noto Sans JP など）、HUD アイコン、履歴パネル | |
+| UI | 日本語フォント（TMP SDF。Noto Sans JP など）、HUD アイコン、履歴パネル、背景パネル | |
 | シェーダー | 選択範囲（半透明）、ストローク、ディゾルブ、スキャンライン、ゴースト（操作対象の目標表示） | Shader Graph（URP） |
 
 ---
@@ -372,7 +388,7 @@ M3 まではプリミティブを組み合わせた仮モデルで進め、M4 �
 |---|---|---|
 | **M0 基盤** | ✅ プロジェクト作成とシーンの骨組み ／ シーン骨組みを本シナリオに合わせて修正（比較台、神殿用の環境ルート） ／ 2台の LAN 接続（ホスト、UDP 探索、IP の手入力） ／ `DemoRoleService` によるロール割り当てとスポーン位置 ／ ロビーパネル ／ ✅ 初回起動時に出るダイアログを実機で洗い出し、なくす（§2.1） | 2台で同じ空間に入り、相手のアバターが見える |
 | **M1 シナリオエンジン** | ScenarioData / Director / CueSystem ／ ステップ同期と途中参加 ／ 字幕と仮音声 ／ 運営用デバッグ操作 | 全ステップを、台詞の自動進行と運営スキップで最後まで通せる |
-| **M2 ペン共通部品** | 空間ペン（モード表示、スフィアの半径変更、ボタン割り当て） ／ §2.4 の5部品と同期 ／ タスク HUD ／ 競合する Basis 機能（メニュー、ミュート切り替えなど）の無効化 | 各部品を実機2台で単体操作でき、相手側にも操作が見える |
+| **M2 ペン共通部品** | 空間ペン（モード表示、スフィアの半径変更、ボタン割り当て） ／ §2.4 の部品と同期 ／ タスク HUD ／ 競合する Basis 機能（メニュー、ミュート切り替えなど）の無効化 | 各部品を実機2台で単体操作でき、相手側にも操作が見える |
 | **M3 ステップ組み込み** | ✅ `VenusStatue` と版定義（仮モデル） ／ `ModelTransition` ／ 各ステップの判定ゾーン・目標・制約の設定 ／ 比較表示 ／ 環境切り替え ／ ヒント表示 | 仮素材で全編を操作して通せる。所要時間を計測する |
 | **M4 アセット統合** | 本番のモデル、神殿のパノラマ、音声、SE、シェーダー、ライティング | 本番素材で通しプレイできる |
 | **M5 仕上げ** | Quest での性能（72fps を維持）、通しリハーサル、リセットと復旧手順、運用マニュアル、リリース APK | 展示運用ができる状態 |

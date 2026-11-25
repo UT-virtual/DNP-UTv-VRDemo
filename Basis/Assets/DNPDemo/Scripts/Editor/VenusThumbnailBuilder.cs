@@ -28,8 +28,9 @@ namespace DNPDemo.Editor
         public const string Folder = DNPDemoProjectSetup.Root + "/Art/Venus/Thumbnails";
         public const int Size = 256;
 
-        // The statue faces -Z. Yaw turns the camera towards the statue's left (-X), pitch looks down a little.
-        static readonly Quaternion ViewRotation = Quaternion.Euler(10f, 50f, 0f);
+        // The statue faces -Z. Yaw moves the camera round to her left (+X), the side of the arm the scenario changes most;
+        // pitch looks down a little.
+        static readonly Quaternion ViewRotation = Quaternion.Euler(10f, -50f, 0f);
         const float Margin = 1.06f;
 
         [MenuItem("DNP Demo/Create/Venus Thumbnails")]

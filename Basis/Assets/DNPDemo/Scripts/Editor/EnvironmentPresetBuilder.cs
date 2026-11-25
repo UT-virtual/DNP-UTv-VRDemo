@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using DNPDemo.Environment;
-using DNPDemo.Scenario;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -15,6 +14,10 @@ namespace DNPDemo.Editor
     public static class EnvironmentPresetBuilder
     {
         public const string DataFolder = DNPDemoProjectSetup.Root + "/Data/Environment";
+        /// <summary>Display names of the presets (<see cref="EnvironmentPreset.DisplayName"/>).</summary>
+        public const string ExhibitionDisplayName = "展示室";
+        public const string TempleDisplayName = "神殿";
+
         public const string ExhibitionPresetPath = DataFolder + "/EnvironmentPreset_Exhibition.asset";
         public const string TemplePresetPath = DataFolder + "/EnvironmentPreset_Temple.asset";
         public const string ExhibitionPanoramaPath = DNPDemoProjectSetup.Root + "/Art/Environment/Environment_Exhibition_Panorama.png";
@@ -75,6 +78,7 @@ namespace DNPDemo.Editor
             EnsurePreset(
                 ExhibitionPresetPath,
                 "EnvironmentPreset_Exhibition",
+                ExhibitionDisplayName,
                 exhibitionPanorama,
                 exposure: 0f,
                 rotation: 0f,
@@ -125,6 +129,7 @@ namespace DNPDemo.Editor
             EnsurePreset(
                 TemplePresetPath,
                 "EnvironmentPreset_Temple",
+                TempleDisplayName,
                 templePanorama,
                 // The JPEG is LDR and the marble in it is already near white, so it is shown as is.
                 exposure: 0f,
@@ -266,6 +271,7 @@ namespace DNPDemo.Editor
         static void EnsurePreset(
             string assetPath,
             string assetName,
+            string displayName,
             Texture2D panorama,
             float exposure,
             float rotation,
@@ -287,6 +293,7 @@ namespace DNPDemo.Editor
             if (created || preset.Panorama == null)
             {
                 preset.Configure(
+                    displayName,
                     panorama,
                     exposure,
                     rotation,
@@ -323,12 +330,7 @@ namespace DNPDemo.Editor
                     throw new InvalidOperationException("Lighting prefab must contain a directional light and a spot light.");
                 }
 
-                ScenarioObjectBinding binding = root.GetComponent<ScenarioObjectBinding>();
-                if (binding == null)
-                {
-                    binding = root.AddComponent<ScenarioObjectBinding>();
-                }
-                SetBindingKey(binding, EnvironmentController.EnvironmentKey);
+                ScenarioBindingEditor.Bind(root, EnvironmentController.EnvironmentKey);
 
                 EnvironmentController controller = root.GetComponent<EnvironmentController>();
                 if (controller == null)
@@ -366,12 +368,7 @@ namespace DNPDemo.Editor
             GameObject root = PrefabUtility.LoadPrefabContents(ExhibitionRoomPrefabPath);
             try
             {
-                ScenarioObjectBinding binding = root.GetComponent<ScenarioObjectBinding>();
-                if (binding == null)
-                {
-                    binding = root.AddComponent<ScenarioObjectBinding>();
-                }
-                SetBindingKey(binding, EnvironmentController.ExhibitionRoomKey);
+                ScenarioBindingEditor.Bind(root, EnvironmentController.ExhibitionRoomKey);
                 PrefabUtility.SaveAsPrefabAsset(root, ExhibitionRoomPrefabPath);
             }
             finally
@@ -390,12 +387,7 @@ namespace DNPDemo.Editor
             GameObject root = PrefabUtility.LoadPrefabContents(TemplePrefabPath);
             try
             {
-                ScenarioObjectBinding binding = root.GetComponent<ScenarioObjectBinding>();
-                if (binding == null)
-                {
-                    binding = root.AddComponent<ScenarioObjectBinding>();
-                }
-                SetBindingKey(binding, ScenarioDataBuilder.TempleFloorKey);
+                ScenarioBindingEditor.Bind(root, ScenarioDataBuilder.TempleFloorKey);
 
                 Transform floor = root.transform.Find(TempleFloorName);
                 if (floor == null)
@@ -441,13 +433,6 @@ namespace DNPDemo.Editor
             material.SetFloat("_Metallic", 0f);
             AssetDatabase.CreateAsset(material, TempleFloorMaterialPath);
             return material;
-        }
-
-        static void SetBindingKey(ScenarioObjectBinding binding, string key)
-        {
-            var serialized = new SerializedObject(binding);
-            serialized.FindProperty("_key").stringValue = key;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
     }
 }

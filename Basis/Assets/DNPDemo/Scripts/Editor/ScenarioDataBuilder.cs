@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Background;
 using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
@@ -73,14 +74,75 @@ namespace DNPDemo.Editor
         /// <summary>Key of the dashed line that shows <see cref="LeftArmGuideKey"/> while step 11 waits for the stroke.</summary>
         public const string LeftArmGuideLineKey = "GuideLine_LeftArm";
 
-        /// <summary>Step 9: the arm turns inwards (towards the body, a negative angle about the shoulder's up) at most this far.</summary>
-        public const float ArmSlideMinAngle = -60f;
+        /// <summary>
+        /// Key of the hand mirror on its own (<see cref="ScenarioObjectBinding"/> on Statue_Original/Targets/HandMirror),
+        /// generated from the sketch of step 13 and moved to the right hand in step 14. Hidden at scene load, shown from
+        /// step 14 and hidden again once Ver 3.0 holds the mirror. It carries the zone that is grabbed.
+        /// </summary>
+        public const string HandMirrorKey = "HandMirror";
 
-        /// <summary>Step 9: the arm may turn outwards this far, so a small slip the wrong way does not stop it.</summary>
-        public const float ArmSlideMaxAngle = 10f;
+        /// <summary>
+        /// Key of the marker the hand mirror appears at when there is no sketch to place it by, and around which a
+        /// sketched mirror is kept (<see cref="MirrorSpawnMaxOffset"/>). Turned like the goal.
+        /// </summary>
+        public const string MirrorSpawnKey = "Spawn_HandMirror";
+
+        /// <summary>Key of the marker the hand mirror is moved to: the pose of the mirror Ver 3.0 holds in its right hand.</summary>
+        public const string MirrorGoalKey = "Goal_MirrorRightHand";
+
+        /// <summary>Key of the zone from the right shoulder to the mirror at the right hand, selected in step 15.</summary>
+        public const string RightArmToMirrorZoneKey = "Zone_RightArmToMirror";
+
+        /// <summary>Key of the zone around the right wrist and the mirror of Ver 3.0, selected in step 17.</summary>
+        public const string RightHandMirrorZoneKey = "Zone_RightHandMirror";
+
+        /// <summary>
+        /// Key of the translucent stand-in for Ver 3.0's right hand and mirror that step 17 twists about the wrist, like
+        /// <see cref="LeftArmProxyKey"/> in step 9. Hidden at scene load and shown only during step 17.
+        /// </summary>
+        public const string RightHandProxyKey = "RightHandProxy";
+
+        /// <summary>Key of the zone on the hand proxy that the pen's tip grabs, around the mirror.</summary>
+        public const string RightHandProxyGrabKey = "RightHandProxy_Grab";
+
+        /// <summary>Key of the right wrist joint the hand proxy twists about; the axis is its local up, along the forearm.</summary>
+        public const string RightWristPivotKey = "Pivot_RightWrist";
+
+        /// <summary>Key of the region of the right arm and the mirror, where the version transitions of steps 16 and 18 centre.</summary>
+        public const string RightArmFocusKey = "Focus_RightArm";
+
+        /// <summary>Id of step 13, whose sketch the hand mirror is generated from.</summary>
+        public const string DrawMirrorStepId = "s3-draw-mirror";
+
+        /// <summary>Step 14: the mirror appears at most this far from <see cref="MirrorSpawnKey"/>, in metres.</summary>
+        public const float MirrorSpawnMaxOffset = 0.8f;
+
+        /// <summary>
+        /// Step 14: the mirror may move this far from where it appeared, in metres. Enough to reach the goal from anywhere
+        /// it can appear (ScenarioSceneBindingTests checks it against the markers).
+        /// </summary>
+        public const float MirrorMaxDistance = 2.5f;
+
+        /// <summary>Step 17: the hand twists to this angle about the forearm, where Ver 3.1's mirror faces the head.</summary>
+        public const float WristTwistTargetAngle = VenusAssetBuilder.MirrorTwistDegrees;
+
+        /// <summary>Step 17: the hand may twist this much past 0° and past the target, so the target is easy to pass and come back to.</summary>
+        public const float WristTwistMargin = 30f;
+
+        /// <summary>Step 17: released within this many degrees of the target, the hand snaps to it.</summary>
+        public const float WristTwistSnapAngle = 12f;
+
+        /// <summary>Step 9: the arm may turn outwards (a negative angle) this far, so a small slip the wrong way does not stop it.</summary>
+        public const float ArmSlideMinAngle = -10f;
+
+        /// <summary>
+        /// Step 9: the arm turns inwards (towards the body: the left arm is on the +X side, so a positive angle about the
+        /// shoulder's up) at most this far.
+        /// </summary>
+        public const float ArmSlideMaxAngle = 60f;
 
         /// <summary>Step 9: released past this angle inwards, the slide is done.</summary>
-        public const float ArmSlideThresholdAngle = -25f;
+        public const float ArmSlideThresholdAngle = 25f;
 
         /// <summary>
         /// Key of the comparison table (<see cref="ScenarioObjectBinding"/> on the ComparisonTable root). Hidden at scene load
@@ -99,6 +161,9 @@ namespace DNPDemo.Editor
         public const float AppleMaxDistance = 0.4f;
 
         public const string CompletionBannerText = "WORKSHOP COMPLETE";
+
+        /// <summary>Step 21: the voice command that generates the temple background.</summary>
+        public const string TempleTranscript = "ヴィーナス像に似合う神殿の背景を生成";
 
         /// <summary>Hint of every voice command (<see cref="InteractionPart.Hint"/>).</summary>
         public const string VoiceHint = "トリガーを押している間に、指示の文をはっきり読み上げてください";
@@ -263,28 +328,40 @@ namespace DNPDemo.Editor
                     Version(VenusAssetBuilder.Ver20Id, LeftArmFocusKey),
                     B("あーなるほど。確かにこれは凄く綺麗ですね。力学的にも矛盾点がなさそうです。"),
                     A("左腕は良い感じですね。それでは次に右腕の話に移行しましょう。古典彫刻においては手鏡が林檎と並ぶ代表的なシンボルとされているので、右腕には手鏡があったと考えられます。一度3Dモデルにしてみますね。")),
-                Operation("s3-draw-mirror", "Scene 3 [A] 手鏡の線画を変換", DemoRole.PlayerA,
+                Operation(DrawMirrorStepId, "Scene 3 [A] 手鏡の線画を変換", DemoRole.PlayerA,
                     "空間ペンで空中に手鏡の線画を描け。「線画を西洋のアンティークな手鏡に変換」と音声指示せよ。",
                     WithHint(StrokePart.Sketch("空中に手鏡の線画を描く"), "トリガーを押したまま、手のひらほどの大きさで手鏡の形を描いてください"),
                     Voice("「線画を西洋のアンティークな手鏡に変換」と音声指示する", "線画を西洋のアンティークな手鏡に変換")),
-                Operation("s3-place-mirror", "Scene 3 [A] 手鏡を移動", DemoRole.PlayerA,
-                    "生成された手鏡を所定の位置に移動させよ。",
-                    Manipulate("手鏡を所定の位置へ移動する", "手鏡にペン先を当て、トリガーを押したまま右手の位置まで動かしてください")),
-                Operation("s3-grip-mirror", "Scene 3 [A] 鏡を握らせる", DemoRole.PlayerA,
-                    "続けて右肩から手鏡まで領域選択し、「鏡を握らせる」と発話せよ。",
-                    Select("右肩から手鏡までを範囲選択する", "右肩から手鏡までを、トリガーを押したままペン先でなぞってください"),
-                    Voice("「鏡を握らせる」と音声指示する", "鏡を握らせる")),
+                WithCues(Operation("s3-place-mirror", "Scene 3 [A] 手鏡を移動", DemoRole.PlayerA,
+                        "生成された手鏡を所定の位置に移動させよ。",
+                        WithHint(ManipulatePart.Translate("手鏡を右手の位置へ移動する", HandMirrorKey, MirrorGoalKey, MirrorMaxDistance),
+                            "光っている手鏡にペン先を当て、トリガーを押したまま水色の手鏡の位置まで動かしてください")),
+                    // The mirror generated from the sketch appears where the sketch was drawn.
+                    new PlaceAtSketchCue(HandMirrorKey, MirrorSpawnKey, DrawMirrorStepId, MirrorSpawnMaxOffset)),
+                WithCues(Operation("s3-grip-mirror", "Scene 3 [A] 鏡を握らせる", DemoRole.PlayerA,
+                        "続けて右肩から手鏡まで領域選択し、「鏡を握らせる」と発話せよ。",
+                        WithHint(new SelectionPart("右肩から手鏡までを範囲選択する", RightArmToMirrorZoneKey),
+                            "光っている右肩から手鏡までを、トリガーを押したままペン先でなぞってください"),
+                        Voice("「鏡を握らせる」と音声指示する", "鏡を握らせる")),
+                    // The stage puts the mirror back where it appeared when the step changes; this keeps the result of step 14.
+                    new MatchPoseCue(HandMirrorKey, MirrorGoalKey)),
                 Auto("s3-mirror-angle", "Scene 3 鏡の角度の指摘",
-                    Version(VenusAssetBuilder.Ver30Id),
+                    // From Ver 3.0 on the mirror is part of the model.
+                    new SetObjectActiveCue(HandMirrorKey, false),
+                    Version(VenusAssetBuilder.Ver30Id, RightArmFocusKey),
                     B("なるほど...手鏡を持っているのは納得ですが、生成されたモデルを見ると、手鏡の角度がおかしいかもしれませんね。なんというか、もっとヴィーナスの目線の先に手鏡がくる感じの方が良さそうです。"),
                     A("えーと、どんな感じでしょう？ よければBさんに修正をお任せしたいのですが。"),
                     B("承知しました。一旦、手首のひねりを少し調整してみましょう。")),
-                Operation("s3-adjust-wrist", "Scene 3 [B] 手首の角度を修正", DemoRole.PlayerB,
-                    "空間ペンで右手首と手鏡を領域選択し、空間ペンを用いながらヴィーナスの目線に合わせて鏡の角度を修正せよ。",
-                    Select("右手首と手鏡を範囲選択する", "右手首と手鏡を、トリガーを押したままペン先でなぞってください"),
-                    Manipulate("目線に合わせて鏡の角度を修正する", "手鏡にペン先を当て、トリガーを押したまま顔の方へ回してください")),
+                WithCues(Operation("s3-adjust-wrist", "Scene 3 [B] 手首の角度を修正", DemoRole.PlayerB,
+                        "空間ペンで右手首と手鏡を領域選択し、空間ペンを用いながらヴィーナスの目線に合わせて鏡の角度を修正せよ。",
+                        WithHint(new SelectionPart("右手首と手鏡を範囲選択する", RightHandMirrorZoneKey),
+                            "光っている右手首と手鏡を、トリガーを押したままペン先でなぞってください"),
+                        WithHint(TwistWristToFace(),
+                            "手鏡にペン先を当て、トリガーを押したまま水色の手鏡の向きまで回してください")),
+                    new SetObjectActiveCue(RightHandProxyKey, true)),
                 Auto("p2-review", "Phase 2 振り返りの提案",
-                    Version(VenusAssetBuilder.Ver31Id),
+                    new SetObjectActiveCue(RightHandProxyKey, false),
+                    Version(VenusAssetBuilder.Ver31Id, RightArmFocusKey),
                     A("あー、いいですね！ 視線と所作がぴったり合いました。"),
                     B("では、これまでの過程を振り返ってみましょう。最初の案と、今の案を並べてみてください。")),
                 WithCues(Operation("p2-compare", "Phase 2 [B] Ver 1.0 と比較", DemoRole.PlayerB,
@@ -296,10 +373,12 @@ namespace DNPDemo.Editor
                     A("うーん、やはりこうしてみると現在の案が一番美しく見えますね。"),
                     B("ええ、とてもいいかんじです。"),
                     A("最後に復元案のヴィーナスが神殿を背景にしても自然かどうか確かめてみましょう")),
+                // The background (the skybox and the lighting) applies to the whole space, so no statue is selected: the
+                // voice command generates it, and the background panel, opened on recognition, applies it.
                 Operation("p3-temple", "Phase 3 [A] 背景を神殿に", DemoRole.PlayerA,
-                    "復元案のヴィーナス像を領域選択。「選択した像の背景を神殿に変更」と音声指示せよ。",
-                    Select("像全体を範囲選択する", "像全体を、トリガーを押したままペン先で大きくなぞってください"),
-                    Voice("「選択した像の背景を神殿に変更」と音声指示する", "選択した像の背景を神殿に変更")),
+                    $"「{TempleTranscript}」と音声指示し、背景パネルで神殿を選んで「{BackgroundPanel.ApplyLabel}」を押せ。",
+                    Voice($"「{TempleTranscript}」と音声指示する", TempleTranscript),
+                    Background(templePreset)),
                 new()
                 {
                     Id = "closing",
@@ -359,11 +438,20 @@ namespace DNPDemo.Editor
             return part;
         }
 
-        // Stand-ins for selections and manipulations whose objects are not placed on the statue yet.
-        static InteractionPart Select(string instruction, string hint) =>
-            WithHint(new DummyInteractionPart(PenMode.Select, instruction), hint);
-        static InteractionPart Manipulate(string instruction, string hint) =>
-            WithHint(new DummyInteractionPart(PenMode.Manipulate, instruction), hint);
+        /// <summary>
+        /// Step 17: the hand proxy twists about the forearm (the wrist pivot's up) until the mirror faces the head, where
+        /// it snaps; that pose is Ver 3.1's.
+        /// </summary>
+        static ManipulatePart TwistWristToFace()
+        {
+            ManipulatePart part = ManipulatePart.RotateToTarget("目線に合わせて鏡の角度を修正する", RightHandProxyKey, RightWristPivotKey,
+                Vector3.up,
+                Mathf.Min(0f, WristTwistTargetAngle) - WristTwistMargin,
+                Mathf.Max(0f, WristTwistTargetAngle) + WristTwistMargin,
+                WristTwistTargetAngle, WristTwistSnapAngle);
+            part.GrabZoneKey = RightHandProxyGrabKey;
+            return part;
+        }
 
         static VoicePart Voice(string instruction, string transcript) => WithHint(new VoicePart(instruction, transcript), VoiceHint);
 
@@ -380,6 +468,20 @@ namespace DNPDemo.Editor
             string name = version != null ? version.DisplayName : versionId;
             return WithHint(new HistoryPart(HistoryInstruction(name), version), HistoryHint(name));
         }
+
+        static InteractionPart Background(EnvironmentPreset preset)
+        {
+            string name = preset != null ? preset.DisplayName : EnvironmentPresetBuilder.TempleDisplayName;
+            return WithHint(new BackgroundPart(BackgroundInstruction(name), preset), BackgroundHint(name));
+        }
+
+        /// <summary>Task HUD line of the part that applies the generated background <paramref name="presetName"/>.</summary>
+        public static string BackgroundInstruction(string presetName) =>
+            $"背景パネルで{presetName}を選び、「{BackgroundPanel.ApplyLabel}」を押す";
+
+        /// <summary>Hint of the part that applies the generated background <paramref name="presetName"/>.</summary>
+        public static string BackgroundHint(string presetName) =>
+            $"背景パネルを閉じたときは、メニューの「{BackgroundMenuProvider.MenuTitle}」で開けます。{presetName}のカードを押し、「{BackgroundPanel.ApplyLabel}」を押してください";
 
         /// <summary>Task HUD line of the step that calls <paramref name="versionName"/> back from the history.</summary>
         public static string HistoryInstruction(string versionName) =>
