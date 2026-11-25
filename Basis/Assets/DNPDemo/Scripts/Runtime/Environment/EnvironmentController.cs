@@ -51,7 +51,6 @@ namespace DNPDemo.Environment
             public float DirectionalIntensity;
             public Quaternion DirectionalRotation;
             public LightShadows DirectionalShadows;
-            public LightShadowResolution DirectionalShadowResolution;
             public float DirectionalShadowStrength;
             public float DirectionalShadowBias;
             public float DirectionalShadowNormalBias;
@@ -64,7 +63,6 @@ namespace DNPDemo.Environment
             public float SpotAngle;
             public float SpotInnerAngle;
             public LightShadows SpotShadows;
-            public LightShadowResolution SpotShadowResolution;
             public float SpotShadowStrength;
             public float SpotShadowBias;
             public float SpotShadowNormalBias;
@@ -94,7 +92,6 @@ namespace DNPDemo.Environment
                     DirectionalIntensity = directional.Intensity,
                     DirectionalRotation = Quaternion.Euler(directional.Rotation),
                     DirectionalShadows = directional.Shadows,
-                    DirectionalShadowResolution = directional.ShadowResolution,
                     DirectionalShadowStrength = directional.ShadowStrength,
                     DirectionalShadowBias = directional.ShadowBias,
                     DirectionalShadowNormalBias = directional.ShadowNormalBias,
@@ -107,7 +104,6 @@ namespace DNPDemo.Environment
                     SpotAngle = spot.SpotAngle,
                     SpotInnerAngle = spot.InnerSpotAngle,
                     SpotShadows = spot.Shadows,
-                    SpotShadowResolution = spot.ShadowResolution,
                     SpotShadowStrength = spot.ShadowStrength,
                     SpotShadowBias = spot.ShadowBias,
                     SpotShadowNormalBias = spot.ShadowNormalBias,
@@ -140,7 +136,6 @@ namespace DNPDemo.Environment
                     DirectionalIntensity = Mathf.Lerp(from.DirectionalIntensity, to.DirectionalIntensity, t),
                     DirectionalRotation = Quaternion.Slerp(from.DirectionalRotation, to.DirectionalRotation, t),
                     DirectionalShadows = t < 0.5f ? from.DirectionalShadows : to.DirectionalShadows,
-                    DirectionalShadowResolution = t < 0.5f ? from.DirectionalShadowResolution : to.DirectionalShadowResolution,
                     DirectionalShadowStrength = Mathf.Lerp(from.DirectionalShadowStrength, to.DirectionalShadowStrength, t),
                     DirectionalShadowBias = Mathf.Lerp(from.DirectionalShadowBias, to.DirectionalShadowBias, t),
                     DirectionalShadowNormalBias = Mathf.Lerp(from.DirectionalShadowNormalBias, to.DirectionalShadowNormalBias, t),
@@ -153,7 +148,6 @@ namespace DNPDemo.Environment
                     SpotAngle = Mathf.Lerp(from.SpotAngle, to.SpotAngle, t),
                     SpotInnerAngle = Mathf.Lerp(from.SpotInnerAngle, to.SpotInnerAngle, t),
                     SpotShadows = t < 0.5f ? from.SpotShadows : to.SpotShadows,
-                    SpotShadowResolution = t < 0.5f ? from.SpotShadowResolution : to.SpotShadowResolution,
                     SpotShadowStrength = Mathf.Lerp(from.SpotShadowStrength, to.SpotShadowStrength, t),
                     SpotShadowBias = Mathf.Lerp(from.SpotShadowBias, to.SpotShadowBias, t),
                     SpotShadowNormalBias = Mathf.Lerp(from.SpotShadowNormalBias, to.SpotShadowNormalBias, t),
@@ -343,7 +337,11 @@ namespace DNPDemo.Environment
             }
             // The snapshot shader samples the same properties as the sky, so it bakes exactly what the sky shows.
             _snapshotMaterial.CopyPropertiesFromMaterial(_skyboxMaterial);
+            // Blit leaves its destination as the active render texture; put the previous one back so the snapshot is not
+            // still active when it is released at the end of the transition.
+            RenderTexture previousActive = RenderTexture.active;
             Graphics.Blit(null, snapshot, _snapshotMaterial);
+            RenderTexture.active = previousActive;
             _activeSkySnapshot = snapshot;
         }
 
@@ -384,7 +382,6 @@ namespace DNPDemo.Environment
                 DirectionalIntensity = _directionalLight.intensity,
                 DirectionalRotation = _directionalLight.transform.rotation,
                 DirectionalShadows = _directionalLight.shadows,
-                DirectionalShadowResolution = _directionalLight.shadowResolution,
                 DirectionalShadowStrength = _directionalLight.shadowStrength,
                 DirectionalShadowBias = _directionalLight.shadowBias,
                 DirectionalShadowNormalBias = _directionalLight.shadowNormalBias,
@@ -397,7 +394,6 @@ namespace DNPDemo.Environment
                 SpotAngle = _spotLight.spotAngle,
                 SpotInnerAngle = _spotLight.innerSpotAngle,
                 SpotShadows = _spotLight.shadows,
-                SpotShadowResolution = _spotLight.shadowResolution,
                 SpotShadowStrength = _spotLight.shadowStrength,
                 SpotShadowBias = _spotLight.shadowBias,
                 SpotShadowNormalBias = _spotLight.shadowNormalBias,
@@ -431,7 +427,6 @@ namespace DNPDemo.Environment
                 _directionalLight.intensity = state.DirectionalIntensity;
                 _directionalLight.transform.rotation = state.DirectionalRotation;
                 _directionalLight.shadows = state.DirectionalShadows;
-                _directionalLight.shadowResolution = state.DirectionalShadowResolution;
                 _directionalLight.shadowStrength = state.DirectionalShadowStrength;
                 _directionalLight.shadowBias = state.DirectionalShadowBias;
                 _directionalLight.shadowNormalBias = state.DirectionalShadowNormalBias;
@@ -449,7 +444,6 @@ namespace DNPDemo.Environment
                 _spotLight.spotAngle = state.SpotAngle;
                 _spotLight.innerSpotAngle = state.SpotInnerAngle;
                 _spotLight.shadows = state.SpotShadows;
-                _spotLight.shadowResolution = state.SpotShadowResolution;
                 _spotLight.shadowStrength = state.SpotShadowStrength;
                 _spotLight.shadowBias = state.SpotShadowBias;
                 _spotLight.shadowNormalBias = state.SpotShadowNormalBias;

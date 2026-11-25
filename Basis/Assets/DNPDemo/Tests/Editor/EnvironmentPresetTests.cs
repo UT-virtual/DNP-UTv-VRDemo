@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
 
 namespace DNPDemo.Tests
 {
@@ -266,6 +267,43 @@ namespace DNPDemo.Tests
             Assert.IsFalse(fixture.Spot.gameObject.activeSelf, "The exhibition keeps the spot light as the temple left it.");
             Assert.AreSame(_exhibition.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
             Assert.AreEqual(1f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.001f);
+        }
+
+        [Test]
+        public void SwitchingEnvironmentsLogsNoWarnings()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            fixture.Controller.ApplyInstant(_exhibition);
+            var logged = new System.Collections.Generic.List<string>();
+            void Collect(string message, string stackTrace, LogType type)
+            {
+                if (type != LogType.Log)
+                {
+                    logged.Add($"{type}: {message}");
+                }
+            }
+
+            Application.logMessageReceived += Collect;
+            try
+            {
+                // Every frame of a transition applies the lights, so a setter that only the Built-In pipeline supports
+                // (Light.shadowResolution) would warn once per light per frame.
+                fixture.Controller.TransitionTo(_temple, 2f);
+                for (int frame = 0; frame < 20; frame++)
+                {
+                    fixture.Controller.AdvanceTransition(0.1f);
+                }
+                fixture.Controller.ApplyInstant(_exhibition);
+                fixture.Controller.ApplyInstant(_temple);
+                fixture.Stage.ResetToBaseline();
+            }
+            finally
+            {
+                Application.logMessageReceived -= Collect;
+            }
+
+            Assert.IsEmpty(logged, string.Join("\n", logged));
+            LogAssert.NoUnexpectedReceived();
         }
 
         [Test]

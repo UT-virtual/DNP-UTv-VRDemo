@@ -22,7 +22,6 @@ namespace DNPDemo.Environment
         public float Intensity;
         public Vector3 Rotation;
         public LightShadows Shadows;
-        public LightShadowResolution ShadowResolution;
         public float ShadowStrength;
         public float ShadowBias;
         public float ShadowNormalBias;
@@ -40,7 +39,6 @@ namespace DNPDemo.Environment
         public float SpotAngle;
         public float InnerSpotAngle;
         public LightShadows Shadows;
-        public LightShadowResolution ShadowResolution;
         public float ShadowStrength;
         public float ShadowBias;
         public float ShadowNormalBias;
