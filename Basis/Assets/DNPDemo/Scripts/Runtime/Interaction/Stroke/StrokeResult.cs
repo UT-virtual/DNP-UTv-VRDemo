@@ -25,6 +25,29 @@ namespace DNPDemo.Interaction.Stroke
         /// <summary>The finished lines, oldest first. Empty when nothing was drawn (for example, when the step was skipped).</summary>
         public IReadOnlyList<IReadOnlyList<Vector3>> Lines { get; }
 
+        /// <summary>The world-space box around every point of every line. False when there are no points.</summary>
+        public bool TryGetBounds(out Bounds bounds)
+        {
+            bounds = default;
+            bool any = false;
+            foreach (IReadOnlyList<Vector3> line in Lines)
+            {
+                foreach (Vector3 point in line)
+                {
+                    if (any)
+                    {
+                        bounds.Encapsulate(point);
+                    }
+                    else
+                    {
+                        bounds = new Bounds(point, Vector3.zero);
+                        any = true;
+                    }
+                }
+            }
+            return any;
+        }
+
         public static StrokeResult Capture(ScenarioStep step, StrokePart part, StrokeSet set)
         {
             var lines = new List<IReadOnlyList<Vector3>>();

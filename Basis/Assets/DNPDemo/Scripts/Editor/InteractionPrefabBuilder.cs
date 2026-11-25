@@ -130,7 +130,8 @@ namespace DNPDemo.Editor
 
         /// <summary>
         /// Tool for <see cref="StrokePart"/>, with the view that draws the lines. The pen and the stage live in
-        /// DemoSystems, so <see cref="ScenarioInstaller"/> wires them when it places the tool there.
+        /// DemoSystems, so <see cref="ScenarioInstaller"/> wires them when it places the tool there. The tool carries the
+        /// key <see cref="StrokeTool.BindingKey"/>, through which cues read the last sketch.
         /// </summary>
         public static GameObject CreateStrokeTool()
         {
@@ -147,6 +148,7 @@ namespace DNPDemo.Editor
                 Assign(view, "_material", material);
                 var tool = root.AddComponent<StrokeTool>();
                 Assign(tool, "_view", view);
+                ScenarioBindingEditor.Bind(root, StrokeTool.BindingKey);
                 Directory.CreateDirectory(Path.GetDirectoryName(StrokeToolPath));
                 GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, StrokeToolPath);
                 Debug.Log($"[DNPDemo] Created {StrokeToolPath}");
