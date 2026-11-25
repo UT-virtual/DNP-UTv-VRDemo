@@ -252,6 +252,44 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void LeftAndRightKeysOnTheStatueAreHerOwnSides()
+        {
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(VenusStatueKeys.Main, out UnityEngine.GameObject statue));
+            // The statue faces -Z of its anchor, so her left is +X and her right is -X (docs/PLAN.md §2.5).
+            UnityEngine.Transform anchor = statue.transform.parent;
+            int left = 0;
+            int right = 0;
+            foreach (KeyValuePair<string, UnityEngine.GameObject> pair in bindings.Objects)
+            {
+                if (pair.Value == null || !pair.Value.transform.IsChildOf(anchor))
+                {
+                    continue;
+                }
+                // A curve sits at the origin and lies where its points are; other objects on the centre line (such as the
+                // dashed line under the curve) are containers that tell no side.
+                UnityEngine.Vector3 point = pair.Value.TryGetComponent(out GuideCurve curve) ? curve.Evaluate(0.5f) : pair.Value.transform.position;
+                float x = anchor.InverseTransformPoint(point).x;
+                if (UnityEngine.Mathf.Abs(x) < 0.01f)
+                {
+                    continue;
+                }
+                if (pair.Key.Contains("Left"))
+                {
+                    Assert.Greater(x, 0f, $"'{pair.Key}' should be on her left, the +X side.");
+                    left++;
+                }
+                else if (pair.Key.Contains("Right"))
+                {
+                    Assert.Less(x, 0f, $"'{pair.Key}' should be on her right, the -X side.");
+                    right++;
+                }
+            }
+            Assert.Greater(left, 0, "The statue should have keys for her left arm.");
+            Assert.Greater(right, 0, "The statue should have keys for her right arm.");
+        }
+
+        [Test]
         public void CollectingAnUnloadedSceneGivesAnEmptySet()
         {
             // A scene that is still loading (as in Awake) counts as not loaded, and has nothing to collect yet.

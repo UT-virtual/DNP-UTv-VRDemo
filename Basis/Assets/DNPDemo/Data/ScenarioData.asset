@@ -485,12 +485,12 @@ MonoBehaviour:
         SnapDistance: 0.05
         PivotKey: Pivot_LeftShoulder
         Axis: {x: 0, y: 1, z: 0}
-        MinAngle: -60
-        MaxAngle: 10
+        MinAngle: -10
+        MaxAngle: 60
         Completion: 1
         TargetAngle: 45
         SnapAngle: 10
-        ThresholdAngle: -25
+        ThresholdAngle: 25
     - rid: 1662061916731736507
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
@@ -696,10 +696,10 @@ MonoBehaviour:
         SnapDistance: 0.05
         PivotKey: Pivot_RightWrist
         Axis: {x: 0, y: 1, z: 0}
-        MinAngle: -80
-        MaxAngle: 30
+        MinAngle: -30
+        MaxAngle: 80
         Completion: 0
-        TargetAngle: -50
+        TargetAngle: 50
         SnapAngle: 12
         ThresholdAngle: 30
     - rid: 1662061916731736532
