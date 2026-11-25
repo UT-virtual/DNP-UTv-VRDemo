@@ -12,7 +12,15 @@ namespace DNPDemo.Tests
 {
     public class ScenarioDataTests
     {
-        static List<ScenarioStep> DefaultSteps => ScenarioDataBuilder.CreateDefaultSteps();
+        static List<ScenarioStep> _defaultSteps;
+
+        [OneTimeSetUp]
+        public static void OneTimeSetUp()
+        {
+            _defaultSteps = ScenarioDataBuilder.CreateDefaultSteps();
+        }
+
+        static List<ScenarioStep> DefaultSteps => _defaultSteps;
 
         [Test]
         public void DefaultScenarioIsValid()

@@ -108,5 +108,41 @@ namespace DNPDemo.Tests
             Assert.IsFalse(glow.gameObject.activeSelf);
             Assert.IsFalse(head.gameObject.activeSelf);
         }
+
+        [Test]
+        public void EffectArrivesAtEndThenFades()
+        {
+            GuideSnapEffect effect = CreateEffect(out _, out _, out LineRenderer glow, out _);
+            effect.Play(0.8f);
+            Assert.IsFalse(effect.HasArrived);
+
+            // Travel through the entire curve.
+            effect.Tick(0.8f);
+            Assert.IsTrue(effect.HasArrived, "HasArrived should be true once the curve is complete");
+            Assert.IsTrue(glow.gameObject.activeSelf, "Glow should still be active during fade");
+
+            // Fade out completes.
+            effect.Tick(0.5f);
+            Assert.IsFalse(effect.IsPlaying);
+            Assert.IsFalse(glow.gameObject.activeSelf);
+        }
+
+        [Test]
+        public void EffectArrivesBeforeFadeEnds()
+        {
+            GuideSnapEffect effect = CreateEffect(out _, out _, out LineRenderer glow, out _);
+            effect.Play(1f);
+            Assert.IsFalse(effect.HasArrived);
+
+            // Tick to arrival time (1 second into a 1 second travel).
+            effect.Tick(1f);
+            Assert.IsTrue(effect.HasArrived, "Should arrive after travel time");
+
+            // Glow is still visible during fade.
+            int beforeCount = glow.positionCount;
+            effect.Tick(0.2f);
+            Assert.Greater(beforeCount, 0, "Glow was visible at arrival");
+            Assert.IsFalse(effect.IsPlaying, "Effect should still be fading after travel");
+        }
     }
 }
