@@ -126,9 +126,16 @@ namespace DNPDemo.Editor
         }
 
         /// <summary>
-        /// Steps whose statue change has a sound, played by a <see cref="SoundCue"/> just before the step's first
-        /// <see cref="StatueVersionCue"/>. A part added to the statue is <see cref="SeEvent.Generate"/>, a reshape is
-        /// <see cref="SeEvent.Morph"/>. The comparison table (p3-temple-proposal) and the temple (closing) have none.
+        /// Volume of a new sound cue of <see cref="VersionSounds"/>. The clips are normalized on import, so at full volume
+        /// they drown the voice lines. A cue already in the asset keeps the volume it has.
+        /// </summary>
+        public const float VersionSoundVolume = 0.3f;
+
+        /// <summary>
+        /// Steps whose statue change has a sound, played by a <see cref="SoundCue"/> right after the step's first line
+        /// (<see cref="EnsureVersionSounds"/>). A part added to
+        /// the statue is <see cref="SeEvent.Generate"/>, a reshape is <see cref="SeEvent.Morph"/>. The comparison table
+        /// (p3-temple-proposal) and the temple (closing) have none.
         /// </summary>
         public static readonly IReadOnlyList<(string StepId, SeEvent Sound)> VersionSounds = new[]
         {
@@ -141,8 +148,8 @@ namespace DNPDemo.Editor
         };
 
         /// <summary>
-        /// Adds the sound cues of <see cref="VersionSounds"/> to the existing asset, or fills their empty clips, and saves
-        /// it. Run from "DNP Demo/Setup/Install Sound Effects".
+        /// Adds the sound cues of <see cref="VersionSounds"/> to the existing asset, or moves them or fills their empty
+        /// clips, and saves it. Run from "DNP Demo/Setup/Install Sound Effects".
         /// </summary>
         public static void EnsureVersionSoundsInExistingAsset()
         {
@@ -162,8 +169,11 @@ namespace DNPDemo.Editor
         }
 
         /// <summary>
-        /// Puts the sound cue of <see cref="VersionSounds"/> before the first statue cue of each listed step. A sound cue
-        /// already there keeps its clip and volume unless the clip is empty. Returns true when anything changed.
+        /// Puts the sound cue of <see cref="VersionSounds"/> right after the first line of each listed step, or right before
+        /// it when the step has no other line: after its only line the step would end at once, and changing the step stops
+        /// the effects. Overlapping a line is fine, the effects are lowered while lines play (<see cref="SeDucking"/>). A
+        /// sound cue already in the step is moved there and keeps its clip and volume unless the clip is empty. Returns true
+        /// when anything changed.
         /// </summary>
         public static bool EnsureVersionSounds(IReadOnlyList<ScenarioStep> steps)
         {
@@ -171,26 +181,41 @@ namespace DNPDemo.Editor
             foreach ((string stepId, SeEvent sound) in VersionSounds)
             {
                 ScenarioStep step = FindStep(steps, stepId);
-                int index = step?.Cues?.FindIndex(cue => cue is StatueVersionCue) ?? -1;
-                if (index < 0)
+                if (step?.Cues == null || step.Cues.FindIndex(cue => cue is LineCue) < 0)
                 {
-                    Debug.LogWarning($"[DNPDemo] ステップ {stepId} に像の版のキューがないため、効果音のキューを置けません。");
+                    Debug.LogWarning($"[DNPDemo] ステップ {stepId} に台詞がないため、効果音のキューを置けません。");
                     continue;
                 }
                 AudioClip clip = SoundEffectsSetup.LoadClip(sound);
-                if (index > 0 && step.Cues[index - 1] is SoundCue existing)
+                int previousIndex = step.Cues.FindIndex(c => c is SoundCue);
+                SoundCue cue;
+                if (previousIndex < 0)
                 {
-                    if (existing.Clip == null && clip != null)
+                    cue = new SoundCue { Clip = clip, Volume = VersionSoundVolume };
+                }
+                else
+                {
+                    cue = (SoundCue)step.Cues[previousIndex];
+                    step.Cues.RemoveAt(previousIndex);
+                    if (cue.Clip == null && clip != null)
                     {
-                        existing.Clip = clip;
+                        cue.Clip = clip;
                         changed = true;
                     }
-                    continue;
                 }
-                step.Cues.Insert(index, new SoundCue { Clip = clip });
-                changed = true;
+                int index = VersionSoundIndex(step.Cues);
+                step.Cues.Insert(index, cue);
+                changed |= index != previousIndex;
             }
             return changed;
+        }
+
+        /// <summary>Where the sound cue goes in <paramref name="cues"/> (without it): see <see cref="EnsureVersionSounds"/>.</summary>
+        public static int VersionSoundIndex(List<ScenarioCue> cues)
+        {
+            int firstLine = cues.FindIndex(c => c is LineCue);
+            bool onlyLine = cues.FindLastIndex(c => c is LineCue) == firstLine;
+            return onlyLine ? firstLine : firstLine + 1;
         }
 
         static ScenarioStep FindStep(IReadOnlyList<ScenarioStep> steps, string id)

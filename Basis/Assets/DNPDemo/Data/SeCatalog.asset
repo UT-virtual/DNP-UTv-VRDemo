@@ -15,28 +15,28 @@ MonoBehaviour:
   _entries:
   - Event: 0
     Clip: {fileID: 8300000, guid: 97ed247aa660b5441a31773995e1c3f2, type: 3}
-    Volume: 1
+    Volume: 0.3
   - Event: 1
     Clip: {fileID: 8300000, guid: c8dfd2ac6dbc750429367399b31dbb25, type: 3}
-    Volume: 1
+    Volume: 0.3
   - Event: 2
     Clip: {fileID: 8300000, guid: eb1d1e08e06285d4a864a686bc106afe, type: 3}
-    Volume: 1
+    Volume: 0.3
   - Event: 3
     Clip: {fileID: 8300000, guid: 02ae30dce9e1869458727a34a9e2cfc7, type: 3}
-    Volume: 1
+    Volume: 0.3
   - Event: 4
     Clip: {fileID: 8300000, guid: b78287148d9aca34b8f5f581335a9c0e, type: 3}
-    Volume: 1
+    Volume: 0.3
   - Event: 5
     Clip: {fileID: 8300000, guid: 10bd126b124c4e743914a0e2c0d914b9, type: 3}
-    Volume: 1
+    Volume: 0.3
   - Event: 6
     Clip: {fileID: 8300000, guid: 005a62f83a4cc0d48a79da9867ce44b0, type: 3}
-    Volume: 1
+    Volume: 0.3
   - Event: 7
     Clip: {fileID: 8300000, guid: 4fe746e95895164469e6f267b6c83b24, type: 3}
-    Volume: 1
+    Volume: 0.3
   - Event: 8
     Clip: {fileID: 8300000, guid: a49743b48efc1c54b8c95b0bf60dea01, type: 3}
-    Volume: 1
+    Volume: 0.3

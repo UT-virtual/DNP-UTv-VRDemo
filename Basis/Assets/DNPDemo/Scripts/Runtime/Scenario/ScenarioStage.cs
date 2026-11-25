@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DNPDemo.Audio;
 using DNPDemo.Presentation;
 using UnityEngine;
 
@@ -39,7 +40,19 @@ namespace DNPDemo.Scenario
         readonly Dictionary<GameObject, Baseline> _baselines = new();
         readonly List<IStageResettable> _resettables = new();
         readonly HashSet<string> _reportedMissing = new();
+        readonly SeDucking _effectsDucking = new();
         ScenarioBindingSet _bindings;
+
+        // The effects source's volume as set in the inspector; the ducking gain multiplies it every frame.
+        float _effectsVolume = 1f;
+
+        void Awake()
+        {
+            if (_effects != null)
+            {
+                _effectsVolume = _effects.volume;
+            }
+        }
 
         /// <summary>
         /// Collects the bindings before any cue runs, so the baseline is the state at scene load. Awake is too early:
@@ -48,6 +61,24 @@ namespace DNPDemo.Scenario
         void Start()
         {
             EnsureBindings();
+        }
+
+        /// <summary>Lowers the effects (sound cues) while a line plays (<see cref="SeDucking"/>).</summary>
+        void Update()
+        {
+            if (_effects != null)
+            {
+                _effects.volume = _effectsVolume * _effectsDucking.Step(IsLinePlaying, Time.unscaledDeltaTime);
+            }
+        }
+
+        void OnDisable()
+        {
+            _effectsDucking.Reset();
+            if (_effects != null)
+            {
+                _effects.volume = _effectsVolume;
+            }
         }
 
         public void ShowLine(ScenarioSpeaker speaker, string text, AudioClip voice)
@@ -65,6 +96,23 @@ namespace DNPDemo.Scenario
                 binding.Voice.Stop();
                 binding.Voice.clip = voice;
                 binding.Voice.Play();
+            }
+        }
+
+        /// <summary>True while any speaker's voice (narrator or scholar) is playing on this device.</summary>
+        public bool IsLinePlaying
+        {
+            get
+            {
+                EnsureBindings();
+                foreach (ScenarioSpeakerBinding binding in Bindings.Speakers.Values)
+                {
+                    if (binding != null && binding.Voice != null && binding.Voice.isPlaying)
+                    {
+                        return true;
+                    }
+                }
+                return false;
             }
         }
 

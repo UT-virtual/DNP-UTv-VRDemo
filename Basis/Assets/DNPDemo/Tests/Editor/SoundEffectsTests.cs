@@ -47,6 +47,76 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void SoundWaitsForTheLineAndPlaysWhenItEnds()
+        {
+            var hold = new SeHold();
+            Assert.IsFalse(hold.Request(SeEvent.SelectConfirm, now: 10f, linePlaying: true), "Held while a line plays.");
+            Assert.IsFalse(hold.TryRelease(10.5f, linePlaying: true, out _), "Still held while the line plays.");
+            Assert.IsTrue(hold.TryRelease(11f, linePlaying: false, out SeEvent released), "Released once the line ended.");
+            Assert.AreEqual(SeEvent.SelectConfirm, released);
+            Assert.IsFalse(hold.TryRelease(11.1f, linePlaying: false, out _), "Released only once.");
+        }
+
+        [Test]
+        public void SoundPlaysAtOnceWithoutALine()
+        {
+            var hold = new SeHold();
+            Assert.IsTrue(hold.Request(SeEvent.Snap, now: 0f, linePlaying: false));
+            Assert.IsFalse(hold.IsHolding);
+        }
+
+        [Test]
+        public void NewerSoundReplacesTheHeldOne()
+        {
+            var hold = new SeHold();
+            hold.Request(SeEvent.VoiceStart, now: 0f, linePlaying: true);
+            hold.Request(SeEvent.Fail, now: 0.5f, linePlaying: true);
+            Assert.IsTrue(hold.TryRelease(1f, linePlaying: false, out SeEvent released));
+            Assert.AreEqual(SeEvent.Fail, released);
+        }
+
+        [Test]
+        public void SoundHeldTooLongIsDropped()
+        {
+            var hold = new SeHold();
+            hold.Request(SeEvent.Complete, now: 0f, linePlaying: true);
+            Assert.IsFalse(hold.TryRelease(SeHold.MaxWaitSeconds + 0.1f, linePlaying: false, out _));
+            Assert.IsFalse(hold.IsHolding, "A dropped sound is not played later.");
+        }
+
+        [Test]
+        public void EffectsAreLoweredWhileALinePlays()
+        {
+            var ducking = new SeDucking();
+            ducking.Step(linePlaying: true, deltaTime: SeDucking.FadeSeconds * 2f);
+            Assert.AreEqual(SeDucking.LineGain, ducking.Gain, 1e-5f);
+            ducking.Step(linePlaying: true, deltaTime: 1f);
+            Assert.AreEqual(SeDucking.LineGain, ducking.Gain, 1e-5f, "Stays down while the line goes on.");
+        }
+
+        [Test]
+        public void EffectsComeBackWhenTheLineEnds()
+        {
+            var ducking = new SeDucking();
+            ducking.Step(linePlaying: true, deltaTime: 1f);
+            ducking.Step(linePlaying: false, deltaTime: SeDucking.FadeSeconds * 2f);
+            Assert.AreEqual(1f, ducking.Gain, 1e-5f);
+        }
+
+        [Test]
+        public void EffectsFadeRatherThanJump()
+        {
+            var ducking = new SeDucking();
+            float down = ducking.Step(linePlaying: true, deltaTime: SeDucking.FadeSeconds * 0.5f);
+            Assert.Greater(down, SeDucking.LineGain, "Half way down after half the fade.");
+            Assert.Less(down, 1f);
+            ducking.Step(linePlaying: true, deltaTime: 1f);
+            float up = ducking.Step(linePlaying: false, deltaTime: SeDucking.FadeSeconds * 0.5f);
+            Assert.Greater(up, SeDucking.LineGain, "Half way up after half the fade.");
+            Assert.Less(up, 1f);
+        }
+
+        [Test]
         public void EveryEventHasAFileName()
         {
             foreach (SeEvent seEvent in System.Enum.GetValues(typeof(SeEvent)))
@@ -56,7 +126,7 @@ namespace DNPDemo.Tests
         }
 
         [Test]
-        public void DefaultStepsPlayTheVersionSoundBeforeTheStatueChanges()
+        public void DefaultStepsPlayTheVersionSoundAfterTheFirstLine()
         {
             AssertVersionSounds(ScenarioDataBuilder.CreateDefaultSteps(), "CreateDefaultSteps");
         }
@@ -88,14 +158,16 @@ namespace DNPDemo.Tests
             Assert.IsNotNull(player, $"InteractionRunner._sounds is not set (run {InstallMenu}).");
             var so = new SerializedObject(player);
             Assert.IsNotNull(so.FindProperty("_catalog").objectReferenceValue, "SePlayer._catalog is not set.");
+            Assert.IsNotNull(so.FindProperty("_stage").objectReferenceValue, $"SePlayer._stage is not set, so sounds do not wait for lines (run {InstallMenu}).");
             var source = so.FindProperty("_source").objectReferenceValue as AudioSource;
             Assert.IsNotNull(source, "SePlayer._source is not set.");
             Assert.AreEqual(0f, source.spatialBlend, "Interaction sounds are not positional.");
         }
 
         /// <summary>
-        /// Each step of <see cref="ScenarioDataBuilder.VersionSounds"/> has its sound cue right before its first statue cue,
-        /// with the clip of the event when that file is placed, and no other step has a sound cue.
+        /// Each step of <see cref="ScenarioDataBuilder.VersionSounds"/> has its sound cue right after its first line (before
+        /// it when it is the only line), never last and never holding the step, with the clip of the event when that file is
+        /// placed; no other step has a sound cue.
         /// </summary>
         static void AssertVersionSounds(IReadOnlyList<ScenarioStep> steps, string source)
         {
@@ -116,13 +188,18 @@ namespace DNPDemo.Tests
                 }
                 found++;
                 Assert.AreEqual(1, soundCount, $"{source}: {step.Id} must have one sound cue.");
-                int index = cues.FindIndex(cue => cue is StatueVersionCue);
-                Assert.Greater(index, 0, $"{source}: {step.Id} has no statue cue after its sound.");
-                Assert.IsInstanceOf<SoundCue>(cues[index - 1], $"{source}: the sound of {step.Id} must come right before the statue cue.");
+                Assert.GreaterOrEqual(cues.FindIndex(cue => cue is LineCue), 0, $"{source}: {step.Id} has no line.");
+                int expectedIndex = ScenarioDataBuilder.VersionSoundIndex(cues.FindAll(cue => cue is not SoundCue));
+                var soundCue = cues[expectedIndex] as SoundCue;
+                Assert.IsNotNull(soundCue,
+                    $"{source}: the sound of {step.Id} must come right after its first line (before it when it is the only line).");
+                Assert.Less(expectedIndex, cues.Count - 1,
+                    $"{source}: the sound of {step.Id} must not be the last cue, or the step change stops it at once.");
+                Assert.IsFalse(soundCue.WaitForEnd, $"{source}: the sound of {step.Id} must not hold the step.");
                 AudioClip clip = SoundEffectsSetup.LoadClip(sound);
                 if (clip != null)
                 {
-                    Assert.AreSame(clip, ((SoundCue)cues[index - 1]).Clip, $"{source}: {step.Id} plays {SoundEffectsSetup.FileNames[sound]}.");
+                    Assert.AreSame(clip, soundCue.Clip, $"{source}: {step.Id} plays {SoundEffectsSetup.FileNames[sound]}.");
                 }
             }
             Assert.AreEqual(expected.Count, found, $"{source}: a step of VersionSounds is missing.");
