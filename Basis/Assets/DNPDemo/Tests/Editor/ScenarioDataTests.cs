@@ -225,7 +225,7 @@ namespace DNPDemo.Tests
                 ["s3-grip-mirror"] = new[] { PenMode.Select, PenMode.Voice },
                 ["s3-adjust-wrist"] = new[] { PenMode.Select, PenMode.Manipulate },
                 ["p2-compare"] = new[] { PenMode.Panel },
-                ["p3-temple"] = new[] { PenMode.Select, PenMode.Voice },
+                ["p3-temple"] = new[] { PenMode.Voice, PenMode.Panel },
             };
             foreach (ScenarioStep step in DefaultSteps)
             {
@@ -244,16 +244,13 @@ namespace DNPDemo.Tests
         }
 
         [Test]
-        public void SceneOneToThreeOperationsRunOnTheirTools()
+        public void EveryOperationRunsOnItsTool()
         {
-            List<ScenarioStep> steps = DefaultSteps;
-            int wrist = steps.FindIndex(step => step.Id == "s3-adjust-wrist");
-            Assert.AreEqual(17, wrist);
-            for (int i = 0; i <= wrist + 1; i++)
+            foreach (ScenarioStep step in DefaultSteps)
             {
-                foreach (InteractionPart part in steps[i].Interaction)
+                foreach (InteractionPart part in step.Interaction)
                 {
-                    Assert.IsNotInstanceOf<DummyInteractionPart>(part, $"{steps[i].Id}: steps 0 to 18 are played with the pen, not stand-ins.");
+                    Assert.IsNotInstanceOf<DummyInteractionPart>(part, $"{step.Id}: every operation is played with its tool, not a stand-in.");
                 }
             }
         }

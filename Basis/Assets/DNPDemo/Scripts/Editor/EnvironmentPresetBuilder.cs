@@ -11,6 +11,10 @@ namespace DNPDemo.Editor
     public static class EnvironmentPresetBuilder
     {
         public const string DataFolder = DNPDemoProjectSetup.Root + "/Data/Environment";
+        /// <summary>Display names of the presets (<see cref="EnvironmentPreset.DisplayName"/>).</summary>
+        public const string ExhibitionDisplayName = "展示室";
+        public const string TempleDisplayName = "神殿";
+
         public const string ExhibitionPresetPath = DataFolder + "/EnvironmentPreset_Exhibition.asset";
         public const string TemplePresetPath = DataFolder + "/EnvironmentPreset_Temple.asset";
         public const string ExhibitionPanoramaPath = DNPDemoProjectSetup.Root + "/Art/Environment/Environment_Exhibition_Panorama.png";
@@ -51,6 +55,7 @@ namespace DNPDemo.Editor
             EnsurePreset(
                 ExhibitionPresetPath,
                 "EnvironmentPreset_Exhibition",
+                ExhibitionDisplayName,
                 exhibitionPanorama,
                 exposure: 0f,
                 rotation: 0f,
@@ -102,6 +107,7 @@ namespace DNPDemo.Editor
             EnsurePreset(
                 TemplePresetPath,
                 "EnvironmentPreset_Temple",
+                TempleDisplayName,
                 templePanorama,
                 exposure: 0.2f,
                 rotation: 0f,
@@ -208,6 +214,7 @@ namespace DNPDemo.Editor
         static void EnsurePreset(
             string assetPath,
             string assetName,
+            string displayName,
             Texture2D panorama,
             float exposure,
             float rotation,
@@ -228,6 +235,7 @@ namespace DNPDemo.Editor
             if (created || preset.Panorama == null)
             {
                 preset.Configure(
+                    displayName,
                     panorama,
                     exposure,
                     rotation,

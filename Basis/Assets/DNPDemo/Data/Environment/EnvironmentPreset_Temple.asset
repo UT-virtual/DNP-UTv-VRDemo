@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: adc590f12d8057745ac026cd6bf71119, type: 3}
   m_Name: EnvironmentPreset_Temple
   m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Environment.EnvironmentPreset
+  _displayName: "\u795E\u6BBF"
   _panorama: {fileID: 2800000, guid: b1732f8e71795c24a94198cc95014e13, type: 3}
   _exposure: 0.2
   _rotation: 0

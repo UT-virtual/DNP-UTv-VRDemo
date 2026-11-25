@@ -60,7 +60,7 @@ namespace DNPDemo.BasisPolicy
         internal static DemoMenuProvider[] CreateDemoProviders() => new DemoMenuProvider[]
         {
             new PenMenuProvider(),
-            new EnvironmentMenuProvider(),
+            new BackgroundMenuProvider(),
             new HistoryMenuProvider(),
         };
 

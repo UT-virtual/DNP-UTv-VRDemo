@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Background;
 using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
@@ -153,6 +154,9 @@ namespace DNPDemo.Editor
         public const float AppleMaxDistance = 0.4f;
 
         public const string CompletionBannerText = "WORKSHOP COMPLETE";
+
+        /// <summary>Step 21: the voice command that generates the temple background.</summary>
+        public const string TempleTranscript = "ヴィーナス像に似合う神殿の背景を生成";
 
         /// <summary>Hint of every voice command (<see cref="InteractionPart.Hint"/>).</summary>
         public const string VoiceHint = "トリガーを押している間に、指示の文をはっきり読み上げてください";
@@ -353,10 +357,12 @@ namespace DNPDemo.Editor
                     A("うーん、やはりこうしてみると現在の案が一番美しく見えますね。"),
                     B("ええ、とてもいいかんじです。"),
                     A("最後に復元案のヴィーナスが神殿を背景にしても自然かどうか確かめてみましょう")),
+                // The background (the skybox and the lighting) applies to the whole space, so no statue is selected: the
+                // voice command generates it, and the background panel, opened on recognition, applies it.
                 Operation("p3-temple", "Phase 3 [A] 背景を神殿に", DemoRole.PlayerA,
-                    "復元案のヴィーナス像を領域選択。「選択した像の背景を神殿に変更」と音声指示せよ。",
-                    Select("像全体を範囲選択する", "像全体を、トリガーを押したままペン先で大きくなぞってください"),
-                    Voice("「選択した像の背景を神殿に変更」と音声指示する", "選択した像の背景を神殿に変更")),
+                    $"「{TempleTranscript}」と音声指示し、背景パネルで神殿を選んで「{BackgroundPanel.ApplyLabel}」を押せ。",
+                    Voice($"「{TempleTranscript}」と音声指示する", TempleTranscript),
+                    Background(templePreset)),
                 new()
                 {
                     Id = "closing",
@@ -430,10 +436,6 @@ namespace DNPDemo.Editor
             return part;
         }
 
-        // Stand-in for a selection whose zone is not placed in the scene yet.
-        static InteractionPart Select(string instruction, string hint) =>
-            WithHint(new DummyInteractionPart(PenMode.Select, instruction), hint);
-
         static VoicePart Voice(string instruction, string transcript) => WithHint(new VoicePart(instruction, transcript), VoiceHint);
 
         /// <summary>Sets the hint text of <paramref name="part"/>, shown after the default delay.</summary>
@@ -449,6 +451,20 @@ namespace DNPDemo.Editor
             string name = version != null ? version.DisplayName : versionId;
             return WithHint(new HistoryPart(HistoryInstruction(name), version), HistoryHint(name));
         }
+
+        static InteractionPart Background(EnvironmentPreset preset)
+        {
+            string name = preset != null ? preset.DisplayName : EnvironmentPresetBuilder.TempleDisplayName;
+            return WithHint(new BackgroundPart(BackgroundInstruction(name), preset), BackgroundHint(name));
+        }
+
+        /// <summary>Task HUD line of the part that applies the generated background <paramref name="presetName"/>.</summary>
+        public static string BackgroundInstruction(string presetName) =>
+            $"背景パネルで{presetName}を選び、「{BackgroundPanel.ApplyLabel}」を押す";
+
+        /// <summary>Hint of the part that applies the generated background <paramref name="presetName"/>.</summary>
+        public static string BackgroundHint(string presetName) =>
+            $"背景パネルを閉じたときは、メニューの「{BackgroundMenuProvider.MenuTitle}」で開けます。{presetName}のカードを押し、「{BackgroundPanel.ApplyLabel}」を押してください";
 
         /// <summary>Task HUD line of the step that calls <paramref name="versionName"/> back from the history.</summary>
         public static string HistoryInstruction(string versionName) =>

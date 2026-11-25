@@ -248,6 +248,7 @@ namespace DNPDemo.Tests
         {
             EnvironmentPreset preset = fixture.Track(ScriptableObject.CreateInstance<EnvironmentPreset>());
             preset.Configure(
+                source.DisplayName,
                 source.Panorama,
                 source.Exposure,
                 rotation,
