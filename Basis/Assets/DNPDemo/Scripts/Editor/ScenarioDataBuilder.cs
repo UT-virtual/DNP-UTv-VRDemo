@@ -53,6 +53,9 @@ namespace DNPDemo.Editor
 
         public const string CompletionBannerText = "WORKSHOP COMPLETE";
 
+        /// <summary>Hint of every voice command (<see cref="InteractionPart.Hint"/>).</summary>
+        public const string VoiceHint = "トリガーを押している間に、指示の文をはっきり読み上げてください";
+
         [MenuItem("DNP Demo/Create/Scenario Data")]
         public static void CreateFromMenu()
         {
@@ -151,7 +154,7 @@ namespace DNPDemo.Editor
                     A("分かりました。一度、3Dモデルにおこしてみましょう！")),
                 Operation("s1-voice-left-arm", "Scene 1 [A] 左腕を音声生成", DemoRole.PlayerA,
                     "音声生成を起動し、「現在のヴィーナスについて、手のひらに林檎がのった水平に伸びる左手を追加」と出力せよ。",
-                    new VoicePart("「手のひらに林檎がのった水平に伸びる左手を追加」と音声指示する", "現在のヴィーナスについて、手のひらに林檎がのった水平に伸びる左手を追加")),
+                    Voice("「手のひらに林檎がのった水平に伸びる左手を追加」と音声指示する", "現在のヴィーナスについて、手のひらに林檎がのった水平に伸びる左手を追加")),
                 Auto("s1-concerns", "Scene 1 構造の懸念",
                     Version(VenusAssetBuilder.Ver10Id),
                     new SetObjectActiveCue(AppleKey, true),
@@ -164,11 +167,14 @@ namespace DNPDemo.Editor
                     B("そうですね、一度私の考えもモデル化してみましょう。")),
                 Operation("s2-move-apple", "Scene 2 [B] 林檎を手の下へ", DemoRole.PlayerB,
                     "空間ペンで林檎の領域を選択し、林檎の位置を調整せよ。（手の下に持ってくる）",
-                    new SelectionPart("林檎を範囲選択する", AppleKey),
-                    ManipulatePart.Translate("林檎を手の下へ移動する", AppleKey, AppleGoalKey, AppleMaxDistance)),
+                    WithHint(new SelectionPart("林檎を範囲選択する", AppleKey),
+                        "光っている林檎のまわりを、トリガーを押したままペン先でなぞってください"),
+                    WithHint(ManipulatePart.Translate("林檎を手の下へ移動する", AppleKey, AppleGoalKey, AppleMaxDistance),
+                        "光っている林檎にペン先を当て、トリガーを押したまま水色の林檎の位置まで動かしてください")),
                 Operation("s2-regrip-apple", "Scene 2 [B] 林檎の持ち方を修正", DemoRole.PlayerB,
                     "空間ペンで腕を選択し、「選択した範囲について、上からボールを包み込むように林檎を持ち直す形に修正」と入力せよ。",
-                    Select("左手から前腕を範囲選択する"), new VoicePart("「上からボールを包み込むように林檎を持ち直す形に修正」と音声指示する", "選択した範囲について、上からボールを包み込むように林檎を持ち直す形に修正")),
+                    Select("左手から前腕を範囲選択する", "左手から前腕までを、トリガーを押したままペン先でなぞってください"),
+                    Voice("「上からボールを包み込むように林檎を持ち直す形に修正」と音声指示する", "選択した範囲について、上からボールを包み込むように林檎を持ち直す形に修正")),
                 Auto("s2-natural-curve", "Scene 2 自然なカーブ",
                     // From Ver 1.1 on the apple is part of the model.
                     new SetObjectActiveCue(AppleKey, false),
@@ -178,26 +184,31 @@ namespace DNPDemo.Editor
                     B("なるほど。自然なカーブですか...うーん少しイメージが難しいですね。モデルで表現するとこんな感じでしょうか。")),
                 Operation("s2-slide-arm", "Scene 2 [B] 腕を内側へ", DemoRole.PlayerB,
                     "空間ペンで左肩から肘の領域を選択し、腕の角度を内側へスライド修正せよ。",
-                    new SelectionPart("左肩から肘を範囲選択する", LeftShoulderZoneKey), Manipulate("腕を内側へスライドする")),
+                    WithHint(new SelectionPart("左肩から肘を範囲選択する", LeftShoulderZoneKey),
+                        "光っている左肩から肘までを、トリガーを押したままペン先でなぞってください"),
+                    Manipulate("腕を内側へスライドする", "腕にペン先を当て、トリガーを押したまま体の内側へ回してください")),
                 Auto("s2-mismatch", "Scene 2 イメージのズレ",
                     Version(VenusAssetBuilder.Ver12Id),
                     A("うーん私のイメージとズレていますね。私のイメージだとこんな感じなんです。")),
                 Operation("s2-guide-curve", "Scene 2 [A] ガイドでカーブを描く", DemoRole.PlayerA,
                     "空間ペン（ガイドモード）を使用し、左肩から胸の前へ「緩やかなカーブを描く軌跡」をなぞるように描け。",
-                    StrokePart.Guide("左肩から胸の前へ緩やかなカーブを描く", LeftShoulderZoneKey, ChestFrontZoneKey)),
+                    WithHint(StrokePart.Guide("左肩から胸の前へ緩やかなカーブを描く", LeftShoulderZoneKey, ChestFrontZoneKey),
+                        "光っている左肩と胸の前を、トリガーを押したまま一筆の線でつないでください")),
                 Auto("s3-hand-mirror", "Scene 3 右腕と手鏡",
                     Version(VenusAssetBuilder.Ver20Id),
                     B("あーなるほど。確かにこれは凄く綺麗ですね。力学的にも矛盾点がなさそうです。"),
                     A("左腕は良い感じですね。それでは次に右腕の話に移行しましょう。古典彫刻においては手鏡が林檎と並ぶ代表的なシンボルとされているので、右腕には手鏡があったと考えられます。一度3Dモデルにしてみますね。")),
                 Operation("s3-draw-mirror", "Scene 3 [A] 手鏡の線画を変換", DemoRole.PlayerA,
                     "空間ペンで空中に手鏡の線画を描け。「線画を西洋のアンティークな手鏡に変換」と音声指示せよ。",
-                    StrokePart.Sketch("空中に手鏡の線画を描く"), new VoicePart("「線画を西洋のアンティークな手鏡に変換」と音声指示する", "線画を西洋のアンティークな手鏡に変換")),
+                    WithHint(StrokePart.Sketch("空中に手鏡の線画を描く"), "トリガーを押したまま、手のひらほどの大きさで手鏡の形を描いてください"),
+                    Voice("「線画を西洋のアンティークな手鏡に変換」と音声指示する", "線画を西洋のアンティークな手鏡に変換")),
                 Operation("s3-place-mirror", "Scene 3 [A] 手鏡を移動", DemoRole.PlayerA,
                     "生成された手鏡を所定の位置に移動させよ。",
-                    Manipulate("手鏡を所定の位置へ移動する")),
+                    Manipulate("手鏡を所定の位置へ移動する", "手鏡にペン先を当て、トリガーを押したまま右手の位置まで動かしてください")),
                 Operation("s3-grip-mirror", "Scene 3 [A] 鏡を握らせる", DemoRole.PlayerA,
                     "続けて右肩から手鏡まで領域選択し、「鏡を握らせる」と発話せよ。",
-                    Select("右肩から手鏡までを範囲選択する"), new VoicePart("「鏡を握らせる」と音声指示する", "鏡を握らせる")),
+                    Select("右肩から手鏡までを範囲選択する", "右肩から手鏡までを、トリガーを押したままペン先でなぞってください"),
+                    Voice("「鏡を握らせる」と音声指示する", "鏡を握らせる")),
                 Auto("s3-mirror-angle", "Scene 3 鏡の角度の指摘",
                     Version(VenusAssetBuilder.Ver30Id),
                     B("なるほど...手鏡を持っているのは納得ですが、生成されたモデルを見ると、手鏡の角度がおかしいかもしれませんね。なんというか、もっとヴィーナスの目線の先に手鏡がくる感じの方が良さそうです。"),
@@ -205,7 +216,8 @@ namespace DNPDemo.Editor
                     B("承知しました。一旦、手首のひねりを少し調整してみましょう。")),
                 Operation("s3-adjust-wrist", "Scene 3 [B] 手首の角度を修正", DemoRole.PlayerB,
                     "空間ペンで右手首と手鏡を領域選択し、空間ペンを用いながらヴィーナスの目線に合わせて鏡の角度を修正せよ。",
-                    Select("右手首と手鏡を範囲選択する"), Manipulate("目線に合わせて鏡の角度を修正する")),
+                    Select("右手首と手鏡を範囲選択する", "右手首と手鏡を、トリガーを押したままペン先でなぞってください"),
+                    Manipulate("目線に合わせて鏡の角度を修正する", "手鏡にペン先を当て、トリガーを押したまま顔の方へ回してください")),
                 Auto("p2-review", "Phase 2 振り返りの提案",
                     Version(VenusAssetBuilder.Ver31Id),
                     A("あー、いいですね！ 視線と所作がぴったり合いました。"),
@@ -221,7 +233,8 @@ namespace DNPDemo.Editor
                     A("最後に復元案のヴィーナスが神殿を背景にしても自然かどうか確かめてみましょう")),
                 Operation("p3-temple", "Phase 3 [A] 背景を神殿に", DemoRole.PlayerA,
                     "復元案のヴィーナス像を領域選択。「選択した像の背景を神殿に変更」と音声指示せよ。",
-                    Select("像全体を範囲選択する"), new VoicePart("「選択した像の背景を神殿に変更」と音声指示する", "選択した像の背景を神殿に変更")),
+                    Select("像全体を範囲選択する", "像全体を、トリガーを押したままペン先で大きくなぞってください"),
+                    Voice("「選択した像の背景を神殿に変更」と音声指示する", "選択した像の背景を神殿に変更")),
                 new()
                 {
                     Id = "closing",
@@ -271,19 +284,34 @@ namespace DNPDemo.Editor
         static StatueVersionCue Version(string id) => new(VenusStatueKeys.Main, VenusAssetBuilder.LoadVersion(id));
 
         // Stand-ins for selections and manipulations whose objects are not placed on the statue yet.
-        static InteractionPart Select(string instruction) => new DummyInteractionPart(PenMode.Select, instruction);
-        static InteractionPart Manipulate(string instruction) => new DummyInteractionPart(PenMode.Manipulate, instruction);
+        static InteractionPart Select(string instruction, string hint) =>
+            WithHint(new DummyInteractionPart(PenMode.Select, instruction), hint);
+        static InteractionPart Manipulate(string instruction, string hint) =>
+            WithHint(new DummyInteractionPart(PenMode.Manipulate, instruction), hint);
+
+        static VoicePart Voice(string instruction, string transcript) => WithHint(new VoicePart(instruction, transcript), VoiceHint);
+
+        /// <summary>Sets the hint text of <paramref name="part"/>, shown after the default delay.</summary>
+        static T WithHint<T>(T part, string hint) where T : InteractionPart
+        {
+            part.Hint = new InteractionHint(hint);
+            return part;
+        }
 
         static InteractionPart History(string versionId)
         {
             VenusVersion version = VenusAssetBuilder.LoadVersion(versionId);
             string name = version != null ? version.DisplayName : versionId;
-            return new HistoryPart(HistoryInstruction(name), version);
+            return WithHint(new HistoryPart(HistoryInstruction(name), version), HistoryHint(name));
         }
 
         /// <summary>Task HUD line of the step that calls <paramref name="versionName"/> back from the history.</summary>
         public static string HistoryInstruction(string versionName) =>
             $"メニューの「{HistoryMenuProvider.MenuTitle}」で {versionName} を表示し、「{HistoryPanel.RestoreLabel}」を押す";
+
+        /// <summary>Hint of the step that calls <paramref name="versionName"/> back from the history.</summary>
+        public static string HistoryHint(string versionName) =>
+            $"メニューの「{HistoryMenuProvider.MenuTitle}」で {versionName} のカードを押し、「{HistoryPanel.RestoreLabel}」を押してください";
 
         static LineCue N(string text) => new(ScenarioSpeaker.Narrator, text);
         static LineCue A(string text) => new(ScenarioSpeaker.ScholarA, text);

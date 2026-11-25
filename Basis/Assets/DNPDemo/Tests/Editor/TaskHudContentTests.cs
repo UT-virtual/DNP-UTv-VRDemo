@@ -117,6 +117,24 @@ namespace DNPDemo.Tests
             Assert.AreEqual(string.Empty, TaskHudContent.Hidden.Status);
         }
 
+        [Test]
+        public void HintIsShownToBothPlayersWithItsPrefix()
+        {
+            TaskHudContent actor = TaskHudContent.Build(SelectThenManipulate(), 0, isLocalActor: true, PenMode.Select, null, " 林檎をなぞる ");
+            TaskHudContent observer = TaskHudContent.Build(SelectThenManipulate(), 0, isLocalActor: false, PenMode.Select, null, "林檎をなぞる");
+
+            Assert.AreEqual(TaskHudContent.HintPrefix + "林檎をなぞる", actor.Hint);
+            Assert.AreEqual(TaskHudContent.HintPrefix + "林檎をなぞる", observer.Hint);
+        }
+
+        [Test]
+        public void NoHintLineWithoutAHint()
+        {
+            Assert.AreEqual(string.Empty, TaskHudContent.Build(SelectThenManipulate(), 0, isLocalActor: true, PenMode.Select).Hint);
+            Assert.AreEqual(string.Empty, TaskHudContent.Build(SelectThenManipulate(), 0, isLocalActor: true, PenMode.Select, null, " ").Hint);
+            Assert.AreEqual(string.Empty, TaskHudContent.Hidden.Hint);
+        }
+
         [TestCase(-1)]
         [TestCase(2)]
         public void HiddenWhenThePartIndexIsOutsideTheStep(int partIndex)

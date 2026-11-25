@@ -140,6 +140,9 @@ namespace DNPDemo.Interaction.Manipulate
             Add(requirements, Constraint == ManipulateConstraintKind.Translate ? GoalKey : PivotKey);
         }
 
+        /// <summary>The hint lights up where the pen's tip grabs. The goal is already shown by the ghost.</summary>
+        protected override void CollectDefaultHintZoneKeys(List<string> keys) => AddHintZoneKey(keys, EffectiveGrabZoneKey);
+
         public override void Validate(List<string> problems)
         {
             if (string.IsNullOrWhiteSpace(TargetKey))

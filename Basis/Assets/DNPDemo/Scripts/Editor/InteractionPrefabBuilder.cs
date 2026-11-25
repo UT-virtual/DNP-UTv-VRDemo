@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Hint;
 using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
@@ -31,6 +32,7 @@ namespace DNPDemo.Editor
         public const string ManipulateToolPath = Folder + "/ManipulateTool.prefab";
         public const string VoiceCommandToolPath = Folder + "/VoiceCommandTool.prefab";
         public const string HistoryToolPath = Folder + "/HistoryTool.prefab";
+        public const string HintPresenterPath = Folder + "/InteractionHint.prefab";
 
         /// <summary>Name of the child of <see cref="HistoryToolPath"/> that holds the <see cref="HistoryPanel"/>.</summary>
         public const string HistoryPanelObjectName = "HistoryPanel";
@@ -42,13 +44,15 @@ namespace DNPDemo.Editor
         public const string StrokeLineShaderName = "Universal Render Pipeline/Unlit";
         public const string StrokeLineMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/Stroke/StrokeLine.mat";
 
-        public const string ManipulateGhostShaderName = "Universal Render Pipeline/Unlit";
+        /// <summary>Shader of the translucent overlays: the manipulate ghost and the hint zones.</summary>
+        public const string TransparentUnlitShaderName = "Universal Render Pipeline/Unlit";
 
         public const string HistoryPanelBackgroundShaderName = "UI/Default";
         public const string HistoryPanelBackgroundMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/History/HistoryPanelBackground.mat";
         public const string HistoryPanelDepthShaderName = "DNPDemo/HistoryPanelDepth";
         public const string HistoryPanelDepthMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/History/HistoryPanelDepth.mat";
         public const string ManipulateGhostMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/Manipulate/ManipulateGhost.mat";
+        public const string HintZoneMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/Hint/HintZone.mat";
 
         static readonly Color PanelBackground = new(0.06f, 0.08f, 0.14f, 0.92f);
 
@@ -57,6 +61,9 @@ namespace DNPDemo.Editor
 
         // Pale cyan, apart from the red selection, so the goal reads as a different thing.
         static readonly Color ManipulateGhostColor = new(0.45f, 0.85f, 1f, 0.35f);
+
+        // Warm yellow, apart from the red selection and the cyan ghost. HintZoneView replaces it with its own colour.
+        static readonly Color HintZoneColor = new(1f, 0.85f, 0.2f, 0.3f);
 
         [MenuItem("DNP Demo/Create/Interaction Prefabs")]
         public static void CreateAllIfMissing()
@@ -67,6 +74,7 @@ namespace DNPDemo.Editor
             CreateManipulateTool();
             CreateVoiceCommandTool();
             CreateHistoryTool();
+            CreateHintPresenter();
         }
 
         /// <summary>
@@ -228,23 +236,61 @@ namespace DNPDemo.Editor
         }
 
         /// <summary>
-        /// Material of <see cref="ManipulateGhostView"/>: translucent unlit, without depth writes so the object behind the
-        /// ghost stays visible.
+        /// The hint of the running part (<see cref="InteractionHintPresenter"/>) with the view that lights up its zones. The
+        /// runner and the stage live in DemoSystems, so <see cref="ScenarioInstaller"/> wires them when it places it there.
         /// </summary>
-        public static Material CreateManipulateGhostMaterial()
+        public static GameObject CreateHintPresenter()
         {
-            var existing = AssetDatabase.LoadAssetAtPath<Material>(ManipulateGhostMaterialPath);
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(HintPresenterPath);
             if (existing != null)
             {
                 return existing;
             }
-            Shader shader = Shader.Find(ManipulateGhostShaderName);
+            Material material = CreateHintZoneMaterial();
+            var root = new GameObject("InteractionHint");
+            try
+            {
+                var view = root.AddComponent<HintZoneView>();
+                Assign(view, "_material", material);
+                var presenter = root.AddComponent<InteractionHintPresenter>();
+                Assign(presenter, "_zoneView", view);
+                Directory.CreateDirectory(Path.GetDirectoryName(HintPresenterPath));
+                GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, HintPresenterPath);
+                Debug.Log($"[DNPDemo] Created {HintPresenterPath}");
+                return prefab;
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        /// <summary>
+        /// Material of <see cref="ManipulateGhostView"/>: translucent unlit, without depth writes so the object behind the
+        /// ghost stays visible.
+        /// </summary>
+        public static Material CreateManipulateGhostMaterial() =>
+            CreateTransparentUnlitMaterialIfMissing(ManipulateGhostMaterialPath, ManipulateGhostColor);
+
+        /// <summary>Material of <see cref="HintZoneView"/>: translucent unlit like the ghost, in the hint's colour.</summary>
+        public static Material CreateHintZoneMaterial() =>
+            CreateTransparentUnlitMaterialIfMissing(HintZoneMaterialPath, HintZoneColor);
+
+        /// <summary>URP Unlit with Surface Type = Transparent and no depth writes, in <paramref name="color"/>.</summary>
+        static Material CreateTransparentUnlitMaterialIfMissing(string path, Color color)
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (existing != null)
+            {
+                return existing;
+            }
+            Shader shader = Shader.Find(TransparentUnlitShaderName);
             if (shader == null)
             {
-                throw new InvalidOperationException($"Shader {ManipulateGhostShaderName} was not found.");
+                throw new InvalidOperationException($"Shader {TransparentUnlitShaderName} was not found.");
             }
             var material = new Material(shader);
-            material.SetColor("_BaseColor", ManipulateGhostColor);
+            material.SetColor("_BaseColor", color);
             // URP's transparent surface: the same properties the material inspector sets for Surface Type = Transparent.
             material.SetFloat("_Surface", 1f);
             material.SetFloat("_Blend", 0f);
@@ -256,9 +302,9 @@ namespace DNPDemo.Editor
             material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             material.SetOverrideTag("RenderType", "Transparent");
             material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-            Directory.CreateDirectory(Path.GetDirectoryName(ManipulateGhostMaterialPath));
-            AssetDatabase.CreateAsset(material, ManipulateGhostMaterialPath);
-            Debug.Log($"[DNPDemo] Created {ManipulateGhostMaterialPath}");
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            AssetDatabase.CreateAsset(material, path);
+            Debug.Log($"[DNPDemo] Created {path}");
             return material;
         }
 

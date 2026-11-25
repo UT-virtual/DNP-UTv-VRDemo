@@ -51,6 +51,19 @@ namespace DNPDemo.Interaction.Selection
             }
         }
 
+        /// <summary>The hint lights up the zones to select.</summary>
+        protected override void CollectDefaultHintZoneKeys(List<string> keys)
+        {
+            if (TargetZoneKeys == null)
+            {
+                return;
+            }
+            foreach (string key in TargetZoneKeys)
+            {
+                AddHintZoneKey(keys, key);
+            }
+        }
+
         public override void Validate(List<string> problems)
         {
             if (TargetZoneKeys == null || TargetZoneKeys.Count == 0)

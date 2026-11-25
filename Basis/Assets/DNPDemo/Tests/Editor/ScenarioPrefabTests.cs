@@ -56,7 +56,7 @@ namespace DNPDemo.Tests
             var view = prefab.GetComponent<TaskHudView>();
             Assert.IsNotNull(view);
             var so = new SerializedObject(view);
-            foreach (string field in new[] { "_content", "_follower", "_headingText", "_taskText", "_linesText", "_statusText", "_modeHintText" })
+            foreach (string field in new[] { "_content", "_follower", "_headingText", "_taskText", "_linesText", "_statusText", "_modeHintText", "_hintText" })
             {
                 Assert.IsNotNull(so.FindProperty(field).objectReferenceValue, $"TaskHudView.{field} is not set.");
             }

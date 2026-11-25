@@ -36,6 +36,7 @@ Transform:
   - {fileID: 9051184299870818189}
   - {fileID: 1580097561374207203}
   - {fileID: 5834656575315883830}
+  - {fileID: 668890911873035417}
   m_Father: {fileID: 7372542472398596075}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2493661690745391217
@@ -2016,6 +2017,87 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee3cb54388a16f14fbfd6caf299b0ca5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Interaction.Voice.VoiceCommandTool
+--- !u!1001 &6801081578478630611
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 7668987521185825665}
+    m_Modifications:
+    - target: {fileID: 2861397464516080419, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+      propertyPath: _stage
+      value: 
+      objectReference: {fileID: 3240398646132276269}
+    - target: {fileID: 2861397464516080419, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+      propertyPath: _runner
+      value: 
+      objectReference: {fileID: 2493661690745391217}
+    - target: {fileID: 6280879999482731082, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6280879999482731082, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6280879999482731082, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6280879999482731082, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6280879999482731082, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6280879999482731082, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6280879999482731082, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6280879999482731082, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6280879999482731082, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6280879999482731082, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7170538494062233220, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+      propertyPath: m_Name
+      value: InteractionHint
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+--- !u!4 &668890911873035417 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6280879999482731082, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+  m_PrefabInstance: {fileID: 6801081578478630611}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8779752613442012656 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2861397464516080419, guid: 7af2c2964c51e2842ac4452a18968317, type: 3}
+  m_PrefabInstance: {fileID: 6801081578478630611}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7dce9e1ffc98f145ace6c7f41d110b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Interaction.Hint.InteractionHintPresenter
 --- !u!1001 &6894968842100390714
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2109,6 +2191,10 @@ PrefabInstance:
       propertyPath: _pen
       value: 
       objectReference: {fileID: 3860300835675763750}
+    - target: {fileID: 4856469298504448545, guid: 7fef2341fc6355e4a80db7951d7f901a, type: 3}
+      propertyPath: _hints
+      value: 
+      objectReference: {fileID: 8779752613442012656}
     - target: {fileID: 4856469298504448545, guid: 7fef2341fc6355e4a80db7951d7f901a, type: 3}
       propertyPath: _runner
       value: 
