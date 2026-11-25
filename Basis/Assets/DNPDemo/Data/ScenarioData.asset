@@ -62,7 +62,7 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738421400567808
+    - rid: 4263738434233040896
     - rid: 1662061592158404929
     - rid: 1662061592158404882
     - rid: 1662061592158404883
@@ -92,10 +92,10 @@ MonoBehaviour:
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u8155\u3092\u9078\u629E\u3057\u3001\u300C\u9078\u629E\u3057\u305F\u7BC4\u56F2\u306B\u3064\u3044\u3066\u3001\u4E0A\u304B\u3089\u30DC\u30FC\u30EB\u3092\u5305\u307F\u8FBC\u3080\u3088\u3046\u306B\u6797\u6A8E\u3092\u6301\u3061\u76F4\u3059\u5F62\u306B\u4FEE\u6B63\u300D\u3068\u5165\u529B\u305B\u3088\u3002"
     Interaction:
-    - rid: 4263738421400567809
+    - rid: 4263738434233040897
     - rid: 1662061692535701653
     Cues:
-    - rid: 4263738421400567810
+    - rid: 4263738434233040898
   - Id: s2-natural-curve
     Title: "Scene 2 \u81EA\u7136\u306A\u30AB\u30FC\u30D6"
     Actor: 0
@@ -104,7 +104,7 @@ MonoBehaviour:
     Interaction: []
     Cues:
     - rid: 1662061797466701974
-    - rid: 4263738421400567811
+    - rid: 4263738434233040899
     - rid: 1662061592158404888
     - rid: 1662061592158404889
     - rid: 1662061592158404890
@@ -114,10 +114,10 @@ MonoBehaviour:
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u5DE6\u80A9\u304B\u3089\u8098\u306E\u9818\u57DF\u3092\u9078\u629E\u3057\u3001\u8155\u306E\u89D2\u5EA6\u3092\u5185\u5074\u3078\u30B9\u30E9\u30A4\u30C9\u4FEE\u6B63\u305B\u3088\u3002"
     Interaction:
-    - rid: 4263738421400567812
-    - rid: 4263738421400567813
+    - rid: 4263738434233040900
+    - rid: 4263738434233040901
     Cues:
-    - rid: 4263738421400567814
+    - rid: 4263738434233040902
   - Id: s2-mismatch
     Title: "Scene 2 \u30A4\u30E1\u30FC\u30B8\u306E\u30BA\u30EC"
     Actor: 0
@@ -125,8 +125,8 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738421400567815
-    - rid: 4263738421400567816
+    - rid: 4263738434233040903
+    - rid: 4263738434233040904
     - rid: 1662061592158404891
   - Id: s2-guide-curve
     Title: "Scene 2 [A] \u30AC\u30A4\u30C9\u3067\u30AB\u30FC\u30D6\u3092\u63CF\u304F"
@@ -136,7 +136,7 @@ MonoBehaviour:
     Interaction:
     - rid: 1662061592158404918
     Cues:
-    - rid: 4263738421400567817
+    - rid: 4263738434233040905
   - Id: s3-hand-mirror
     Title: "Scene 3 \u53F3\u8155\u3068\u624B\u93E1"
     Actor: 0
@@ -144,9 +144,9 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738421400567818
-    - rid: 4263738421400567819
-    - rid: 4263738421400567820
+    - rid: 4263738434233040906
+    - rid: 4263738434233040907
+    - rid: 4263738434233040908
     - rid: 1662061592158404892
     - rid: 1662061592158404893
   - Id: s3-draw-mirror
@@ -241,6 +241,7 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
+    - rid: 4263738388917256512
     - rid: 1662061592158404902
     - rid: 1662061592158404903
     - rid: 1662061592158404904
@@ -617,13 +618,19 @@ MonoBehaviour:
         StatueKey: ComparisonStatue
         Version: {fileID: 11400000, guid: 6d031f87170b0de49add3e8d8fbb887e, type: 2}
         FocusKey: 
-    - rid: 4263738421400567808
+    - rid: 4263738388917256512
+      type: {class: EnvironmentCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        EnvironmentKey: Environment
+        Preset: {fileID: 11400000, guid: e0956dc4b6bd04340be655738996d8c3, type: 2}
+        Duration: 2
+    - rid: 4263738434233040896
       type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         StatueKey: Statue
         Version: {fileID: 11400000, guid: 6d031f87170b0de49add3e8d8fbb887e, type: 2}
         FocusKey: Focus_LeftArm
-    - rid: 4263738421400567809
+    - rid: 4263738434233040897
       type: {class: SelectionPart, ns: DNPDemo.Interaction.Selection, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u5DE6\u624B\u304B\u3089\u524D\u8155\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
@@ -631,18 +638,18 @@ MonoBehaviour:
         - Zone_LeftForearm
         RequiredInsideRatio: 0.9
         RequiredCoverage: 0.5
-    - rid: 4263738421400567810
+    - rid: 4263738434233040898
       type: {class: MatchPoseCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: Apple
         MarkerKey: Goal_AppleUnderHand
-    - rid: 4263738421400567811
+    - rid: 4263738434233040899
       type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         StatueKey: Statue
         Version: {fileID: 11400000, guid: 7b8787aa72e06194599d5e96c05c8730, type: 2}
         FocusKey: Focus_LeftArm
-    - rid: 4263738421400567812
+    - rid: 4263738434233040900
       type: {class: SelectionPart, ns: DNPDemo.Interaction.Selection, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u5DE6\u80A9\u304B\u3089\u8098\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
@@ -650,7 +657,7 @@ MonoBehaviour:
         - Zone_LeftUpperArm
         RequiredInsideRatio: 0.9
         RequiredCoverage: 0.5
-    - rid: 4263738421400567813
+    - rid: 4263738434233040901
       type: {class: ManipulatePart, ns: DNPDemo.Interaction.Manipulate, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u8155\u3092\u5185\u5074\u3078\u30B9\u30E9\u30A4\u30C9\u3059\u308B"
@@ -668,38 +675,38 @@ MonoBehaviour:
         TargetAngle: 45
         SnapAngle: 10
         ThresholdAngle: -25
-    - rid: 4263738421400567814
+    - rid: 4263738434233040902
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: LeftArmProxy
         Active: 1
-    - rid: 4263738421400567815
+    - rid: 4263738434233040903
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: LeftArmProxy
         Active: 0
-    - rid: 4263738421400567816
+    - rid: 4263738434233040904
       type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         StatueKey: Statue
         Version: {fileID: 11400000, guid: 09a3782d0f528ad4f8521989edd0f76b, type: 2}
         FocusKey: Focus_LeftArm
-    - rid: 4263738421400567817
+    - rid: 4263738434233040905
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: GuideLine_LeftArm
         Active: 1
-    - rid: 4263738421400567818
+    - rid: 4263738434233040906
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: GuideLine_LeftArm
         Active: 0
-    - rid: 4263738421400567819
+    - rid: 4263738434233040907
       type: {class: GuideSnapCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: Guide_LeftArmCurve
         TravelSeconds: 0.8
-    - rid: 4263738421400567820
+    - rid: 4263738434233040908
       type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         StatueKey: Statue
