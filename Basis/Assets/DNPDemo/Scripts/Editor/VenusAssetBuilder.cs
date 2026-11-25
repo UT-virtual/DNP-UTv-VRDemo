@@ -45,8 +45,74 @@ namespace DNPDemo.Editor
         const float AppleSize = 0.1f;
 
         static readonly Vector3 LeftShoulder = new(-0.3f, 1.6f, 0f);
-        static readonly Vector3 RightShoulder = new(0.3f, 1.6f, 0f);
+        public static readonly Vector3 RightShoulder = new(0.3f, 1.6f, 0f);
         static readonly Vector3 HeadCenter = new(0f, 2.15f, 0f);
+
+        /// <summary>Right elbow of Ver 3.0 and 3.1. The arm is the same in both; only the wrist twists.</summary>
+        public static readonly Vector3 RightElbow = new(0.4f, 1.3f, -0.1f);
+
+        /// <summary>Right wrist of Ver 3.0 and 3.1, the joint the wrist twists about.</summary>
+        public static readonly Vector3 RightWrist = new(0.36f, 1.55f, -0.36f);
+
+        /// <summary>The handle continues the forearm: the centre of the mirror is this far beyond the wrist, in metres.</summary>
+        public const float MirrorReach = 0.16f;
+
+        /// <summary>
+        /// Ver 3.0 → Ver 3.1: the wrist twists this far about the forearm (degrees, Unity's rotation direction about
+        /// <see cref="ForearmDirection"/>), which turns the mirror from facing up and outwards to facing the head.
+        /// </summary>
+        public const float MirrorTwistDegrees = -50f;
+
+        /// <summary>Direction of the right forearm from the elbow to the wrist; the axis of the wrist's twist.</summary>
+        public static Vector3 ForearmDirection => (RightWrist - RightElbow).normalized;
+
+        /// <summary>Centre of the hand mirror of Ver 3.0 and 3.1. On the twist axis, so the twist does not move it.</summary>
+        public static Vector3 MirrorCenter => RightWrist + ForearmDirection * MirrorReach;
+
+        /// <summary>
+        /// Rotation of the right hand and the mirror: up along the forearm, forward out of the mirror's face. Ver 3.1 faces
+        /// the head; Ver 3.0 is the same hand twisted back by <see cref="MirrorTwistDegrees"/>.
+        /// </summary>
+        public static Quaternion MirrorRotation(bool facesHead)
+        {
+            Vector3 axis = ForearmDirection;
+            Quaternion towardHead = Quaternion.LookRotation(Vector3.ProjectOnPlane(HeadCenter - MirrorCenter, axis), axis);
+            return facesHead ? towardHead : Quaternion.AngleAxis(-MirrorTwistDegrees, axis) * towardHead;
+        }
+
+        /// <summary>One primitive of the hand mirror, in the mirror's space (origin at the centre of the mirror, see <see cref="MirrorRotation"/>).</summary>
+        public readonly struct MirrorPart
+        {
+            public MirrorPart(string name, PrimitiveType type, Vector3 position, Quaternion rotation, Vector3 scale)
+            {
+                Name = name;
+                Type = type;
+                Position = position;
+                Rotation = rotation;
+                Scale = scale;
+            }
+
+            public string Name { get; }
+            public PrimitiveType Type { get; }
+            public Vector3 Position { get; }
+            public Quaternion Rotation { get; }
+            public Vector3 Scale { get; }
+        }
+
+        /// <summary>
+        /// The placeholder hand mirror: a disc facing forward and a handle running back to the wrist along the forearm.
+        /// The statue's mirror of Ver 3.0 and 3.1 and the separate mirror of steps 13 to 15 use the same parts.
+        /// </summary>
+        public static readonly MirrorPart[] MirrorParts =
+        {
+            // A cylinder's flat faces point along its Y axis; the disc faces forward.
+            new("Mirror", PrimitiveType.Cylinder, Vector3.zero, Quaternion.Euler(90f, 0f, 0f), new Vector3(0.18f, 0.006f, 0.18f)),
+            new("MirrorHandle", PrimitiveType.Cylinder, new Vector3(0f, -0.6f * MirrorReach, 0f), Quaternion.identity, new Vector3(0.025f, 0.06f, 0.025f)),
+        };
+
+        /// <summary>The right hand around the handle, in the mirror's space. It twists with the mirror.</summary>
+        public static readonly MirrorPart RightHandPart =
+            new("RightHand", PrimitiveType.Cube, new Vector3(0f, -MirrorReach, 0f), Quaternion.identity, new Vector3(0.07f, 0.09f, 0.05f));
 
         sealed class Definition
         {
@@ -116,17 +182,17 @@ namespace DNPDemo.Editor
             }),
             new(Ver30Id, Ver20Id, false, "Ver 3.0", "Venus_Ver3_0", b =>
             {
-                // Right arm raised, holding the mirror facing forward.
+                // Right arm raised, the mirror facing up and outwards, away from her eyes.
                 b.Body();
                 b.CurvedLeftArm();
-                b.RightArmWithMirror(Vector3.back);
+                b.RightArmWithMirror(false);
             }),
             new(Ver31Id, Ver30Id, false, "Ver 3.1", "Venus_Ver3_1", b =>
             {
-                // The wrist turned so the mirror faces the head.
+                // The same arm with the wrist twisted so the mirror faces the head (step 17).
                 b.Body();
                 b.CurvedLeftArm();
-                b.RightArmWithMirror(null);
+                b.RightArmWithMirror(true);
             }),
         };
 
@@ -262,6 +328,18 @@ namespace DNPDemo.Editor
             return version;
         }
 
+        /// <summary>
+        /// Builds the placeholder model of the version <paramref name="id"/> again from its definition and overwrites the
+        /// prefab in place, so the version asset keeps referring to it. For when a placeholder's definition changes; the
+        /// thumbnail is not retaken (DNP Demo/Create/Venus Thumbnails).
+        /// </summary>
+        public static GameObject RebuildPlaceholderModel(string id)
+        {
+            Definition definition = Array.Find(Definitions, candidate => candidate.Id == id)
+                ?? throw new ArgumentException($"No placeholder version has the id {id}.", nameof(id));
+            return BuildModel(definition);
+        }
+
         static GameObject CreateModel(Definition definition)
         {
             var existing = AssetDatabase.LoadAssetAtPath<GameObject>(definition.ModelPath);
@@ -269,6 +347,11 @@ namespace DNPDemo.Editor
             {
                 return existing;
             }
+            return BuildModel(definition);
+        }
+
+        static GameObject BuildModel(Definition definition)
+        {
             var root = new GameObject($"{definition.FileName}_Placeholder");
             try
             {
@@ -343,24 +426,24 @@ namespace DNPDemo.Editor
             }
 
             /// <summary>
-            /// Right arm raised in front of the shoulder with the hand mirror. The mirror faces <paramref name="facing"/>,
-            /// or the head when it is null.
+            /// Right arm raised in front of the shoulder, the hand holding the mirror (<see cref="MirrorParts"/>). The mirror
+            /// faces the head when <paramref name="facesHead"/> (Ver 3.1), otherwise up and outwards (Ver 3.0).
             /// </summary>
-            public void RightArmWithMirror(Vector3? facing)
+            public void RightArmWithMirror(bool facesHead)
             {
-                Vector3 elbow = new(0.4f, 1.3f, -0.1f);
-                Vector3 wrist = new(0.36f, 1.55f, -0.36f);
-                Limb("RightUpperArm", RightShoulder, elbow);
-                Limb("RightForearm", elbow, wrist);
-                Vector3 mirrorCenter = wrist + new Vector3(0f, 0.16f, -0.02f);
-                Vector3 normal = (facing ?? (HeadCenter - mirrorCenter)).normalized;
-                // A cylinder's flat faces point along its Y axis.
-                Quaternion faceRotation = Quaternion.FromToRotation(Vector3.up, normal);
+                Limb("RightUpperArm", RightShoulder, RightElbow);
+                Limb("RightForearm", RightElbow, RightWrist);
+                Quaternion rotation = MirrorRotation(facesHead);
+                Part(RightHandPart, MirrorCenter, rotation, _marble);
                 _mirror ??= CreateMirrorMaterial();
-                Primitive(PrimitiveType.Cylinder, "MirrorHandle", Vector3.Lerp(wrist, mirrorCenter, 0.4f),
-                    new Vector3(0.025f, 0.06f, 0.025f), Quaternion.FromToRotation(Vector3.up, mirrorCenter - wrist), _mirror);
-                Primitive(PrimitiveType.Cylinder, "Mirror", mirrorCenter, new Vector3(0.18f, 0.006f, 0.18f), faceRotation, _mirror);
+                foreach (MirrorPart part in MirrorParts)
+                {
+                    Part(part, MirrorCenter, rotation, _mirror);
+                }
             }
+
+            void Part(MirrorPart part, Vector3 origin, Quaternion rotation, Material material) =>
+                Primitive(part.Type, part.Name, origin + rotation * part.Position, part.Scale, rotation * part.Rotation, material);
 
             public void Apple(Vector3 position)
             {
