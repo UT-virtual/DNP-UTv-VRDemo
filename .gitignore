@@ -49,3 +49,7 @@ CLAUDE.md
 
 # DNP demo: Blender backup files
 *.blend1
+
+# DNP demo: link.xml that Addressables copies in for a player build (removed on the next domain reload)
+/Basis/Assets/AddressableAssetsData/link.xml
+/Basis/Assets/AddressableAssetsData/link.xml.meta
