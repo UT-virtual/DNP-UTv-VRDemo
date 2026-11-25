@@ -457,14 +457,16 @@ namespace DNPDemo.Editor
         }
 
         /// <summary>
-        /// Makes a URP Lit material alpha blended, as URP's own material inspector would. Depth writing stays off here because
-        /// URP's validation turns it off for transparent Lit materials anyway; <see cref="EnvironmentFadeGroup"/> turns it on
-        /// in its runtime copies.
+        /// Makes a URP Lit material alpha blended, leaving it as URP's material validation would, so the asset stays the same
+        /// whichever ran last. Specular highlights fade with the rest (Preserve Specular off), or they would linger on a wall
+        /// that has faded out. Depth writing and shadow casting stay off, as URP's validation turns them off for transparent
+        /// Lit materials; <see cref="EnvironmentFadeGroup"/> turns depth writing on in its runtime copies.
         /// </summary>
         public static void ConfigureFadeMaterial(Material material)
         {
             material.SetFloat("_Surface", 1f);
             material.SetFloat("_Blend", 0f);
+            material.SetFloat("_BlendModePreserveSpecular", 0f);
             material.SetFloat("_AlphaClip", 0f);
             material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
             material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
@@ -472,6 +474,9 @@ namespace DNPDemo.Editor
             material.SetFloat("_DstBlendAlpha", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
             material.SetFloat("_ZWrite", 0f);
             material.SetShaderPassEnabled("DepthOnly", false);
+            material.SetShaderPassEnabled("ShadowCaster", false);
+            // URP keeps the legacy colour in step with the base colour.
+            material.SetColor("_Color", material.GetColor("_BaseColor"));
             material.SetOverrideTag("RenderType", "Transparent");
             material.renderQueue = (int)RenderQueue.Transparent;
             material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");

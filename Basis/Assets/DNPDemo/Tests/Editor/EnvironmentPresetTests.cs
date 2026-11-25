@@ -215,6 +215,9 @@ namespace DNPDemo.Tests
                     Assert.AreEqual(1f, fade.GetFloat("_Surface"), context);
                     Assert.IsTrue(fade.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT"), context);
                     Assert.AreEqual((int)RenderQueue.Transparent, fade.renderQueue, context);
+                    Assert.AreEqual(0f, fade.GetFloat("_BlendModePreserveSpecular"), $"{context}: highlights must fade with the wall.");
+                    Assert.IsFalse(fade.IsKeywordEnabled("_ALPHAPREMULTIPLY_ON"), context);
+                    Assert.AreEqual((float)BlendMode.SrcAlpha, fade.GetFloat("_SrcBlend"), context);
                     Assert.AreEqual(original.GetColor("_BaseColor"), fade.GetColor("_BaseColor"), context);
                     Assert.AreSame(original.GetTexture("_BaseMap"), fade.GetTexture("_BaseMap"), context);
                 }
