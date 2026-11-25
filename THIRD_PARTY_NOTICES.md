@@ -57,6 +57,14 @@ This project includes third-party software under the following licenses:
 - [Poppins](https://github.com/itfoundry/Poppins) - Copyright 2020 The Poppins Project Authors. See `Basis/Packages/com.basis.sdk/LICENSE-Poppins-OFL.txt`.
 - [Noto Sans JP](https://fonts.google.com/noto/specimen/Noto+Sans+JP) - Copyright 2014-2021 Adobe, with Reserved Font Name 'Source'. See `Basis/Packages/com.basis.sdk/LICENSE-NotoSansJP-OFL.txt`.
 
+### 音声
+
+デモの台詞音声は [VOICEVOX](https://voicevox.hiroshiba.jp/) で作成しています（`Basis/Assets/DNPDemo/Audio/Voice/`）。
+
+- VOICEVOX:青山龍星
+- VOICEVOX:ずんだもん
+- VOICEVOX:春日部つむぎ
+
 ### Trademarks
 
 "Valve", "Steam", and the associated figurative images are trademarks and/or registered trademarks of Valve Corporation in the US and in various other jurisdictions. All rights reserved. Use of these trademarks must comply with the guidelines outlined in `Basis/Packages/com.steam.steamaudio/TRADEMARK_RIGHTS.md`.
