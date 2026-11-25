@@ -47,7 +47,9 @@ Built with [Basis](https://github.com/BasisVR/basis)
 
 - mp3 を置いてから Unity を開いてください。mp3 がないまま開くと、対応するファイルのない `.meta` が Unity に削除されることがあります（未確認）。削除された `.meta` をコミットすると GUID が変わり、シーンや Prefab からの参照が切れます。削除されてしまったときは、その削除をコミットせず、mp3 を置き直してください。`.meta` をコミット済みであれば、`git restore` で戻せます。
 - 配置したあとに Unity を開き、9件の `.meta` が生成される（またはリポジトリの `.meta` が使われる）ことを確認してください。`.meta` は手で作りません。
+- mp3 を置いて Unity を開いたら、メニュー `DNP Demo > Setup > Install Sound Effects` を実行してください。
 - ビルドの前に9件そろっていることを確認してください。足りない SE は APK に入らず、その場面では無音になります。
+- シェーダーのマテリアルを既定値に戻すときは、メニュー `DNP Demo > Setup > Reset Effect Materials` を実行してください。手で調整した値は上書きされます。
 
 ## Quest へのインストール
 
