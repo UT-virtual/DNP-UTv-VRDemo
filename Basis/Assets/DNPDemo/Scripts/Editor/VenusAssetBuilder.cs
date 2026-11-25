@@ -13,8 +13,9 @@ namespace DNPDemo.Editor
     /// assets that point at them and the <see cref="VenusVersionCatalog"/>. Existing assets are kept as they are; after
     /// creation they are edited by hand, and the real models replace the placeholders in each <see cref="VenusVersion"/>.
     /// <para>
-    /// The placeholders are primitives in the space of the old placeholder statue: the statue faces -Z, its left side is
-    /// -X, and the body stands on the origin (the top of the pedestal).
+    /// The placeholders are primitives in the space of the old placeholder statue: the statue faces -Z and the body stands
+    /// on the origin (the top of the pedestal). Left and right are the statue's own, as in the scenario: facing -Z, her
+    /// left arm is on the +X side (on the right as seen from the front).
     /// </para>
     /// </summary>
     public static class VenusAssetBuilder
@@ -44,15 +45,15 @@ namespace DNPDemo.Editor
         const float ArmThickness = 0.09f;
         const float AppleSize = 0.1f;
 
-        static readonly Vector3 LeftShoulder = new(-0.3f, 1.6f, 0f);
-        public static readonly Vector3 RightShoulder = new(0.3f, 1.6f, 0f);
+        static readonly Vector3 LeftShoulder = new(0.3f, 1.6f, 0f);
+        public static readonly Vector3 RightShoulder = new(-0.3f, 1.6f, 0f);
         static readonly Vector3 HeadCenter = new(0f, 2.15f, 0f);
 
         /// <summary>Right elbow of Ver 3.0 and 3.1. The arm is the same in both; only the wrist twists.</summary>
-        public static readonly Vector3 RightElbow = new(0.4f, 1.3f, -0.1f);
+        public static readonly Vector3 RightElbow = new(-0.4f, 1.3f, -0.1f);
 
         /// <summary>Right wrist of Ver 3.0 and 3.1, the joint the wrist twists about.</summary>
-        public static readonly Vector3 RightWrist = new(0.36f, 1.55f, -0.36f);
+        public static readonly Vector3 RightWrist = new(-0.36f, 1.55f, -0.36f);
 
         /// <summary>The handle continues the forearm: the centre of the mirror is this far beyond the wrist, in metres.</summary>
         public const float MirrorReach = 0.16f;
@@ -61,7 +62,7 @@ namespace DNPDemo.Editor
         /// Ver 3.0 → Ver 3.1: the wrist twists this far about the forearm (degrees, Unity's rotation direction about
         /// <see cref="ForearmDirection"/>), which turns the mirror from facing up and outwards to facing the head.
         /// </summary>
-        public const float MirrorTwistDegrees = -50f;
+        public const float MirrorTwistDegrees = 50f;
 
         /// <summary>Direction of the right forearm from the elbow to the wrist; the axis of the wrist's twist.</summary>
         public static Vector3 ForearmDirection => (RightWrist - RightElbow).normalized;
@@ -154,23 +155,23 @@ namespace DNPDemo.Editor
                 // Left arm straight forward, palm up. The apple on the palm is the separate Apple object of the step
                 // definitions until Ver 1.1, because step 6 moves it.
                 b.Body();
-                Vector3 hand = new(-0.29f, 1.58f, -0.55f);
+                Vector3 hand = new(0.29f, 1.58f, -0.55f);
                 b.Limb("LeftArm", LeftShoulder, hand);
-                b.Box("LeftHand", new Vector3(-0.275f, 1.56f, -0.6f), new Vector3(0.1f, 0.02f, 0.12f), Quaternion.identity);
+                b.Box("LeftHand", new Vector3(0.275f, 1.56f, -0.6f), new Vector3(0.1f, 0.02f, 0.12f), Quaternion.identity);
             }),
             new(Ver11Id, Ver10Id, true, "Ver 1.1", "Venus_Ver1_1", b =>
             {
                 // Same arm; the fingers hold the apple from above.
                 b.Body();
-                b.Limb("LeftArm", LeftShoulder, new Vector3(-0.29f, 1.58f, -0.55f));
-                b.Box("LeftHand", new Vector3(-0.275f, 1.52f, -0.6f), new Vector3(0.1f, 0.03f, 0.12f), Quaternion.identity);
-                b.Apple(new Vector3(-0.275f, 1.45f, -0.6f));
+                b.Limb("LeftArm", LeftShoulder, new Vector3(0.29f, 1.58f, -0.55f));
+                b.Box("LeftHand", new Vector3(0.275f, 1.52f, -0.6f), new Vector3(0.1f, 0.03f, 0.12f), Quaternion.identity);
+                b.Apple(new Vector3(0.275f, 1.45f, -0.6f));
             }),
             new(Ver12Id, Ver11Id, false, "Ver 1.2", "Venus_Ver1_2", b =>
             {
                 // The arm slid inwards as one straight piece: an awkward, shortened angle.
                 b.Body();
-                Vector3 hand = new(-0.06f, 1.5f, -0.42f);
+                Vector3 hand = new(0.06f, 1.5f, -0.42f);
                 b.Limb("LeftArm", LeftShoulder, hand);
                 b.Box("LeftHand", hand + new Vector3(0f, -0.02f, -0.03f), new Vector3(0.1f, 0.03f, 0.12f), Quaternion.identity);
                 b.Apple(hand + new Vector3(0f, -0.09f, -0.03f));
@@ -417,12 +418,12 @@ namespace DNPDemo.Editor
             /// <summary>Upper arm and forearm bent so the hand rests in front of the chest with the apple (Ver 2.0 onwards).</summary>
             public void CurvedLeftArm()
             {
-                Vector3 elbow = new(-0.32f, 1.25f, -0.12f);
-                Vector3 wrist = new(-0.06f, 1.36f, -0.32f);
+                Vector3 elbow = new(0.32f, 1.25f, -0.12f);
+                Vector3 wrist = new(0.06f, 1.36f, -0.32f);
                 Limb("LeftUpperArm", LeftShoulder, elbow);
                 Limb("LeftForearm", elbow, wrist);
-                Box("LeftHand", wrist + new Vector3(0.02f, -0.02f, -0.04f), new Vector3(0.1f, 0.03f, 0.12f), Quaternion.identity);
-                Apple(wrist + new Vector3(0.02f, -0.09f, -0.04f));
+                Box("LeftHand", wrist + new Vector3(-0.02f, -0.02f, -0.04f), new Vector3(0.1f, 0.03f, 0.12f), Quaternion.identity);
+                Apple(wrist + new Vector3(-0.02f, -0.09f, -0.04f));
             }
 
             /// <summary>

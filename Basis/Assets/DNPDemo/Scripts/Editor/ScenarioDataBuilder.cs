@@ -131,14 +131,17 @@ namespace DNPDemo.Editor
         /// <summary>Step 17: released within this many degrees of the target, the hand snaps to it.</summary>
         public const float WristTwistSnapAngle = 12f;
 
-        /// <summary>Step 9: the arm turns inwards (towards the body, a negative angle about the shoulder's up) at most this far.</summary>
-        public const float ArmSlideMinAngle = -60f;
+        /// <summary>Step 9: the arm may turn outwards (a negative angle) this far, so a small slip the wrong way does not stop it.</summary>
+        public const float ArmSlideMinAngle = -10f;
 
-        /// <summary>Step 9: the arm may turn outwards this far, so a small slip the wrong way does not stop it.</summary>
-        public const float ArmSlideMaxAngle = 10f;
+        /// <summary>
+        /// Step 9: the arm turns inwards (towards the body: the left arm is on the +X side, so a positive angle about the
+        /// shoulder's up) at most this far.
+        /// </summary>
+        public const float ArmSlideMaxAngle = 60f;
 
         /// <summary>Step 9: released past this angle inwards, the slide is done.</summary>
-        public const float ArmSlideThresholdAngle = -25f;
+        public const float ArmSlideThresholdAngle = 25f;
 
         /// <summary>
         /// Key of the comparison table (<see cref="ScenarioObjectBinding"/> on the ComparisonTable root). Hidden at scene load
