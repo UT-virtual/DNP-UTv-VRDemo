@@ -86,7 +86,7 @@ namespace DNPDemo.Editor
                 directional: new DirectionalLightSettings
                 {
                     Color = new Color(1f, 0.94f, 0.84f),
-                    Intensity = 0.15f,
+                    Intensity = 0.035f,
                     Rotation = new Vector3(50f, -30f, 0f),
                     Shadows = LightShadows.None,
                     ShadowStrength = 0f,
@@ -97,12 +97,12 @@ namespace DNPDemo.Editor
                 spot: new SpotLightSettings
                 {
                     Enabled = SpotLightMode.Keep,
-                    Color = Color.white,
-                    Intensity = 30f,
-                    Rotation = new Vector3(80f, 0f, 0f),
-                    Range = 8f,
+                    Color = new Color(1f, 0.96f, 0.89f),
+                    Intensity = 35f,
+                    Rotation = new Vector3(90f, 0f, 0f),
+                    Range = 3.7f,
                     SpotAngle = 40f,
-                    InnerSpotAngle = 22f,
+                    InnerSpotAngle = 21.80208f,
                     Shadows = LightShadows.None,
                     ShadowStrength = 0f,
                     ShadowBias = 0.05f,
@@ -111,11 +111,11 @@ namespace DNPDemo.Editor
                 },
                 ambient: new AmbientSettings
                 {
-                    Mode = AmbientMode.Trilight,
-                    SkyColor = new Color(0.35f, 0.34f, 0.32f),
+                    Mode = AmbientMode.Flat,
+                    SkyColor = new Color(0.12f, 0.12f, 0.14f),
                     EquatorColor = new Color(0.2f, 0.19f, 0.17f),
                     GroundColor = new Color(0.08f, 0.075f, 0.07f),
-                    FlatColor = new Color(0.2f, 0.19f, 0.17f),
+                    FlatColor = new Color(0.12f, 0.12f, 0.14f),
                     Intensity = 1f,
                 },
                 reflection: new ReflectionSettings
@@ -124,7 +124,13 @@ namespace DNPDemo.Editor
                     CustomReflectionTexture = null,
                     Intensity = 0.6f,
                 },
-                shadowQuality: new ShadowQualitySettings { Override = false });
+                shadowQuality: new ShadowQualitySettings { Override = false },
+                distanceFog: new DistanceFogSettings
+                {
+                    Enabled = true,
+                    StartDistance = 5f,
+                    EndDistance = 7f,
+                });
 
             EnsurePreset(
                 TemplePresetPath,
@@ -280,7 +286,8 @@ namespace DNPDemo.Editor
             SpotLightSettings spot,
             AmbientSettings ambient,
             ReflectionSettings reflection,
-            ShadowQualitySettings shadowQuality)
+            ShadowQualitySettings shadowQuality,
+            DistanceFogSettings distanceFog = default)
         {
             EnvironmentPreset preset = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(assetPath);
             bool created = preset == null;
@@ -302,7 +309,8 @@ namespace DNPDemo.Editor
                     spot,
                     ambient,
                     reflection,
-                    shadowQuality);
+                    shadowQuality,
+                    distanceFog);
                 EditorUtility.SetDirty(preset);
             }
         }

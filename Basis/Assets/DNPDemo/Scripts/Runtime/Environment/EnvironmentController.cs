@@ -60,6 +60,90 @@ namespace DNPDemo.Environment
             public int[] ColorPropertyIds;
         }
 
+        struct FogState
+        {
+            public bool Enabled;
+            public FogMode Mode;
+            public Color FogColor;
+            public float Density;
+            public float StartDistance;
+            public float EndDistance;
+
+            public static FogState FromSettings(DistanceFogSettings settings)
+            {
+                float start = Mathf.Max(0f, settings.StartDistance);
+                return new FogState
+                {
+                    Enabled = settings.Enabled,
+                    Mode = FogMode.Linear,
+                    FogColor = Color.black,
+                    StartDistance = start,
+                    EndDistance = Mathf.Max(start + 0.01f, settings.EndDistance),
+                };
+            }
+
+            public static FogState Capture()
+            {
+                return new FogState
+                {
+                    Enabled = RenderSettings.fog,
+                    Mode = RenderSettings.fogMode,
+                    FogColor = RenderSettings.fogColor,
+                    Density = RenderSettings.fogDensity,
+                    StartDistance = RenderSettings.fogStartDistance,
+                    EndDistance = RenderSettings.fogEndDistance,
+                };
+            }
+
+            public static FogState Lerp(FogState from, FogState to, float t)
+            {
+                if (t <= 0f)
+                {
+                    return from;
+                }
+                if (t >= 1f)
+                {
+                    return to;
+                }
+                if (from.Enabled == to.Enabled)
+                {
+                    return new FogState
+                    {
+                        Enabled = to.Enabled,
+                        Mode = t < 0.5f ? from.Mode : to.Mode,
+                        FogColor = Color.Lerp(from.FogColor, to.FogColor, t),
+                        Density = Mathf.Lerp(from.Density, to.Density, t),
+                        StartDistance = Mathf.Lerp(from.StartDistance, to.StartDistance, t),
+                        EndDistance = Mathf.Lerp(from.EndDistance, to.EndDistance, t),
+                    };
+                }
+
+                FogState fog = from.Enabled ? from : to;
+                float strength = from.Enabled ? 1f - t : t;
+                if (fog.Mode == FogMode.Linear)
+                {
+                    // Widening the distance range scales the falloff while keeping the near area clear.
+                    float width = fog.EndDistance - fog.StartDistance;
+                    fog.EndDistance = fog.StartDistance + width / Mathf.Max(strength, 0.0001f);
+                }
+                else
+                {
+                    fog.Density *= strength;
+                }
+                return fog;
+            }
+
+            public void Apply()
+            {
+                RenderSettings.fogMode = Mode;
+                RenderSettings.fogColor = FogColor;
+                RenderSettings.fogDensity = Density;
+                RenderSettings.fogStartDistance = StartDistance;
+                RenderSettings.fogEndDistance = EndDistance;
+                RenderSettings.fog = Enabled;
+            }
+        }
+
         struct RuntimeState
         {
             public Color DirectionalColor;
@@ -93,6 +177,7 @@ namespace DNPDemo.Environment
             public float ReflectionIntensity;
             public ShadowQualitySettings ShadowQuality;
             public float WallAlpha;
+            public FogState Fog;
 
             /// <param name="spotEnabled">Spot light activation already resolved from the preset's <see cref="SpotLightMode"/>.</param>
             public static RuntimeState FromPreset(EnvironmentPreset preset, bool spotEnabled)
@@ -134,6 +219,7 @@ namespace DNPDemo.Environment
                     ReflectionIntensity = reflection.Intensity,
                     ShadowQuality = preset.ShadowQuality,
                     WallAlpha = preset.ExhibitionRoomVisible ? 1f : 0f,
+                    Fog = FogState.FromSettings(preset.DistanceFog),
                 };
             }
 
@@ -178,6 +264,7 @@ namespace DNPDemo.Environment
                     ReflectionIntensity = Mathf.Lerp(from.ReflectionIntensity, to.ReflectionIntensity, t),
                     ShadowQuality = t < 0.5f ? from.ShadowQuality : to.ShadowQuality,
                     WallAlpha = Mathf.Lerp(from.WallAlpha, to.WallAlpha, t),
+                    Fog = FogState.Lerp(from.Fog, to.Fog, t),
                 };
             }
         }
@@ -209,6 +296,14 @@ namespace DNPDemo.Environment
 
         /// <summary>The environment at scene load, which a stage reset returns to.</summary>
         public EnvironmentPreset BaselinePreset => _baselinePreset;
+
+        void Start()
+        {
+            if (gameObject.scene == SceneManager.GetActiveScene())
+            {
+                EnsureInitialized();
+            }
+        }
 
         void Update() => AdvanceTransition(Time.unscaledDeltaTime);
 
@@ -428,6 +523,7 @@ namespace DNPDemo.Environment
                 ReflectionIntensity = RenderSettings.reflectionIntensity,
                 ShadowQuality = _shadowQuality != null ? _shadowQuality.Requested : default,
                 WallAlpha = _wallAlpha,
+                Fog = FogState.Capture(),
             };
         }
 
@@ -479,6 +575,7 @@ namespace DNPDemo.Environment
             RenderSettings.defaultReflectionMode = state.ReflectionMode;
             RenderSettings.customReflectionTexture = state.CustomReflection;
             RenderSettings.reflectionIntensity = state.ReflectionIntensity;
+            state.Fog.Apply();
 
             _shadowQuality?.Request(state.ShadowQuality);
         }

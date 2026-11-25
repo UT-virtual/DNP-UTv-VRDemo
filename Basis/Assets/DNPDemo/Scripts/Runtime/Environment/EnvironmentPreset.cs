@@ -81,6 +81,14 @@ namespace DNPDemo.Environment
         [Range(1, 4)] public int CascadeCount;
     }
 
+    [Serializable]
+    public struct DistanceFogSettings
+    {
+        public bool Enabled;
+        [Min(0f)] public float StartDistance;
+        [Min(0f)] public float EndDistance;
+    }
+
     [CreateAssetMenu(menuName = "DNP Demo/Environment Preset", fileName = "EnvironmentPreset")]
     public sealed class EnvironmentPreset : ScriptableObject
     {
@@ -95,6 +103,8 @@ namespace DNPDemo.Environment
         [SerializeField] AmbientSettings _ambient;
         [SerializeField] ReflectionSettings _reflection;
         [SerializeField] ShadowQualitySettings _shadowQuality;
+        [Tooltip("Fades distant objects to black over the specified range in metres.")]
+        [SerializeField] DistanceFogSettings _distanceFog;
 
         /// <summary>Name shown to players. Falls back to the asset name when it is not set.</summary>
         public string DisplayName => string.IsNullOrWhiteSpace(_displayName) ? name : _displayName;
@@ -107,6 +117,7 @@ namespace DNPDemo.Environment
         public AmbientSettings Ambient => _ambient;
         public ReflectionSettings Reflection => _reflection;
         public ShadowQualitySettings ShadowQuality => _shadowQuality;
+        public DistanceFogSettings DistanceFog => _distanceFog;
 
         public override string ToString() => DisplayName;
 
@@ -120,7 +131,8 @@ namespace DNPDemo.Environment
             SpotLightSettings spotLight,
             AmbientSettings ambient,
             ReflectionSettings reflection,
-            ShadowQualitySettings shadowQuality)
+            ShadowQualitySettings shadowQuality,
+            DistanceFogSettings distanceFog = default)
         {
             _displayName = displayName;
             _panorama = panorama;
@@ -132,6 +144,7 @@ namespace DNPDemo.Environment
             _ambient = ambient;
             _reflection = reflection;
             _shadowQuality = shadowQuality;
+            _distanceFog = distanceFog;
         }
     }
 }

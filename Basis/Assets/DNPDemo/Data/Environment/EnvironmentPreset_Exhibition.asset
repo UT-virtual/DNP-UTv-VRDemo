@@ -19,7 +19,7 @@ MonoBehaviour:
   _exhibitionRoomVisible: 1
   _directionalLight:
     Color: {r: 1, g: 0.94, b: 0.84, a: 1}
-    Intensity: 0.15
+    Intensity: 0.035
     Rotation: {x: 50, y: -30, z: 0}
     Shadows: 0
     ShadowStrength: 0
@@ -28,25 +28,29 @@ MonoBehaviour:
     ShadowNearPlane: 0.2
   _spotLight:
     Enabled: 0
-    Color: {r: 1, g: 1, b: 1, a: 1}
-    Intensity: 30
-    Rotation: {x: 80, y: 0, z: 0}
-    Range: 8
+    Color: {r: 1, g: 0.96, b: 0.89, a: 1}
+    Intensity: 35
+    Rotation: {x: 90, y: 0, z: 0}
+    Range: 3.7
     SpotAngle: 40
-    InnerSpotAngle: 22
+    InnerSpotAngle: 21.80208
     Shadows: 0
     ShadowStrength: 0
     ShadowBias: 0.05
     ShadowNormalBias: 0.4
     ShadowNearPlane: 0.2
   _ambient:
-    Mode: 1
-    SkyColor: {r: 0.35, g: 0.34, b: 0.32, a: 1}
+    Mode: 3
+    SkyColor: {r: 0.12, g: 0.12, b: 0.14, a: 1}
     EquatorColor: {r: 0.2, g: 0.19, b: 0.17, a: 1}
     GroundColor: {r: 0.08, g: 0.075, b: 0.07, a: 1}
-    FlatColor: {r: 0.2, g: 0.19, b: 0.17, a: 1}
+    FlatColor: {r: 0.12, g: 0.12, b: 0.14, a: 1}
     Intensity: 1
   _reflection:
     Mode: 0
     CustomReflectionTexture: {fileID: 0}
     Intensity: 0.6
+  _distanceFog:
+    Enabled: 1
+    StartDistance: 5
+    EndDistance: 7

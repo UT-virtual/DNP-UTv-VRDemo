@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Reflection;
 using DNPDemo.Editor;
 using DNPDemo.Environment;
 using DNPDemo.Scenario;
@@ -274,7 +275,6 @@ namespace DNPDemo.Tests
         {
             EnvironmentFixture fixture = CreateFixture();
 
-            // Entering a step after connecting resets the stage, which is what first initializes the controller.
             fixture.Stage.ResetToBaseline();
 
             AssertWallOpaque(fixture);
@@ -358,6 +358,64 @@ namespace DNPDemo.Tests
             Assert.IsFalse(fixture.Controller.IsTransitioning);
             Assert.AreEqual(_temple.DirectionalLight.Intensity, fixture.Directional.intensity);
             Assert.AreSame(_temple.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
+        }
+
+        [Test]
+        public void DistanceFogFollowsExhibitionAndTemple()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            fixture.Stage.ResetToBaseline();
+            AssertExhibitionFog();
+
+            fixture.Controller.TransitionTo(_temple, 2f);
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.IsTrue(RenderSettings.fog);
+            Assert.AreEqual(5f, RenderSettings.fogStartDistance);
+            Assert.AreEqual(9f, RenderSettings.fogEndDistance, 0.001f);
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.IsFalse(RenderSettings.fog);
+            Assert.IsTrue(fixture.Room.activeSelf, "Fog follows the preset even when the room object stays active.");
+
+            fixture.Controller.TransitionTo(_exhibition, 2f);
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.IsTrue(RenderSettings.fog);
+            Assert.AreEqual(9f, RenderSettings.fogEndDistance, 0.001f);
+            fixture.Controller.AdvanceTransition(1f);
+            AssertExhibitionFog();
+        }
+
+        [Test]
+        public void DestroyingEnvironmentControllerRestoresTheSceneFog()
+        {
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.ExponentialSquared;
+            RenderSettings.fogColor = Color.gray;
+            RenderSettings.fogDensity = 0.04f;
+            RenderSettings.fogStartDistance = 8f;
+            RenderSettings.fogEndDistance = 24f;
+
+            EnvironmentFixture fixture = CreateFixture();
+            fixture.Controller.ApplyInstant(_exhibition);
+            AssertExhibitionFog();
+
+            // Unity delivers this lifecycle callback when the controller is destroyed in Play mode.
+            typeof(EnvironmentController).GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(fixture.Controller, null);
+            Assert.IsTrue(RenderSettings.fog);
+            Assert.AreEqual(FogMode.ExponentialSquared, RenderSettings.fogMode);
+            Assert.AreEqual(Color.gray, RenderSettings.fogColor);
+            Assert.AreEqual(0.04f, RenderSettings.fogDensity);
+            Assert.AreEqual(8f, RenderSettings.fogStartDistance);
+            Assert.AreEqual(24f, RenderSettings.fogEndDistance);
+        }
+
+        static void AssertExhibitionFog()
+        {
+            Assert.IsTrue(RenderSettings.fog);
+            Assert.AreEqual(FogMode.Linear, RenderSettings.fogMode);
+            Assert.AreEqual(Color.black, RenderSettings.fogColor);
+            Assert.AreEqual(5f, RenderSettings.fogStartDistance);
+            Assert.AreEqual(7f, RenderSettings.fogEndDistance);
         }
 
         [Test]
@@ -523,7 +581,8 @@ namespace DNPDemo.Tests
                 spot,
                 source.Ambient,
                 source.Reflection,
-                source.ShadowQuality);
+                source.ShadowQuality,
+                source.DistanceFog);
             return preset;
         }
 
