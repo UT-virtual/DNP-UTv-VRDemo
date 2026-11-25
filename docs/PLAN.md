@@ -195,7 +195,7 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
 #### 部品の共通インターフェース（`Scripts/Runtime/Interaction/`）
 
 ```
-InteractionPart（データ）   … 部品の種類ごとのサブクラス。ペンのモード（PenMode）と HUD の手順文を持つ。シーンのオブジェクトはキーで指す
+InteractionPart（データ）   … 部品の種類ごとのサブクラス。ペンのモード（PenMode）、HUD の手順文、ヒント（InteractionHint、§2.7）を持つ。シーンのオブジェクトはキーで指す
 InteractionTool（MonoBehaviour）… 部品を実行するツール。CanRun(part) で担当する部品を判定する
    Begin(session)  … 部品が現在の手順になった。担当の端末では入力を受け付け、それ以外の端末では相手の途中経過を表示する
    End()           … 部品が現在の手順でなくなった。入力を止め、表示は残す（範囲選択を音声指示の間も見せる）
@@ -279,7 +279,13 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 - 最後の手順が完了するとステップが進み、HUD はすぐに消える。
 - 表示内容は `TaskHudContent`（純 C#。`TaskHudContentTests` で確かめる）が、`InteractionRunner` の実行中のステップ（`CurrentStep`）、部品番号、担当かどうか、ペンのモード、状態の文から作る。`TaskHudView` が `InteractionRunner.StateChanged` とペンのモードの変化を受けて描き直す。
 - 位置は `HandFollower`（`Scripts/Runtime/Presentation/`）が決める。最後にペンを握った手の逆の手（`SpatialPenController.LastGrabHand` の逆。初期は左手）の IK 後の位置の少し上に置き、向きは常に目の方へ向ける。デスクトップと、その手のコントローラーが追跡されていないときは、視界の下のその手の側に置く。
-- 操作を待つステップでは、一定時間たっても完了しなければヒントを表示する（判定ゾーンの強調、目標位置のガイドなど）。
+- 操作を待つステップでは、部品が始まってから一定時間たっても完了しなければ、ヒントを両方の端末に表示する。
+  - 設定は部品ごとの `InteractionPart.Hint`（`InteractionHint`）に持つ。待ち時間（`DelaySeconds`、初期値 20 秒。0 ならヒントなし）、HUD に出す文（`Text`）、光らせるゾーンのキー（`ZoneKeys`）。
+  - `ZoneKeys` が空なら部品のゾーンを光らせる。範囲選択は対象ゾーン、ガイドの線は始点と終点のゾーン、部位の操作は掴むゾーン（目標の姿勢はゴーストが常に示している）。線画、音声指示、履歴はゾーンがないので文だけを出す。`ZoneKeys` のキーも `ScenarioSceneBindingTests` で確かめる。
+  - `InteractionHintPresenter`（`Scripts/Runtime/Interaction/Hint/`、DemoSystems の `Scenario/Interaction/InteractionHint`）が、`InteractionRunner.CurrentSession` が変わるたびに計時をやり直す。時間は端末ごとに数え、通信はしない。役割が変わって部品がやり直しになったときも数え直す。ヒントは部品が終わるか、ステップが進むと消える。
+  - ゾーンは `HintZoneView` が、形（球、カプセル、箱）の半透明の黄色で点滅させて描く（`Art/Interaction/Hint/HintZone.mat`）。毎フレームゾーンの今の姿勢で描くので、動かしている林檎にもついていく。非表示のゾーンは描かない。
+  - 文は「ヒント：」を付けて、タスク HUD の最後の行（`TaskHudView._hintText`）に出す。ヒント文に新しい文字を使ったら、UI フォントの文字セットに加える（`UiFontTests` が検出する）。
+  - 既存の DemoSystems と TaskHud プレハブには、メニュー「DNP Demo/Setup/Install Scenario Into DemoSystems Prefab」を再実行すると、足りないヒントの部品と HUD の行が追加される。
 
 ### 2.8 学者 NPC・ナレーター
 

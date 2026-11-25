@@ -1,5 +1,6 @@
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Hint;
 using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
@@ -7,6 +8,7 @@ using DNPDemo.Interaction.Stroke;
 using DNPDemo.Interaction.Voice;
 using DNPDemo.Pen;
 using DNPDemo.Scenario;
+using DNPDemo.TaskHud;
 using DNPDemo.Venus;
 using NUnit.Framework;
 using UnityEditor;
@@ -246,6 +248,30 @@ namespace DNPDemo.Tests
                 registered |= tools.GetArrayElementAtIndex(i).objectReferenceValue == voice;
             }
             Assert.IsTrue(registered, "VoiceCommandTool is not registered with the runner.");
+        }
+
+        [Test]
+        public void DemoSystemsHintPresenterIsWired()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioInstaller.DemoSystemsPrefabPath);
+            Assert.IsNotNull(prefab);
+            var runner = prefab.GetComponentInChildren<InteractionRunner>(true);
+            Assert.IsNotNull(runner);
+            var presenter = runner.GetComponentInChildren<InteractionHintPresenter>(true);
+            Assert.IsNotNull(presenter, "Install it from DNP Demo/Setup/Install Scenario Into DemoSystems Prefab.");
+
+            var so = new SerializedObject(presenter);
+            Assert.AreEqual(runner, so.FindProperty("_runner").objectReferenceValue, "InteractionHintPresenter needs the runner.");
+            Assert.IsNotNull(so.FindProperty("_stage").objectReferenceValue, "InteractionHintPresenter needs the scenario stage.");
+            var view = (HintZoneView)so.FindProperty("_zoneView").objectReferenceValue;
+            Assert.IsNotNull(view, "InteractionHintPresenter needs its zone view.");
+            var material = (Material)new SerializedObject(view).FindProperty("_material").objectReferenceValue;
+            Assert.IsNotNull(material, "HintZoneView needs its material.");
+            Assert.GreaterOrEqual(material.renderQueue, (int)UnityEngine.Rendering.RenderQueue.Transparent, "The zones are drawn translucent.");
+
+            var hud = prefab.GetComponentInChildren<TaskHudView>(true);
+            Assert.IsNotNull(hud);
+            Assert.AreEqual(presenter, new SerializedObject(hud).FindProperty("_hints").objectReferenceValue, "The task HUD shows the hint text.");
         }
 
         [Test]
