@@ -26,6 +26,9 @@ namespace DNPDemo.Venus
         [Tooltip("Parent of the version models. Empty uses this transform.")]
         [SerializeField] Transform _modelRoot;
 
+        [Tooltip("Use versions' stage models so the scenario can display and move their props separately.")]
+        [SerializeField] bool _useStageModels;
+
         [Tooltip("Version drawn in the scene view while not playing, to place zones and goals against. Not shown at runtime.")]
         [SerializeField] VenusVersion _editorPreview;
 
@@ -104,14 +107,15 @@ namespace DNPDemo.Venus
             {
                 return existing;
             }
-            if (version.Model == null)
+            GameObject prefab = version.GetModelPrefab(_useStageModels);
+            if (prefab == null)
             {
                 Debug.LogWarning($"[DNPDemo] {version.name} にモデルが設定されていません。", this);
                 _models[version] = null;
                 return null;
             }
-            GameObject model = Instantiate(version.Model, ModelRoot, false);
-            model.name = version.Model.name;
+            GameObject model = Instantiate(prefab, ModelRoot, false);
+            model.name = prefab.name;
             model.SetActive(version == Current);
             _models[version] = model;
             return model;
@@ -119,13 +123,14 @@ namespace DNPDemo.Venus
 
         void OnDrawGizmos()
         {
-            if (Application.isPlaying || _editorPreview == null || _editorPreview.Model == null)
+            GameObject model = _editorPreview != null ? _editorPreview.GetModelPrefab(_useStageModels) : null;
+            if (Application.isPlaying || model == null)
             {
                 return;
             }
             Matrix4x4 root = ModelRoot.localToWorldMatrix;
             Gizmos.color = new Color(0.85f, 0.85f, 0.8f, 0.6f);
-            foreach (MeshFilter filter in _editorPreview.Model.GetComponentsInChildren<MeshFilter>(true))
+            foreach (MeshFilter filter in model.GetComponentsInChildren<MeshFilter>())
             {
                 if (filter.sharedMesh == null)
                 {
