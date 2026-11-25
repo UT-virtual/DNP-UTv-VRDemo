@@ -88,6 +88,13 @@ namespace DNPDemo.Editor
         /// </summary>
         public const string ComparisonTableKey = "ComparisonTable";
 
+        /// <summary>
+        /// Key of the temple's floor (<see cref="ScenarioObjectBinding"/> on the Env_Temple root, which holds the floor). Hidden
+        /// at scene load and shown right after the closing step switches to the temple, so the statue stands on something
+        /// that receives its shadow.
+        /// </summary>
+        public const string TempleFloorKey = "TempleFloor";
+
         /// <summary>The apple may move this far from where it starts, in metres.</summary>
         public const float AppleMaxDistance = 0.4f;
 
@@ -126,17 +133,21 @@ namespace DNPDemo.Editor
             return data;
         }
 
+        /// <summary>
+        /// Brings an existing asset's closing step up to <see cref="CreateDefaultSteps"/>: it opens with the temple's
+        /// <see cref="EnvironmentCue"/>, followed by the cue that shows the temple floor.
+        /// </summary>
         public static void EnsureEnvironmentCueInExistingAsset()
         {
             ScenarioData data = AssetDatabase.LoadAssetAtPath<ScenarioData>(AssetPath);
-            if (data != null && EnsureEnvironmentCue(data))
+            if (data != null && EnsureClosingEnvironmentCues(data))
             {
                 EditorUtility.SetDirty(data);
                 AssetDatabase.SaveAssets();
             }
         }
 
-        static bool EnsureEnvironmentCue(ScenarioData data)
+        static bool EnsureClosingEnvironmentCues(ScenarioData data)
         {
             EnvironmentPreset templePreset = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.TemplePresetPath);
             foreach (ScenarioStep step in data.Steps)
@@ -146,20 +157,25 @@ namespace DNPDemo.Editor
                     continue;
                 }
                 step.Cues ??= new List<ScenarioCue>();
-                foreach (ScenarioCue cue in step.Cues)
+                bool changed = false;
+                int environmentIndex = step.Cues.FindIndex(cue => cue is EnvironmentCue);
+                if (environmentIndex < 0)
                 {
-                    if (cue is EnvironmentCue environmentCue)
-                    {
-                        if (environmentCue.Preset == null && templePreset != null)
-                        {
-                            environmentCue.Preset = templePreset;
-                            return true;
-                        }
-                        return false;
-                    }
+                    step.Cues.Insert(0, new EnvironmentCue(templePreset));
+                    environmentIndex = 0;
+                    changed = true;
                 }
-                step.Cues.Insert(0, new EnvironmentCue(templePreset));
-                return true;
+                else if (step.Cues[environmentIndex] is EnvironmentCue { Preset: null } environmentCue && templePreset != null)
+                {
+                    environmentCue.Preset = templePreset;
+                    changed = true;
+                }
+                if (!step.Cues.Exists(cue => cue is SetObjectActiveCue { Key: TempleFloorKey }))
+                {
+                    step.Cues.Insert(environmentIndex + 1, new SetObjectActiveCue(TempleFloorKey, true));
+                    changed = true;
+                }
+                return changed;
             }
             return false;
         }
@@ -292,6 +308,7 @@ namespace DNPDemo.Editor
                     Cues = new List<ScenarioCue>
                     {
                         new EnvironmentCue(templePreset),
+                        new SetObjectActiveCue(TempleFloorKey, true),
                         A("おー。現在の案は神殿ともかなりよく調和していますね。"),
                         B("ええ、見た目の美しさと構造の自然さが、うまく両立できましたね"),
                         A("Bさんの鋭いご指摘や空間ペンによる修正がヴィーナス像の復元案の構築に有効的でした。ありがとうございます。"),

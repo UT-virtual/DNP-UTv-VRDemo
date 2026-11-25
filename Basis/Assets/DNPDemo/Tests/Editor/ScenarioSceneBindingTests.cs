@@ -109,6 +109,33 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void TempleFloorKeyResolvesToTheHiddenTempleWithAShadowReceivingFloor()
+        {
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.TempleFloorKey, out UnityEngine.GameObject temple),
+                $"No object has the key \"{ScenarioDataBuilder.TempleFloorKey}\" (Env_Temple prefab).");
+            Assert.IsFalse(temple.activeSelf, "The temple stays hidden until the closing step shows it.");
+            Assert.IsTrue(temple.transform.parent == null || temple.transform.parent.gameObject.activeInHierarchy,
+                "Showing the bound object must be enough to make the floor visible.");
+
+            UnityEngine.Transform floor = temple.transform.Find(EnvironmentPresetBuilder.TempleFloorName);
+            Assert.IsNotNull(floor, "Env_Temple has no floor.");
+            Assert.IsTrue(floor.gameObject.activeSelf);
+            var renderer = floor.GetComponent<UnityEngine.MeshRenderer>();
+            Assert.IsNotNull(renderer);
+            Assert.IsTrue(renderer.receiveShadows, "The floor must receive the statue's shadow.");
+            Assert.AreEqual(AssetDatabase.LoadAssetAtPath<UnityEngine.Material>(EnvironmentPresetBuilder.TempleFloorMaterialPath),
+                renderer.sharedMaterial);
+
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            ScenarioStep closing = data.Steps.Single(step => step.Id == "closing");
+            int environment = closing.Cues.FindIndex(cue => cue is EnvironmentCue);
+            Assert.GreaterOrEqual(environment, 0, "The closing step switches to the temple.");
+            Assert.IsTrue(closing.Cues[environment + 1] is SetObjectActiveCue { Key: ScenarioDataBuilder.TempleFloorKey, Active: true },
+                "The temple floor is shown right after the environment switches.");
+        }
+
+        [Test]
         public void SelectionZoneKeysResolveToDetectionVolumes()
         {
             var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);

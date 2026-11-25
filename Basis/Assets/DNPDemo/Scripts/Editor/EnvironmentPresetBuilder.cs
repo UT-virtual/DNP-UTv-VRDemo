@@ -24,6 +24,18 @@ namespace DNPDemo.Editor
 
         const string LightingPrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Lighting.prefab";
         const string ExhibitionRoomPrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Env_ExhibitionRoom.prefab";
+        public const string TemplePrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Env_Temple.prefab";
+        public const string TempleFloorMaterialPath = DNPDemoProjectSetup.Root + "/Art/Environment/M_TempleFloor.mat";
+        public const string TempleFloorName = "TempleFloor";
+
+        // A marble disc under the statue. The panorama's floor is infinitely far away, so without it the pedestal floats and
+        // nothing receives the statue's shadow. Its top sits 1 mm below the exhibition floor (y = 0), which is still fading
+        // out while the floor appears, so the two never fight for depth.
+        const float TempleFloorRadius = 10f;
+        const float TempleFloorThickness = 0.01f;
+        const float TempleFloorTop = -0.001f;
+        static readonly Color TempleFloorColor = new(0.88f, 0.86f, 0.82f);
+        const float TempleFloorSmoothness = 0.3f;
         const int PanoramaWidth = 512;
         const int PanoramaHeight = 256;
         const int TemplePanoramaMaxSize = 4096;
@@ -34,6 +46,7 @@ namespace DNPDemo.Editor
             CreatePresetsIfMissing();
             ConfigureLightingPrefab();
             ConfigureExhibitionRoomPrefab();
+            ConfigureTemplePrefab();
             ScenarioDataBuilder.EnsureEnvironmentCueInExistingAsset();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -155,13 +168,14 @@ namespace DNPDemo.Editor
                 ambient: new AmbientSettings
                 {
                     Mode = AmbientMode.Trilight,
-                    // The panorama's linear mean over the zenith (45 to 90 degrees), the horizon (within 15 degrees) and
-                    // the floor (below -45 degrees), scaled by 0.6 so the side away from the sun keeps its contrast. The
-                    // sunlit marble floor makes the ground the brightest.
-                    SkyColor = new Color(0.48f, 0.53f, 0.62f),
-                    EquatorColor = new Color(0.54f, 0.53f, 0.54f),
-                    GroundColor = new Color(0.61f, 0.6f, 0.6f),
-                    FlatColor = new Color(0.54f, 0.53f, 0.54f),
+                    // The hues of the panorama's linear mean over the zenith (45 to 90 degrees), the horizon (within 15
+                    // degrees) and the floor (below -45 degrees); the sunlit marble floor makes the ground the brightest.
+                    // The mean is scaled by 0.6 in linear light and the resulting colour halved, which leaves the side away
+                    // from the sun dark enough to read as shade.
+                    SkyColor = new Color(0.24f, 0.265f, 0.31f),
+                    EquatorColor = new Color(0.27f, 0.265f, 0.27f),
+                    GroundColor = new Color(0.305f, 0.3f, 0.3f),
+                    FlatColor = new Color(0.27f, 0.265f, 0.27f),
                     Intensity = 1f,
                 },
                 reflection: new ReflectionSettings
@@ -368,6 +382,69 @@ namespace DNPDemo.Editor
             {
                 PrefabUtility.UnloadPrefabContents(root);
             }
+        }
+
+        /// <summary>
+        /// Puts the marble floor in Env_Temple and binds the root as <see cref="ScenarioDataBuilder.TempleFloorKey"/>. The root
+        /// stays hidden in the scene; the closing step shows it.
+        /// </summary>
+        static void ConfigureTemplePrefab()
+        {
+            Material floorMaterial = EnsureTempleFloorMaterial();
+            GameObject root = PrefabUtility.LoadPrefabContents(TemplePrefabPath);
+            try
+            {
+                ScenarioObjectBinding binding = root.GetComponent<ScenarioObjectBinding>();
+                if (binding == null)
+                {
+                    binding = root.AddComponent<ScenarioObjectBinding>();
+                }
+                SetBindingKey(binding, ScenarioDataBuilder.TempleFloorKey);
+
+                Transform floor = root.transform.Find(TempleFloorName);
+                if (floor == null)
+                {
+                    GameObject created = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    created.name = TempleFloorName;
+                    // Walking and teleporting use the exhibition room's colliders, which stay in place.
+                    UnityEngine.Object.DestroyImmediate(created.GetComponent<Collider>());
+                    created.transform.SetParent(root.transform, false);
+                    floor = created.transform;
+                }
+                // The cylinder primitive is 1 m wide and 2 m tall.
+                floor.localPosition = new Vector3(0f, TempleFloorTop - TempleFloorThickness * 0.5f, 0f);
+                floor.localRotation = Quaternion.identity;
+                floor.localScale = new Vector3(TempleFloorRadius * 2f, TempleFloorThickness * 0.5f, TempleFloorRadius * 2f);
+                var renderer = floor.GetComponent<MeshRenderer>();
+                renderer.sharedMaterial = floorMaterial;
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                renderer.receiveShadows = true;
+                PrefabUtility.SaveAsPrefabAsset(root, TemplePrefabPath);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        static Material EnsureTempleFloorMaterial()
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(TempleFloorMaterialPath);
+            if (material != null)
+            {
+                return material;
+            }
+            Shader lit = Shader.Find("Universal Render Pipeline/Lit");
+            if (lit == null)
+            {
+                throw new InvalidOperationException("The URP Lit shader was not found.");
+            }
+            material = new Material(lit) { name = Path.GetFileNameWithoutExtension(TempleFloorMaterialPath) };
+            material.SetColor("_BaseColor", TempleFloorColor);
+            material.SetFloat("_Smoothness", TempleFloorSmoothness);
+            material.SetFloat("_Metallic", 0f);
+            AssetDatabase.CreateAsset(material, TempleFloorMaterialPath);
+            return material;
         }
 
         static void SetBindingKey(ScenarioObjectBinding binding, string key)

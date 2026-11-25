@@ -276,11 +276,11 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 
 プリセットは「展示室」と「神殿（エーゲ海の青空と自然光）」の2つ。神殿のパノラマは JPEG（LDR）で、太陽の明るさを持たないため、背景と反射にだけ使う。像の陰影はディレクショナルライトと Ambient で作る。ディレクショナルライトは、パノラマ上の太陽の位置（u, v）から向きを決める。Skybox は u を方位 `360·(u−0.5) − 回転` 度（+Z から +X 方向）に、v を高度 `180·(v−0.5)` 度に置くので、ライトの Euler は（高度, 方位 − 180, 0）になる。Android の URP アセットはソフトシャドウに対応しないため、神殿の影は Hard にする。Skybox の Reflection は空から作ったキューブマップなので、パノラマが確定したとき（遷移の終わりと即時適用）に `DynamicGI.UpdateEnvironment` で作り直す。Unity は Skybox マテリアルのすべてのパスを描くので、空のシェーダー（`EnvironmentCrossfadePanorama.shader`）は1パスだけにし、遷移のスナップショットは別のシェーダー（`Hidden/DNPDemo/Environment Panorama Snapshot`）で撮る。パノラマの読み取りは両者で `EnvironmentPanorama.cginc` を共有する。スナップショット用のシェーダーは名前で探さず、Lighting Prefab の `EnvironmentController` に参照を持たせる。
 
-`DNP Demo/Setup/Build Environment Presets` は、展示室の仮パノラマとプリセットを生成し、神殿パノラマのインポート設定（2D、sRGB、Mipmap、Wrap U=Repeat / V=Clamp、2の累乗に縮めない、Android は最大 4096・ASTC 6x6）を適用し、Lighting / Env_ExhibitionRoom Prefab に `Environment` / `ExhibitionRoom` のバインディングを設定する。神殿のパノラマ（`Art/Environment/Environment_Temple_Panorama.jpg`）は生成せず、ないときはエラーにする。共有シーンは編集しない。
+`DNP Demo/Setup/Build Environment Presets` は、展示室の仮パノラマとプリセットを生成し、神殿パノラマのインポート設定（2D、sRGB、Mipmap、Wrap U=Repeat / V=Clamp、2の累乗に縮めない、Android は最大 4096・ASTC 6x6）を適用し、Lighting / Env_ExhibitionRoom Prefab に `Environment` / `ExhibitionRoom` のバインディングを設定する。Env_Temple Prefab には大理石の床（半径 10m の円盤、`M_TempleFloor`、影を受ける）を置き、ルートに `TempleFloor` のバインディングを設定する。パノラマの床は無限遠にあり影も受けないため、像の足元にはこの床が要る。床の上面は、フェードアウト中の展示室の床（y = 0）と奥行きを争わないよう 1mm 下げる。神殿のパノラマ（`Art/Environment/Environment_Temple_Panorama.jpg`）は生成せず、ないときはエラーにする。共有シーンは編集しない。
 
 影の品質はプリセットの `ShadowQualitySettings`（Override、メインライトのシャドウマップ解像度、影の距離、カスケード数）で上書きできる。Basis は影品質の設定（Quest の既定は Very Low：256px・5m・1カスケード）を `SMModuleShadowQualityURP` で URP アセットに書き込むため、神殿だけ Override を有効にし（2048px・8m・1カスケード）、展示室は Basis の値のまま使う。`EnvironmentController` は他の離散値と同じく遷移の t ≥ 0.5 で（`ApplyInstant` と舞台リセットでは即座に）切り替え、Override が有効になる最初の1回にその時点の値を退避してから書き込み、Override のないプリセットへ切り替えたら退避した値に戻す。Override 中は `LateUpdate` で値を比べ、パフォーマンスモードや品質変更で Basis に書き換えられたら上書きし直し、そのとき Basis が書いた値を新たな戻し先にする。品質レベルの切り替えで URP アセット自体が替わったときは、元のアセットへ値を戻してから新しいアセットを上書きする。URP アセットはプロジェクトのアセットで、エディタの Play 中の変更が .asset に残るため、`OnDisable` / `OnDestroy` では必ず元の値に戻す。
 
-シナリオ step 21 までは展示室を基準とし、step 22「結び」の先頭にある永続 `EnvironmentCue` が神殿へ切り替える。後続ステップや途中参加では `ApplyInstant` で同じ状態を即時再構築し、舞台リセットでは展示室プリセットへ戻す。
+シナリオ step 21 までは展示室を基準とし、step 22「結び」の先頭にある永続 `EnvironmentCue` が神殿へ切り替え、直後の `SetObjectActiveCue`（`TempleFloor`）が、シーンでは非表示の Env_Temple を表示する。後続ステップや途中参加では `ApplyInstant` で同じ状態を即時再構築し、舞台リセットでは展示室プリセットへ戻す。
 
 ### 2.7 タスク HUD
 

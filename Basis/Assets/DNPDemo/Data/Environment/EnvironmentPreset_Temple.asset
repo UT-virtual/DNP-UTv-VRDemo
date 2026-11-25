@@ -42,10 +42,10 @@ MonoBehaviour:
     ShadowNearPlane: 0.2
   _ambient:
     Mode: 1
-    SkyColor: {r: 0.48, g: 0.53, b: 0.62, a: 1}
-    EquatorColor: {r: 0.54, g: 0.53, b: 0.54, a: 1}
-    GroundColor: {r: 0.61, g: 0.6, b: 0.6, a: 1}
-    FlatColor: {r: 0.54, g: 0.53, b: 0.54, a: 1}
+    SkyColor: {r: 0.24, g: 0.265, b: 0.31, a: 1}
+    EquatorColor: {r: 0.27, g: 0.265, b: 0.27, a: 1}
+    GroundColor: {r: 0.305, g: 0.3, b: 0.3, a: 1}
+    FlatColor: {r: 0.27, g: 0.265, b: 0.27, a: 1}
     Intensity: 1
   _reflection:
     Mode: 0

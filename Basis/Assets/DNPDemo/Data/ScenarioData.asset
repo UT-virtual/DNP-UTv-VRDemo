@@ -242,6 +242,7 @@ MonoBehaviour:
     Interaction: []
     Cues:
     - rid: 4263738437767528511
+    - rid: 4263738442423468032
     - rid: 4263738437767528512
     - rid: 4263738437767528513
     - rid: 4263738437767528514
@@ -785,3 +786,8 @@ MonoBehaviour:
         Visible: 0
         Text: WORKSHOP COMPLETE
         FadeSeconds: 2
+    - rid: 4263738442423468032
+      type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Key: TempleFloor
+        Active: 1
