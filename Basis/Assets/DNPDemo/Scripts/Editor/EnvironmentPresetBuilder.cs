@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using DNPDemo.Environment;
 using UnityEditor;
@@ -9,7 +10,7 @@ namespace DNPDemo.Editor
 {
     /// <summary>
     /// Creates the environment presets and the exhibition's temporary panorama, configures the temple panorama's
-    /// import, and wires the scene prefabs.
+    /// import, bakes the reflections, and wires the scene prefabs.
     /// </summary>
     public static class EnvironmentPresetBuilder
     {
@@ -26,7 +27,9 @@ namespace DNPDemo.Editor
         public const string SnapshotShaderPath = DNPDemoProjectSetup.Root + "/Scripts/Runtime/Environment/EnvironmentPanoramaSnapshot.shader";
 
         const string LightingPrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Lighting.prefab";
-        const string ExhibitionRoomPrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Env_ExhibitionRoom.prefab";
+        public const string ExhibitionRoomPrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Env_ExhibitionRoom.prefab";
+        public const string ExhibitionRoomFadeMaterialFolder = DNPDemoProjectSetup.Root + "/Art/ExhibitionRoom/Materials/Fade";
+        const string UrpLitShaderName = "Universal Render Pipeline/Lit";
         public const string TemplePrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Env_Temple.prefab";
         public const string TempleFloorMaterialPath = DNPDemoProjectSetup.Root + "/Art/Environment/M_TempleFloor.mat";
         public const string TempleFloorName = "TempleFloor";
@@ -47,6 +50,7 @@ namespace DNPDemo.Editor
         public static void BuildAssetsAndPrefabs()
         {
             CreatePresetsIfMissing();
+            EnvironmentReflectionBaker.BakePresets();
             ConfigureLightingPrefab();
             ConfigureExhibitionRoomPrefab();
             ConfigureTemplePrefab();
@@ -118,12 +122,8 @@ namespace DNPDemo.Editor
                     FlatColor = new Color(0.2f, 0.19f, 0.17f),
                     Intensity = 1f,
                 },
-                reflection: new ReflectionSettings
-                {
-                    Mode = DefaultReflectionMode.Skybox,
-                    CustomReflectionTexture = null,
-                    Intensity = 0.6f,
-                },
+                // The cubemap is baked from the panorama afterwards (EnvironmentReflectionBaker).
+                reflection: new ReflectionSettings { Intensity = 0.6f },
                 shadowQuality: new ShadowQualitySettings { Override = false });
 
             EnsurePreset(
@@ -179,12 +179,7 @@ namespace DNPDemo.Editor
                     FlatColor = new Color(0.27f, 0.265f, 0.27f),
                     Intensity = 1f,
                 },
-                reflection: new ReflectionSettings
-                {
-                    Mode = DefaultReflectionMode.Skybox,
-                    CustomReflectionTexture = null,
-                    Intensity = 0.5f,
-                },
+                reflection: new ReflectionSettings { Intensity = 0.5f },
                 // Basis' Very Low tier on Quest leaves a 256 px map over 5 m, too coarse for the statue's shadow.
                 shadowQuality: new ShadowQualitySettings
                 {
@@ -363,18 +358,126 @@ namespace DNPDemo.Editor
             return shader;
         }
 
+        /// <summary>
+        /// Binds the room as <see cref="EnvironmentController.ExhibitionRoomKey"/> and lists every renderer in its
+        /// <see cref="EnvironmentFadeGroup"/> with a transparent counterpart of each material. The whole room fades, as the
+        /// temple brings its own floor.
+        /// </summary>
         static void ConfigureExhibitionRoomPrefab()
         {
             GameObject root = PrefabUtility.LoadPrefabContents(ExhibitionRoomPrefabPath);
             try
             {
                 ScenarioBindingEditor.Bind(root, EnvironmentController.ExhibitionRoomKey);
+                EnvironmentFadeGroup group = root.GetComponent<EnvironmentFadeGroup>();
+                if (group == null)
+                {
+                    group = root.AddComponent<EnvironmentFadeGroup>();
+                }
+
+                Directory.CreateDirectory(AbsolutePath(ExhibitionRoomFadeMaterialFolder));
+                var fadeMaterials = new Dictionary<Material, Material>();
+                Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+                var entries = new EnvironmentFadeGroup.Entry[renderers.Length];
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    Material[] originals = renderers[i].sharedMaterials;
+                    var fades = new Material[originals.Length];
+                    for (int slot = 0; slot < originals.Length; slot++)
+                    {
+                        fades[slot] = EnsureFadeMaterial(originals[slot], fadeMaterials);
+                    }
+                    entries[i] = new EnvironmentFadeGroup.Entry { Renderer = renderers[i], FadeMaterials = fades };
+                }
+                group.SetEntries(entries);
+                EditorUtility.SetDirty(group);
                 PrefabUtility.SaveAsPrefabAsset(root, ExhibitionRoomPrefabPath);
             }
             finally
             {
                 PrefabUtility.UnloadPrefabContents(root);
             }
+        }
+
+        /// <summary>
+        /// A material embedded in a model is prefixed with the model's name, as it may share its name with an external material.
+        /// </summary>
+        public static string FadeMaterialPath(Material original)
+        {
+            string name = AssetDatabase.IsSubAsset(original)
+                ? $"{Path.GetFileNameWithoutExtension(AssetDatabase.GetAssetPath(original))}_{original.name}"
+                : original.name;
+            return $"{ExhibitionRoomFadeMaterialFolder}/{name}_Fade.mat";
+        }
+
+        /// <summary>
+        /// Creates or refreshes the transparent asset for a room material. Being an asset referenced by the prefab, its shader
+        /// variant is part of the build, which a material made at runtime would not guarantee.
+        /// </summary>
+        static Material EnsureFadeMaterial(Material original, Dictionary<Material, Material> created)
+        {
+            if (original == null)
+            {
+                return null;
+            }
+            if (created.TryGetValue(original, out Material existing))
+            {
+                return existing;
+            }
+            if (original.shader == null || original.shader.name != UrpLitShaderName)
+            {
+                throw new InvalidOperationException(
+                    $"The exhibition room material '{original.name}' uses '{original.shader?.name}', but fading needs {UrpLitShaderName}.");
+            }
+            string path = FadeMaterialPath(original);
+            foreach (KeyValuePair<Material, Material> pair in created)
+            {
+                if (AssetDatabase.GetAssetPath(pair.Value) == path)
+                {
+                    throw new InvalidOperationException($"Two exhibition room materials are named '{original.name}'. Rename one of them.");
+                }
+            }
+
+            Material fade = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (fade == null)
+            {
+                fade = new Material(original) { name = Path.GetFileNameWithoutExtension(path) };
+                ConfigureFadeMaterial(fade);
+                AssetDatabase.CreateAsset(fade, path);
+            }
+            else
+            {
+                fade.shader = original.shader;
+                fade.CopyPropertiesFromMaterial(original);
+                ConfigureFadeMaterial(fade);
+                EditorUtility.SetDirty(fade);
+            }
+            created.Add(original, fade);
+            return fade;
+        }
+
+        /// <summary>
+        /// Makes a URP Lit material alpha blended, as URP's own material inspector would. Depth writing stays off here because
+        /// URP's validation turns it off for transparent Lit materials anyway; <see cref="EnvironmentFadeGroup"/> turns it on
+        /// in its runtime copies.
+        /// </summary>
+        public static void ConfigureFadeMaterial(Material material)
+        {
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", 0f);
+            material.SetFloat("_AlphaClip", 0f);
+            material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_SrcBlendAlpha", (float)UnityEngine.Rendering.BlendMode.One);
+            material.SetFloat("_DstBlendAlpha", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_ZWrite", 0f);
+            material.SetShaderPassEnabled("DepthOnly", false);
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.renderQueue = (int)RenderQueue.Transparent;
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.DisableKeyword("_ALPHATEST_ON");
+            material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            material.DisableKeyword("_ALPHAMODULATE_ON");
         }
 
         /// <summary>

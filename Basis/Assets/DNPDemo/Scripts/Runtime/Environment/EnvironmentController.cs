@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using DNPDemo.Scenario;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -14,7 +13,7 @@ namespace DNPDemo.Environment
     {
         /// <summary>Default <see cref="DNPDemo.Scenario.ScenarioObjectBinding"/> key of the object that holds this controller.</summary>
         public const string EnvironmentKey = "Environment";
-        /// <summary>Key of the exhibition room whose renderers fade out when a preset hides the room.</summary>
+        /// <summary>Key of the exhibition room, whose <see cref="EnvironmentFadeGroup"/> fades out when a preset hides the room.</summary>
         public const string ExhibitionRoomKey = "ExhibitionRoom";
         const string PanoramaShaderName = "DNPDemo/Environment Crossfade Panorama";
 
@@ -25,8 +24,6 @@ namespace DNPDemo.Environment
         static readonly int ExposureBId = Shader.PropertyToID("_ExposureB");
         static readonly int RotationAId = Shader.PropertyToID("_RotationA");
         static readonly int RotationBId = Shader.PropertyToID("_RotationB");
-        static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-        static readonly int LegacyColorId = Shader.PropertyToID("_Color");
 
         [SerializeField] EnvironmentPreset _baselinePreset;
         [SerializeField] Light _directionalLight;
@@ -34,31 +31,6 @@ namespace DNPDemo.Environment
         [SerializeField] Shader _crossfadeShader;
         [SerializeField] Shader _snapshotShader;
         [SerializeField, Min(0f)] float _transitionDuration = 2f;
-
-        /// <summary>
-        /// How the exhibition room is drawn. Transparent materials do not sort correctly against the room's own faces or
-        /// other transparent objects, so they are only used while the room is partially visible.
-        /// </summary>
-        enum WallDisplay
-        {
-            /// <summary>Fully visible with the room's own opaque materials.</summary>
-            Opaque,
-            /// <summary>Partially visible with transparent copies of the materials.</summary>
-            Fading,
-            /// <summary>Not drawn at all, so it casts no shadows either. Colliders are left untouched.</summary>
-            Hidden,
-        }
-
-        sealed class WallRenderer
-        {
-            public Renderer Renderer;
-            public bool OriginallyEnabled;
-            public Material[] OriginalMaterials;
-            /// <summary>Transparent copies created on the first fade; entries that cannot fade keep the original.</summary>
-            public Material[] FadeMaterials;
-            public Color[] BaseColors;
-            public int[] ColorPropertyIds;
-        }
 
         struct RuntimeState
         {
@@ -129,8 +101,8 @@ namespace DNPDemo.Environment
                     AmbientGround = ambient.GroundColor,
                     AmbientFlat = ambient.FlatColor,
                     AmbientIntensity = ambient.Intensity,
-                    ReflectionMode = reflection.Mode,
-                    CustomReflection = reflection.CustomReflectionTexture,
+                    ReflectionMode = DefaultReflectionMode.Custom,
+                    CustomReflection = reflection.Cubemap,
                     ReflectionIntensity = reflection.Intensity,
                     ShadowQuality = preset.ShadowQuality,
                     WallAlpha = preset.ExhibitionRoomVisible ? 1f : 0f,
@@ -139,12 +111,20 @@ namespace DNPDemo.Environment
 
             /// <summary>
             /// Intermediate state of a transition. A disabled spot light counts as intensity 0, so a light that turns on
-            /// fades in from dark and one that turns off fades out before it is deactivated at the end.
+            /// fades in from dark and one that turns off fades out before it is deactivated at the end. A reflection cubemap
+            /// cannot be blended, so when it changes, the reflection dims to 0 by the midpoint, switches there, and brightens
+            /// to its target.
             /// </summary>
             public static RuntimeState Lerp(RuntimeState from, RuntimeState to, float t)
             {
                 float fromSpotIntensity = from.SpotEnabled ? from.SpotIntensity : 0f;
                 float toSpotIntensity = to.SpotEnabled ? to.SpotIntensity : 0f;
+                bool reflectionChanges = from.ReflectionMode != to.ReflectionMode || from.CustomReflection != to.CustomReflection;
+                float reflectionIntensity = !reflectionChanges
+                    ? Mathf.Lerp(from.ReflectionIntensity, to.ReflectionIntensity, t)
+                    : t < 0.5f
+                        ? Mathf.Lerp(from.ReflectionIntensity, 0f, t * 2f)
+                        : Mathf.Lerp(0f, to.ReflectionIntensity, t * 2f - 1f);
                 return new RuntimeState
                 {
                     DirectionalColor = Color.Lerp(from.DirectionalColor, to.DirectionalColor, t),
@@ -175,14 +155,14 @@ namespace DNPDemo.Environment
                     AmbientIntensity = Mathf.Lerp(from.AmbientIntensity, to.AmbientIntensity, t),
                     ReflectionMode = t < 0.5f ? from.ReflectionMode : to.ReflectionMode,
                     CustomReflection = t < 0.5f ? from.CustomReflection : to.CustomReflection,
-                    ReflectionIntensity = Mathf.Lerp(from.ReflectionIntensity, to.ReflectionIntensity, t),
+                    ReflectionIntensity = reflectionIntensity,
                     ShadowQuality = t < 0.5f ? from.ShadowQuality : to.ShadowQuality,
                     WallAlpha = Mathf.Lerp(from.WallAlpha, to.WallAlpha, t),
                 };
             }
         }
 
-        readonly List<WallRenderer> _wallRenderers = new();
+        EnvironmentFadeGroup _exhibitionRoom;
         Material _skyboxMaterial;
         Material _snapshotMaterial;
         RenderTexture _skySnapshotA;
@@ -197,13 +177,11 @@ namespace DNPDemo.Environment
         bool _transitionTargetSpotEnabled;
         ScenarioStage _stage;
         float _wallAlpha = 1f;
-        WallDisplay _wallDisplay = WallDisplay.Opaque;
         float _elapsed;
         float _duration;
         bool _initialized;
         bool _isTransitioning;
-        bool _reportedMissingWalls;
-        bool _reportedWallMaterial;
+        bool _reportedMissingRoom;
 
         public bool IsTransitioning => _isTransitioning;
 
@@ -388,9 +366,6 @@ namespace DNPDemo.Environment
             _skyboxMaterial.SetFloat(ExposureBId, preset.Exposure);
             _skyboxMaterial.SetFloat(RotationAId, preset.Rotation);
             _skyboxMaterial.SetFloat(RotationBId, preset.Rotation);
-            // The Skybox reflection is a cubemap captured from the sky, not the live sky. Recapture it once the panorama has
-            // settled so reflective materials show the new environment.
-            DynamicGI.UpdateEnvironment();
         }
 
         RuntimeState CaptureCurrentState()
@@ -485,67 +460,16 @@ namespace DNPDemo.Environment
 
         void SetWallAlpha(float alpha)
         {
-            if (!EnsureWallRenderers())
-            {
-                return;
-            }
             _wallAlpha = alpha;
-            WallDisplay display = alpha >= 1f ? WallDisplay.Opaque : alpha <= 0f ? WallDisplay.Hidden : WallDisplay.Fading;
-            if (display == WallDisplay.Fading)
+            if (EnsureExhibitionRoom())
             {
-                SetFadeAlpha(alpha);
-            }
-            if (display == _wallDisplay)
-            {
-                return;
-            }
-            _wallDisplay = display;
-            foreach (WallRenderer wall in _wallRenderers)
-            {
-                if (wall.Renderer == null)
-                {
-                    continue;
-                }
-                switch (display)
-                {
-                    case WallDisplay.Opaque:
-                        wall.Renderer.sharedMaterials = wall.OriginalMaterials;
-                        wall.Renderer.enabled = wall.OriginallyEnabled;
-                        break;
-                    case WallDisplay.Fading:
-                        wall.Renderer.sharedMaterials = wall.FadeMaterials;
-                        wall.Renderer.enabled = wall.OriginallyEnabled;
-                        break;
-                    case WallDisplay.Hidden:
-                        wall.Renderer.enabled = false;
-                        break;
-                }
+                _exhibitionRoom.SetAlpha(alpha);
             }
         }
 
-        void SetFadeAlpha(float alpha)
+        bool EnsureExhibitionRoom()
         {
-            foreach (WallRenderer wall in _wallRenderers)
-            {
-                EnsureFadeMaterials(wall);
-                for (int i = 0; i < wall.FadeMaterials.Length; i++)
-                {
-                    Material material = wall.FadeMaterials[i];
-                    if (material == null || material == wall.OriginalMaterials[i])
-                    {
-                        continue;
-                    }
-                    Color color = wall.BaseColors[i];
-                    color.a *= alpha;
-                    material.SetColor(wall.ColorPropertyIds[i], color);
-                }
-            }
-        }
-
-        /// <summary>Records the room's renderers as they are; their materials are only replaced while the room fades.</summary>
-        bool EnsureWallRenderers()
-        {
-            if (_wallRenderers.Count > 0)
+            if (_exhibitionRoom != null)
             {
                 return true;
             }
@@ -553,82 +477,16 @@ namespace DNPDemo.Environment
             {
                 _stage = FindStage(gameObject.scene);
             }
-            if (_stage == null || !_stage.TryGetObject(ExhibitionRoomKey, out GameObject room))
+            if (_stage != null && _stage.TryGetObject(ExhibitionRoomKey, out GameObject room))
             {
-                if (!_reportedMissingWalls)
-                {
-                    Debug.LogWarning($"[DNPDemo] 環境の壁表示に必要なキー「{ExhibitionRoomKey}」がシーンにありません。", this);
-                    _reportedMissingWalls = true;
-                }
-                return false;
+                _exhibitionRoom = room.GetComponent<EnvironmentFadeGroup>();
             }
-
-            foreach (Renderer renderer in room.GetComponentsInChildren<Renderer>(true))
+            if (_exhibitionRoom == null && !_reportedMissingRoom)
             {
-                _wallRenderers.Add(new WallRenderer
-                {
-                    Renderer = renderer,
-                    OriginallyEnabled = renderer.enabled,
-                    OriginalMaterials = renderer.sharedMaterials,
-                });
+                Debug.LogWarning($"[DNPDemo] キー「{ExhibitionRoomKey}」のオブジェクトに EnvironmentFadeGroup がないため、展示室をフェードできません。", this);
+                _reportedMissingRoom = true;
             }
-            _wallDisplay = WallDisplay.Opaque;
-            return _wallRenderers.Count > 0;
-        }
-
-        void EnsureFadeMaterials(WallRenderer wall)
-        {
-            if (wall.FadeMaterials != null)
-            {
-                return;
-            }
-            Material[] originals = wall.OriginalMaterials;
-            wall.FadeMaterials = new Material[originals.Length];
-            wall.BaseColors = new Color[originals.Length];
-            wall.ColorPropertyIds = new int[originals.Length];
-            for (int i = 0; i < originals.Length; i++)
-            {
-                Material original = originals[i];
-                if (original == null)
-                {
-                    continue;
-                }
-                int colorProperty = original.HasProperty(BaseColorId) ? BaseColorId : original.HasProperty(LegacyColorId) ? LegacyColorId : 0;
-                if (colorProperty == 0 || !original.HasProperty("_Surface"))
-                {
-                    wall.FadeMaterials[i] = original;
-                    if (!_reportedWallMaterial)
-                    {
-                        Debug.LogWarning($"[DNPDemo] 壁のマテリアル「{original.name}」は URP Lit の透明フェードに対応していません。", wall.Renderer);
-                        _reportedWallMaterial = true;
-                    }
-                    continue;
-                }
-                Material fade = new(original) { name = $"{original.name} (Fade)", hideFlags = HideFlags.DontSave };
-                ConfigureTransparentMaterial(fade);
-                wall.FadeMaterials[i] = fade;
-                wall.BaseColors[i] = fade.GetColor(colorProperty);
-                wall.ColorPropertyIds[i] = colorProperty;
-            }
-        }
-
-        /// <summary>
-        /// Converts a URP Lit copy to alpha blending. It keeps writing depth so the room's own faces, including the back faces
-        /// of double-sided materials, still occlude each other while it fades.
-        /// </summary>
-        static void ConfigureTransparentMaterial(Material material)
-        {
-            material.SetFloat("_Surface", 1f);
-            material.SetFloat("_Blend", 0f);
-            material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-            material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-            material.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
-            material.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
-            material.SetFloat("_ZWrite", 1f);
-            material.SetOverrideTag("RenderType", "Transparent");
-            material.renderQueue = (int)RenderQueue.Transparent;
-            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            material.DisableKeyword("_ALPHATEST_ON");
+            return _exhibitionRoom != null;
         }
 
         bool EnsureInitialized()
@@ -690,9 +548,10 @@ namespace DNPDemo.Environment
                 Debug.LogError($"[DNPDemo] Environment preset '{preset.name}' has no panorama texture.", preset);
                 return false;
             }
-            if (preset.Reflection.Mode == DefaultReflectionMode.Custom && preset.Reflection.CustomReflectionTexture == null)
+            if (preset.Reflection.Cubemap == null)
             {
-                Debug.LogError($"[DNPDemo] Environment preset '{preset.name}' selects a custom reflection without a texture.", preset);
+                Debug.LogError($"[DNPDemo] Environment preset '{preset.name}' has no reflection cubemap. " +
+                    "Run DNP Demo/Setup/Bake Environment Reflections.", preset);
                 return false;
             }
             return true;
@@ -733,38 +592,15 @@ namespace DNPDemo.Environment
             snapshot = null;
         }
 
-        void RestoreWallMaterials()
-        {
-            foreach (WallRenderer wall in _wallRenderers)
-            {
-                if (wall.Renderer != null)
-                {
-                    wall.Renderer.sharedMaterials = wall.OriginalMaterials;
-                    wall.Renderer.enabled = wall.OriginallyEnabled;
-                }
-                if (wall.FadeMaterials == null)
-                {
-                    continue;
-                }
-                for (int i = 0; i < wall.FadeMaterials.Length; i++)
-                {
-                    Material material = wall.FadeMaterials[i];
-                    if (material != null && material != wall.OriginalMaterials[i])
-                    {
-                        DestroyRuntimeObject(material);
-                    }
-                }
-            }
-            _wallRenderers.Clear();
-            _wallDisplay = WallDisplay.Opaque;
-        }
-
         void OnDestroy()
         {
             _shadowQuality?.Suspend();
             if (_initialized)
             {
-                RestoreWallMaterials();
+                if (_exhibitionRoom != null)
+                {
+                    _exhibitionRoom.SetAlpha(1f);
+                }
                 if (RenderSettings.skybox == _skyboxMaterial)
                 {
                     RenderSettings.skybox = _originalSkybox;

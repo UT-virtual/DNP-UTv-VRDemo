@@ -47,6 +47,10 @@ MonoBehaviour:
     FlatColor: {r: 0.2, g: 0.19, b: 0.17, a: 1}
     Intensity: 1
   _reflection:
-    Mode: 0
-    CustomReflectionTexture: {fileID: 0}
+    Cubemap: {fileID: 8900000, guid: c7462bd6fa78fe94d99b71d33c61f248, type: 3}
     Intensity: 0.6
+  _shadowQuality:
+    Override: 0
+    MainLightShadowmapResolution: 0
+    ShadowDistance: 0
+    CascadeCount: 0

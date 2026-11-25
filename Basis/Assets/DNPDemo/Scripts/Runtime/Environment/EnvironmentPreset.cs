@@ -57,14 +57,13 @@ namespace DNPDemo.Environment
     }
 
     /// <summary>
-    /// Environment reflection applied at runtime. Resolution and bounces are only read when lighting is baked, so they are
-    /// left to the scene's Lighting settings.
+    /// Environment reflection, applied as the scene's custom reflection. The cubemap is baked from the preset's panorama in
+    /// the Editor (DNP Demo/Setup/Bake Environment Reflections), so switching presets needs no capture at runtime.
     /// </summary>
     [Serializable]
     public struct ReflectionSettings
     {
-        public DefaultReflectionMode Mode;
-        public Texture CustomReflectionTexture;
+        public Cubemap Cubemap;
         public float Intensity;
     }
 
@@ -133,5 +132,8 @@ namespace DNPDemo.Environment
             _reflection = reflection;
             _shadowQuality = shadowQuality;
         }
+
+        /// <summary>Assigns the cubemap baked from the panorama, keeping the rest of the preset as authored.</summary>
+        internal void SetReflectionCubemap(Cubemap cubemap) => _reflection.Cubemap = cubemap;
     }
 }
