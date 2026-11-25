@@ -66,5 +66,19 @@ namespace DNPDemo.Pen
             float rate = Mathf.Log(MaxSelectRadius / MinSelectRadius) / fullRangeSeconds;
             return ClampRadius(radius * Mathf.Exp(Mathf.Clamp(stick, -1f, 1f) * rate * deltaTime));
         }
+
+        /// <summary>
+        /// Extension (0..1) after holding the stick at <paramref name="stick"/> (-1..1) for <paramref name="deltaTime"/>,
+        /// for the modes where the stick sets the length directly. The length changes linearly, so the tip moves at a
+        /// steady speed; a full push goes from the shortest to the longest pen in <paramref name="fullRangeSeconds"/>.
+        /// </summary>
+        public static float AdjustExtension(float extension, float stick, float deltaTime, float fullRangeSeconds)
+        {
+            if (stick == 0f || deltaTime <= 0f || fullRangeSeconds <= 0f)
+            {
+                return Mathf.Clamp01(extension);
+            }
+            return Mathf.Clamp01(extension + Mathf.Clamp(stick, -1f, 1f) * deltaTime / fullRangeSeconds);
+        }
     }
 }

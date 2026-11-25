@@ -30,6 +30,17 @@ namespace DNPDemo.Menu
             return items;
         }
 
+        // The pen's mode button can change the mode while the bar is open.
+        protected override void OnBarOpened()
+        {
+            PenModeSelection.Changed -= HandleModeChanged;
+            PenModeSelection.Changed += HandleModeChanged;
+        }
+
+        protected override void OnBarClosed() => PenModeSelection.Changed -= HandleModeChanged;
+
+        void HandleModeChanged(PenMode mode) => RefreshIndicators();
+
         static string IconFor(PenMode mode) => mode switch
         {
             PenMode.Select => AddressableAssets.Sprites.Select,

@@ -9,11 +9,11 @@ namespace DNPDemo.Pen
 {
     /// <summary>
     /// Owns the two pens in the world, one per role, and keeps what Basis's pickup sync does not carry in step
-    /// across devices: the mode, the selection radius, and the held and trigger flags.
+    /// across devices: the mode, the selection radius, the length, and the held and trigger flags.
     /// <list type="bullet">
     /// <item>The pen of the local role goes to <see cref="SpatialPenController"/>, which alone may grab it; the other
     /// one shows what its player's device sends. A pen is visible while its role is in the session.</item>
-    /// <item>The local pen's state is sent at up to <see cref="_sendRate"/> per second while the radius changes
+    /// <item>The local pen's state is sent at up to <see cref="_sendRate"/> per second while the radius or the length changes
     /// (unreliable), mode, grip and trigger changes go out at once, and once the state has been still for
     /// <see cref="_settleSeconds"/> the exact state follows on the reliable channel, so the last packet is never lost.</item>
     /// <item>Joining players get the current state directly. A state that arrives before its sender's role is known is
