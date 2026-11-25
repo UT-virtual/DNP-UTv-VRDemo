@@ -24,7 +24,7 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738437767528448
+    - rid: 1662061916731736477
   - Id: opening
     Title: "Opening \u30CA\u30EC\u30FC\u30BF\u30FC\u5C0E\u5165"
     Actor: 0
@@ -32,11 +32,11 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738437767528449
-    - rid: 4263738437767528450
-    - rid: 4263738437767528451
-    - rid: 4263738437767528452
-    - rid: 4263738437767528453
+    - rid: 1662061916731736478
+    - rid: 1662061916731736479
+    - rid: 1662061916731736480
+    - rid: 1662061916731736481
+    - rid: 1662061916731736482
   - Id: s1-apple-theory
     Title: "Scene 1 \u6797\u6A8E\u8AAC"
     Actor: 0
@@ -44,16 +44,16 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738437767528454
-    - rid: 4263738437767528455
-    - rid: 4263738437767528456
+    - rid: 1662061916731736483
+    - rid: 1662061916731736484
+    - rid: 1662061916731736485
   - Id: s1-voice-left-arm
     Title: "Scene 1 [A] \u5DE6\u8155\u3092\u97F3\u58F0\u751F\u6210"
     Actor: 1
     Completion: 2
     TaskText: "\u97F3\u58F0\u751F\u6210\u3092\u8D77\u52D5\u3057\u3001\u300C\u73FE\u5728\u306E\u30F4\u30A3\u30FC\u30CA\u30B9\u306B\u3064\u3044\u3066\u3001\u624B\u306E\u3072\u3089\u306B\u6797\u6A8E\u304C\u306E\u3063\u305F\u6C34\u5E73\u306B\u4F38\u3073\u308B\u5DE6\u624B\u3092\u8FFD\u52A0\u300D\u3068\u51FA\u529B\u305B\u3088\u3002"
     Interaction:
-    - rid: 4263738437767528457
+    - rid: 1662061916731736486
     Cues: []
   - Id: s1-concerns
     Title: "Scene 1 \u69CB\u9020\u306E\u61F8\u5FF5"
@@ -62,12 +62,12 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738437767528458
-    - rid: 4263738437767528459
-    - rid: 4263738437767528460
-    - rid: 4263738437767528461
-    - rid: 4263738437767528462
-    - rid: 4263738437767528463
+    - rid: 1662061916731736487
+    - rid: 1662061916731736488
+    - rid: 1662061916731736489
+    - rid: 1662061916731736490
+    - rid: 1662061916731736491
+    - rid: 1662061916731736492
   - Id: s2-request-b
     Title: "Scene 2 \u5B66\u8005B\u3078\u306E\u4F9D\u983C"
     Actor: 0
@@ -75,16 +75,16 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738437767528464
-    - rid: 4263738437767528465
+    - rid: 1662061916731736493
+    - rid: 1662061916731736494
   - Id: s2-move-apple
     Title: "Scene 2 [B] \u6797\u6A8E\u3092\u624B\u306E\u4E0B\u3078"
     Actor: 2
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u6797\u6A8E\u306E\u9818\u57DF\u3092\u9078\u629E\u3057\u3001\u6797\u6A8E\u306E\u4F4D\u7F6E\u3092\u8ABF\u6574\u305B\u3088\u3002\uFF08\u624B\u306E\u4E0B\u306B\u6301\u3063\u3066\u304F\u308B\uFF09"
     Interaction:
-    - rid: 4263738437767528466
-    - rid: 4263738437767528467
+    - rid: 1662061916731736495
+    - rid: 1662061916731736496
     Cues: []
   - Id: s2-regrip-apple
     Title: "Scene 2 [B] \u6797\u6A8E\u306E\u6301\u3061\u65B9\u3092\u4FEE\u6B63"
@@ -92,10 +92,10 @@ MonoBehaviour:
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u8155\u3092\u9078\u629E\u3057\u3001\u300C\u9078\u629E\u3057\u305F\u7BC4\u56F2\u306B\u3064\u3044\u3066\u3001\u4E0A\u304B\u3089\u30DC\u30FC\u30EB\u3092\u5305\u307F\u8FBC\u3080\u3088\u3046\u306B\u6797\u6A8E\u3092\u6301\u3061\u76F4\u3059\u5F62\u306B\u4FEE\u6B63\u300D\u3068\u5165\u529B\u305B\u3088\u3002"
     Interaction:
-    - rid: 4263738437767528468
-    - rid: 4263738437767528469
+    - rid: 1662061916731736497
+    - rid: 1662061916731736498
     Cues:
-    - rid: 4263738437767528470
+    - rid: 1662061916731736499
   - Id: s2-natural-curve
     Title: "Scene 2 \u81EA\u7136\u306A\u30AB\u30FC\u30D6"
     Actor: 0
@@ -103,21 +103,21 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738437767528471
-    - rid: 4263738437767528472
-    - rid: 4263738437767528473
-    - rid: 4263738437767528474
-    - rid: 4263738437767528475
+    - rid: 1662061916731736500
+    - rid: 1662061916731736501
+    - rid: 1662061916731736502
+    - rid: 1662061916731736503
+    - rid: 1662061916731736504
   - Id: s2-slide-arm
     Title: "Scene 2 [B] \u8155\u3092\u5185\u5074\u3078"
     Actor: 2
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u5DE6\u80A9\u304B\u3089\u8098\u306E\u9818\u57DF\u3092\u9078\u629E\u3057\u3001\u8155\u306E\u89D2\u5EA6\u3092\u5185\u5074\u3078\u30B9\u30E9\u30A4\u30C9\u4FEE\u6B63\u305B\u3088\u3002"
     Interaction:
-    - rid: 4263738437767528476
-    - rid: 4263738437767528477
+    - rid: 1662061916731736505
+    - rid: 1662061916731736506
     Cues:
-    - rid: 4263738437767528478
+    - rid: 1662061916731736507
   - Id: s2-mismatch
     Title: "Scene 2 \u30A4\u30E1\u30FC\u30B8\u306E\u30BA\u30EC"
     Actor: 0
@@ -125,18 +125,18 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738437767528479
-    - rid: 4263738437767528480
-    - rid: 4263738437767528481
+    - rid: 1662061916731736508
+    - rid: 1662061916731736509
+    - rid: 1662061916731736510
   - Id: s2-guide-curve
     Title: "Scene 2 [A] \u30AC\u30A4\u30C9\u3067\u30AB\u30FC\u30D6\u3092\u63CF\u304F"
     Actor: 1
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\uFF08\u30AC\u30A4\u30C9\u30E2\u30FC\u30C9\uFF09\u3092\u4F7F\u7528\u3057\u3001\u5DE6\u80A9\u304B\u3089\u80F8\u306E\u524D\u3078\u300C\u7DE9\u3084\u304B\u306A\u30AB\u30FC\u30D6\u3092\u63CF\u304F\u8ECC\u8DE1\u300D\u3092\u306A\u305E\u308B\u3088\u3046\u306B\u63CF\u3051\u3002"
     Interaction:
-    - rid: 4263738437767528482
+    - rid: 1662061916731736511
     Cues:
-    - rid: 4263738437767528483
+    - rid: 1662061916731736512
   - Id: s3-hand-mirror
     Title: "Scene 3 \u53F3\u8155\u3068\u624B\u93E1"
     Actor: 0
@@ -144,19 +144,19 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738437767528484
-    - rid: 4263738437767528485
-    - rid: 4263738437767528486
-    - rid: 4263738437767528487
-    - rid: 4263738437767528488
+    - rid: 1662061916731736513
+    - rid: 1662061916731736514
+    - rid: 1662061916731736515
+    - rid: 1662061916731736516
+    - rid: 1662061916731736517
   - Id: s3-draw-mirror
     Title: "Scene 3 [A] \u624B\u93E1\u306E\u7DDA\u753B\u3092\u5909\u63DB"
     Actor: 1
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u7A7A\u4E2D\u306B\u624B\u93E1\u306E\u7DDA\u753B\u3092\u63CF\u3051\u3002\u300C\u7DDA\u753B\u3092\u897F\u6D0B\u306E\u30A2\u30F3\u30C6\u30A3\u30FC\u30AF\u306A\u624B\u93E1\u306B\u5909\u63DB\u300D\u3068\u97F3\u58F0\u6307\u793A\u305B\u3088\u3002"
     Interaction:
-    - rid: 4263738437767528489
-    - rid: 4263738437767528490
+    - rid: 1662061916731736518
+    - rid: 1662061916731736519
     Cues: []
   - Id: s3-place-mirror
     Title: "Scene 3 [A] \u624B\u93E1\u3092\u79FB\u52D5"
@@ -164,17 +164,19 @@ MonoBehaviour:
     Completion: 2
     TaskText: "\u751F\u6210\u3055\u308C\u305F\u624B\u93E1\u3092\u6240\u5B9A\u306E\u4F4D\u7F6E\u306B\u79FB\u52D5\u3055\u305B\u3088\u3002"
     Interaction:
-    - rid: 4263738437767528491
-    Cues: []
+    - rid: 1662061916731736520
+    Cues:
+    - rid: 1662061916731736521
   - Id: s3-grip-mirror
     Title: "Scene 3 [A] \u93E1\u3092\u63E1\u3089\u305B\u308B"
     Actor: 1
     Completion: 2
     TaskText: "\u7D9A\u3051\u3066\u53F3\u80A9\u304B\u3089\u624B\u93E1\u307E\u3067\u9818\u57DF\u9078\u629E\u3057\u3001\u300C\u93E1\u3092\u63E1\u3089\u305B\u308B\u300D\u3068\u767A\u8A71\u305B\u3088\u3002"
     Interaction:
-    - rid: 4263738437767528492
-    - rid: 4263738437767528493
-    Cues: []
+    - rid: 1662061916731736522
+    - rid: 1662061916731736523
+    Cues:
+    - rid: 1662061916731736524
   - Id: s3-mirror-angle
     Title: "Scene 3 \u93E1\u306E\u89D2\u5EA6\u306E\u6307\u6458"
     Actor: 0
@@ -182,19 +184,21 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738437767528494
-    - rid: 4263738437767528495
-    - rid: 4263738437767528496
-    - rid: 4263738437767528497
+    - rid: 1662061916731736525
+    - rid: 1662061916731736526
+    - rid: 1662061916731736527
+    - rid: 1662061916731736528
+    - rid: 1662061916731736529
   - Id: s3-adjust-wrist
     Title: "Scene 3 [B] \u624B\u9996\u306E\u89D2\u5EA6\u3092\u4FEE\u6B63"
     Actor: 2
     Completion: 2
     TaskText: "\u7A7A\u9593\u30DA\u30F3\u3067\u53F3\u624B\u9996\u3068\u624B\u93E1\u3092\u9818\u57DF\u9078\u629E\u3057\u3001\u7A7A\u9593\u30DA\u30F3\u3092\u7528\u3044\u306A\u304C\u3089\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u76EE\u7DDA\u306B\u5408\u308F\u305B\u3066\u93E1\u306E\u89D2\u5EA6\u3092\u4FEE\u6B63\u305B\u3088\u3002"
     Interaction:
-    - rid: 4263738437767528498
-    - rid: 4263738437767528499
-    Cues: []
+    - rid: 1662061916731736530
+    - rid: 1662061916731736531
+    Cues:
+    - rid: 1662061916731736532
   - Id: p2-review
     Title: "Phase 2 \u632F\u308A\u8FD4\u308A\u306E\u63D0\u6848"
     Actor: 0
@@ -202,18 +206,19 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738437767528500
-    - rid: 4263738437767528501
-    - rid: 4263738437767528502
+    - rid: 1662061916731736533
+    - rid: 1662061916731736534
+    - rid: 1662061916731736535
+    - rid: 1662061916731736536
   - Id: p2-compare
     Title: "Phase 2 [B] Ver 1.0 \u3068\u6BD4\u8F03"
     Actor: 2
     Completion: 2
     TaskText: "\u5C65\u6B74\u4E00\u89A7\u304B\u3089Ver 1.0\u3092\u547C\u3073\u51FA\u3057\u3001\u5B8C\u6210\u6848\u306E\u96A3\u306B\u4E26\u3079\u3088\u3002"
     Interaction:
-    - rid: 4263738437767528503
+    - rid: 1662061916731736537
     Cues:
-    - rid: 4263738437767528504
+    - rid: 1662061916731736538
   - Id: p3-temple-proposal
     Title: "Phase 3 \u795E\u6BBF\u3067\u306E\u78BA\u8A8D"
     Actor: 0
@@ -221,18 +226,18 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738437767528505
-    - rid: 4263738437767528506
-    - rid: 4263738437767528507
-    - rid: 4263738437767528508
+    - rid: 1662061916731736539
+    - rid: 1662061916731736540
+    - rid: 1662061916731736541
+    - rid: 1662061916731736542
   - Id: p3-temple
     Title: "Phase 3 [A] \u80CC\u666F\u3092\u795E\u6BBF\u306B"
     Actor: 1
     Completion: 2
     TaskText: "\u5FA9\u5143\u6848\u306E\u30F4\u30A3\u30FC\u30CA\u30B9\u50CF\u3092\u9818\u57DF\u9078\u629E\u3002\u300C\u9078\u629E\u3057\u305F\u50CF\u306E\u80CC\u666F\u3092\u795E\u6BBF\u306B\u5909\u66F4\u300D\u3068\u97F3\u58F0\u6307\u793A\u305B\u3088\u3002"
     Interaction:
-    - rid: 4263738437767528509
-    - rid: 4263738437767528510
+    - rid: 1662061916731736543
+    - rid: 1662061916731736544
     Cues: []
   - Id: closing
     Title: "\u7D50\u3073"
@@ -241,71 +246,71 @@ MonoBehaviour:
     TaskText: 
     Interaction: []
     Cues:
-    - rid: 4263738437767528511
-    - rid: 4263738437767528512
-    - rid: 4263738437767528513
-    - rid: 4263738437767528514
-    - rid: 4263738437767528515
-    - rid: 4263738437767528516
-    - rid: 4263738437767528517
-    - rid: 4263738437767528518
-    - rid: 4263738437767528519
-    - rid: 4263738437767528520
+    - rid: 1662061916731736545
+    - rid: 1662061916731736546
+    - rid: 1662061916731736547
+    - rid: 1662061916731736548
+    - rid: 1662061916731736549
+    - rid: 1662061916731736550
+    - rid: 1662061916731736551
+    - rid: 1662061916731736552
+    - rid: 1662061916731736553
+    - rid: 1662061916731736554
   references:
     version: 2
     RefIds:
-    - rid: 4263738437767528448
+    - rid: 1662061916731736477
       type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         StatueKey: Statue
         Version: {fileID: 11400000, guid: 087eaacacc066274594bede7571779a4, type: 2}
         FocusKey: 
-    - rid: 4263738437767528449
+    - rid: 1662061916731736478
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: Spotlight
         Active: 1
-    - rid: 4263738437767528450
+    - rid: 1662061916731736479
       type: {class: WaitCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Seconds: 1
-    - rid: 4263738437767528451
+    - rid: 1662061916731736480
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 0
         Text: "\u3088\u3046\u3053\u305D\u3001\u6587\u5316\u8CA1\u306E\u5FA9\u5143\u30EF\u30FC\u30AF\u30B7\u30E7\u30C3\u30D7\u3078\u3002\n\u4ECA\u56DE\u306E\u30C6\u30FC\u30DE\u306F\u3001\u8A00\u8449\u3060\u3051\u3067\u306F\u3059\u308C\u9055\u3063\u3066\u3057\u307E\u3046\u300C\u8A8D\u8B58\u306E\u5DEE\u300D\u3092\u30013D\u7A7A\u9593\u306E\u64CD\u4F5C\u306B\u3088\u3063\u3066\u57CB\u3081\u308B\u3053\u3068\u3067\u3059\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528452
+    - rid: 1662061916731736481
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 0
         Text: "\u821E\u53F0\u306F\u3001\u5931\u308F\u308C\u305F\u30DF\u30ED\u306E\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u8155\u3092\u3081\u3050\u308B\u5FA9\u5143\u4F1A\u8B70\u3002\u795E\u8A71\u3084\u767A\u6398\u8A18\u9332\u304B\u3089\u59FF\u3092\u63A2\u308B\u8003\u53E4\u5B66\u8005\u3068\u3001\u77F3\u306E\u5F62\u72B6\u3084\u63A5\u5408\u90E8\u306B\u304B\u304B\u308B\u8CA0\u8377\u3092\u691C\u8A0E\u3059\u308B\u69CB\u9020\u529B\u5B66\u306E\u5C02\u9580\u5BB6\u304C\u8B70\u8AD6\u3057\u3066\u3044\u307E\u3059\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528453
+    - rid: 1662061916731736482
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 0
         Text: "\u4F53\u9A13\u8005\u306E\u304A\u4E8C\u4EBA\u306F\u3001\u305D\u308C\u305E\u308C\u306E\u5C02\u9580\u5BB6\u306E\u52A9\u624B\u3067\u3059\u3002\u304A\u624B\u5143\u306B\u306F\u30013D\u30E2\u30C7\u30EB\u306E\u751F\u6210\u3084\u4FEE\u6B63\u304C\u7C21\u5358\u306B\u3067\u304D\u308B\u7A7A\u9593\u30DA\u30F3\u304C\u3054\u3056\u3044\u307E\u3059\u3002\u753B\u9762\u306E\u6848\u5185\u306B\u5F93\u3063\u3066\u3001\u4E8C\u4EBA\u306E\u30A4\u30E1\u30FC\u30B8\u3092\u7A7A\u9593\u30DA\u30F3\u3092\u4F7F\u3063\u3066\u5177\u4F53\u7684\u306A\u5F62\u306B\u3057\u3066\u3044\u304D\u307E\u3057\u3087\u3046\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528454
+    - rid: 1662061916731736483
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "\u30DF\u30ED\u306E\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u8FD1\u304F\u3067\u306F\u3001\u6797\u6A8E\u3092\u6301\u3063\u305F\u624B\u306E\u65AD\u7247\u304C\u898B\u3064\u304B\u3063\u3066\u3044\u307E\u3059\u3002\u3053\u306E\u3053\u3068\u304B\u3089\u8155\u304C\u6B20\u640D\u3059\u308B\u524D\u306F\u3001\u6797\u6A8E\u3092\u6301\u3063\u3066\u3044\u305F\u3068\u3044\u3046\u8AAC\u304C\u6709\u529B\u3060\u3068\u3055\u308C\u3066\u3044\u307E\u3059\u3002\u79C1\u306F\u3082\u3057\u3053\u306E\u8AAC\u304C\u672C\u5F53\u3067\u3042\u308C\u3070\u3001\u30F4\u30A3\u30FC\u30CA\u30B9\u306F\u524D\u65B9\u306B\u8155\u3092\u4F38\u3070\u3057\u3066\u6797\u6A8E\u3092\u63B2\u3052\u3066\u3044\u305F\u3068\u8003\u3048\u3066\u3044\u307E\u3059\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528455
+    - rid: 1662061916731736484
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 2
         Text: "\u306A\u308B\u307B\u3069...\u300E\u524D\u65B9\u306B\u8155\u3092\u4F38\u3070\u3057\u3066\u6797\u6A8E\u3092\u63B2\u3052\u308B\u300F\u59FF\u3067\u3059\u306D\u3002\u307E\u305A\u306F\u5148\u751F\u306E\u30A4\u30E1\u30FC\u30B8\u30923D\u30E2\u30C7\u30EB\u3067\u304A\u898B\u305B\u3057\u3066\u3044\u305F\u3060\u3044\u305F\u3051\u306A\u3044\u3067\u3057\u3087\u3046\u304B\uFF1F"
         Voice: {fileID: 0}
-    - rid: 4263738437767528456
+    - rid: 1662061916731736485
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "\u5206\u304B\u308A\u307E\u3057\u305F\u3002\u4E00\u5EA6\u30013D\u30E2\u30C7\u30EB\u306B\u304A\u3053\u3057\u3066\u307F\u307E\u3057\u3087\u3046\uFF01"
         Voice: {fileID: 0}
-    - rid: 4263738437767528457
+    - rid: 1662061916731736486
       type: {class: VoicePart, ns: DNPDemo.Interaction.Voice, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u300C\u624B\u306E\u3072\u3089\u306B\u6797\u6A8E\u304C\u306E\u3063\u305F\u6C34\u5E73\u306B\u4F38\u3073\u308B\u5DE6\u624B\u3092\u8FFD\u52A0\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
@@ -315,54 +320,54 @@ MonoBehaviour:
           ZoneKeys: []
         Transcript: "\u73FE\u5728\u306E\u30F4\u30A3\u30FC\u30CA\u30B9\u306B\u3064\u3044\u3066\u3001\u624B\u306E\u3072\u3089\u306B\u6797\u6A8E\u304C\u306E\u3063\u305F\u6C34\u5E73\u306B\u4F38\u3073\u308B\u5DE6\u624B\u3092\u8FFD\u52A0"
         RequiredSpeechSeconds: 1
-    - rid: 4263738437767528458
+    - rid: 1662061916731736487
       type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         StatueKey: Statue
         Version: {fileID: 11400000, guid: 6d031f87170b0de49add3e8d8fbb887e, type: 2}
         FocusKey: Focus_LeftArm
-    - rid: 4263738437767528459
+    - rid: 1662061916731736488
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: Apple
         Active: 1
-    - rid: 4263738437767528460
+    - rid: 1662061916731736489
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "\u79C1\u304C\u8003\u3048\u308B\u3001\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u5DE6\u624B\u306E\u30A4\u30E1\u30FC\u30B8\u306F\u307E\u3055\u306B\u3053\u3093\u306A\u611F\u3058\u3067\u3059\u306D\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528461
+    - rid: 1662061916731736490
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 2
         Text: "\u3042\u308A\u304C\u3068\u3046\u3054\u3056\u3044\u307E\u3059\u3002\u3046\u30FC\u3080...\u79C1\u306E\u5C02\u9580\u306E\u69CB\u9020\u529B\u5B66\u7684\u306A\u89B3\u70B9\u304B\u3089\u3059\u308B\u3068\u3001\u8155\u3092\u3053\u3053\u307E\u3067\u6C34\u5E73\u306B\u4F38\u3070\u3059\u3053\u3068\u306F\u4ED8\u3051\u6839\u3078\u306E\u5927\u304D\u306A\u8CA0\u62C5\u306B\u7E4B\u304C\u308A\u305D\u3046\u3067\u3059\u3002\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u3088\u3046\u306A\u5927\u4E8B\u306A\u50CF\u3092\u6614\u306E\u8077\u4EBA\u304C\u3001\u4E0D\u5B89\u5B9A\u306A\u69CB\u9020\u3067\u4F5C\u308B\u3068\u306F\u3068\u3066\u3082\u601D\u3048\u306A\u3044\u3093\u3067\u3059\u3088\u306D..."
         Voice: {fileID: 0}
-    - rid: 4263738437767528462
+    - rid: 1662061916731736491
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "\u306A\u308B\u307B\u3069\u3002\u4ED6\u306B\u61F8\u5FF5\u70B9\u306A\u3069\u306F\u3054\u3056\u3044\u307E\u305B\u3093\u304B\uFF1F"
         Voice: {fileID: 0}
-    - rid: 4263738437767528463
+    - rid: 1662061916731736492
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 2
         Text: "\u305D\u3046\u3067\u3059\u306D...\u79C1\u7684\u306B\u306F\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u6797\u6A8E\u306E\u6301\u3061\u65B9\u3082\u6C17\u306B\u306A\u3063\u3066\u3044\u307E\u3059\u3002\u6B8B\u5B58\u3057\u3066\u3044\u308B\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u8107\u306E\u90E8\u5206\u3068\u3001\u73FE\u5728\u306E\u6797\u6A8E\u306E\u6301\u3061\u65B9\u304C\u3042\u307E\u308A\u4E00\u81F4\u3057\u3066\u3044\u308B\u3088\u3046\u306B\u601D\u3048\u306A\u3044\u3093\u3067\u3059\u3088\u306D\u3002\uFF21\u5148\u751F\u306E\u30A4\u30E1\u30FC\u30B8\u3067\u3059\u3068\u6797\u6A8E\u3092\u624B\u306E\u3072\u3089\u306E\u4E0A\u306B\u306E\u305B\u3066\u3044\u307E\u3059\u304C\u3001\u30DC\u30FC\u30EB\u3092\u6295\u3052\u308B\u6642\u306E\u3088\u3046\u306B\u3001\u4E0A\u304B\u3089\u6797\u6A8E\u3092\u5305\u307F\u8FBC\u3080\u3088\u3046\u306A\u6301\u3061\u65B9\u306E\u65B9\u304C\u8107\u306E\u3042\u305F\u308A\u306E\u7B4B\u8089\u306E\u52D5\u304D\u3068\u81EA\u7136\u306B\u3064\u306A\u304C\u308B\u3068\u8003\u3048\u3084\u3059\u3044\u3093\u3067\u3059\u3088\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528464
+    - rid: 1662061916731736493
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "\u306A\u308B\u307B\u3069..\u69CB\u9020\u306E\u9762\u304B\u3089\u898B\u308B\u3068\u69D8\u3005\u306A\u554F\u984C\u304C\u3042\u308A\u305D\u3046\u3067\u3059\u306D\u3002\u3088\u308D\u3057\u3051\u308C\u3070\u3001B\u5148\u751F\u304C\u8003\u3048\u308B\u529B\u5B66\u7684\u306B\u5B89\u5B9A\u7684\u3067\u3001\u7B4B\u8089\u306E\u52D5\u304D\u306B\u3082\u77DB\u76FE\u304C\u306A\u3044\u30A2\u30A4\u30C7\u30A2\u30923D\u30E2\u30C7\u30EB\u3067\u51FA\u3057\u3066\u3044\u305F\u3060\u3051\u306A\u3044\u3067\u3057\u3087\u3046\u304B\uFF1F"
         Voice: {fileID: 0}
-    - rid: 4263738437767528465
+    - rid: 1662061916731736494
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 2
         Text: "\u305D\u3046\u3067\u3059\u306D\u3001\u4E00\u5EA6\u79C1\u306E\u8003\u3048\u3082\u30E2\u30C7\u30EB\u5316\u3057\u3066\u307F\u307E\u3057\u3087\u3046\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528466
+    - rid: 1662061916731736495
       type: {class: SelectionPart, ns: DNPDemo.Interaction.Selection, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u6797\u6A8E\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
@@ -374,7 +379,7 @@ MonoBehaviour:
         - Apple
         RequiredInsideRatio: 0.9
         RequiredCoverage: 0.5
-    - rid: 4263738437767528467
+    - rid: 1662061916731736496
       type: {class: ManipulatePart, ns: DNPDemo.Interaction.Manipulate, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u6797\u6A8E\u3092\u624B\u306E\u4E0B\u3078\u79FB\u52D5\u3059\u308B"
@@ -396,7 +401,7 @@ MonoBehaviour:
         TargetAngle: 45
         SnapAngle: 10
         ThresholdAngle: 30
-    - rid: 4263738437767528468
+    - rid: 1662061916731736497
       type: {class: SelectionPart, ns: DNPDemo.Interaction.Selection, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u5DE6\u624B\u304B\u3089\u524D\u8155\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
@@ -408,7 +413,7 @@ MonoBehaviour:
         - Zone_LeftForearm
         RequiredInsideRatio: 0.9
         RequiredCoverage: 0.5
-    - rid: 4263738437767528469
+    - rid: 1662061916731736498
       type: {class: VoicePart, ns: DNPDemo.Interaction.Voice, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u300C\u4E0A\u304B\u3089\u30DC\u30FC\u30EB\u3092\u5305\u307F\u8FBC\u3080\u3088\u3046\u306B\u6797\u6A8E\u3092\u6301\u3061\u76F4\u3059\u5F62\u306B\u4FEE\u6B63\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
@@ -418,41 +423,41 @@ MonoBehaviour:
           ZoneKeys: []
         Transcript: "\u9078\u629E\u3057\u305F\u7BC4\u56F2\u306B\u3064\u3044\u3066\u3001\u4E0A\u304B\u3089\u30DC\u30FC\u30EB\u3092\u5305\u307F\u8FBC\u3080\u3088\u3046\u306B\u6797\u6A8E\u3092\u6301\u3061\u76F4\u3059\u5F62\u306B\u4FEE\u6B63"
         RequiredSpeechSeconds: 1
-    - rid: 4263738437767528470
+    - rid: 1662061916731736499
       type: {class: MatchPoseCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: Apple
         MarkerKey: Goal_AppleUnderHand
-    - rid: 4263738437767528471
+    - rid: 1662061916731736500
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: Apple
         Active: 0
-    - rid: 4263738437767528472
+    - rid: 1662061916731736501
       type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         StatueKey: Statue
         Version: {fileID: 11400000, guid: 7b8787aa72e06194599d5e96c05c8730, type: 2}
         FocusKey: Focus_LeftArm
-    - rid: 4263738437767528473
+    - rid: 1662061916731736502
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 2
         Text: "\u6050\u3089\u304F\u3053\u3093\u306A\u611F\u3058\u306B\u306A\u308B\u304B\u3068\u601D\u308F\u308C\u307E\u3059\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528474
+    - rid: 1662061916731736503
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "\u3042\u308A\u304C\u3068\u3046\u3054\u3056\u3044\u307E\u3059\u3002\u305D\u3046\u3067\u3059\u306D\u3001\u3001\u3001\u79C1\u306E\u6700\u521D\u306E\u6848\u3068\u6BD4\u3079\u308B\u3068\u3001\u3088\u308A\u624B\u306E\u5F62\u306F\u81EA\u7136\u306B\u306A\u308A\u307E\u3057\u305F\u306D\n\u305F\u3060\u4E00\u70B9\u6C17\u306B\u306A\u308B\u70B9\u304C\u3042\u308A\u307E\u3057\u3066\u3002\u3002\u3002\u8155\u306F\u3082\u3063\u3068\u8EAB\u4F53\u306E\u8F2A\u90ED\u306B\u6CBF\u3063\u3066\u3001\u8098\u3092\u66F2\u3052\u3066\u5F15\u304D\u5BC4\u305B\u308B\u3088\u3046\u306A\u81EA\u7136\u306A\u30AB\u30FC\u30D6\u306B\u306A\u3063\u3066\u3044\u305F\u65B9\u304C\u7F8E\u3057\u304F\u898B\u3048\u308B\u3068\u601D\u3046\u3093\u3067\u3059\u3088\u306D\u3002\u307B\u304B\u306E\u53E4\u5178\u5F6B\u523B\u3067\u3082\u3001\u8155\u306E\u81EA\u7136\u306A\u66F2\u7DDA\u304C\u7F8E\u3057\u3055\u3092\u751F\u3093\u3067\u3044\u307E\u3059\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528475
+    - rid: 1662061916731736504
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 2
         Text: "\u306A\u308B\u307B\u3069\u3002\u81EA\u7136\u306A\u30AB\u30FC\u30D6\u3067\u3059\u304B...\u3046\u30FC\u3093\u5C11\u3057\u30A4\u30E1\u30FC\u30B8\u304C\u96E3\u3057\u3044\u3067\u3059\u306D\u3002\u30E2\u30C7\u30EB\u3067\u8868\u73FE\u3059\u308B\u3068\u3053\u3093\u306A\u611F\u3058\u3067\u3057\u3087\u3046\u304B\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528476
+    - rid: 1662061916731736505
       type: {class: SelectionPart, ns: DNPDemo.Interaction.Selection, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u5DE6\u80A9\u304B\u3089\u8098\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
@@ -464,7 +469,7 @@ MonoBehaviour:
         - Zone_LeftUpperArm
         RequiredInsideRatio: 0.9
         RequiredCoverage: 0.5
-    - rid: 4263738437767528477
+    - rid: 1662061916731736506
       type: {class: ManipulatePart, ns: DNPDemo.Interaction.Manipulate, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u8155\u3092\u5185\u5074\u3078\u30B9\u30E9\u30A4\u30C9\u3059\u308B"
@@ -486,29 +491,29 @@ MonoBehaviour:
         TargetAngle: 45
         SnapAngle: 10
         ThresholdAngle: -25
-    - rid: 4263738437767528478
+    - rid: 1662061916731736507
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: LeftArmProxy
         Active: 1
-    - rid: 4263738437767528479
+    - rid: 1662061916731736508
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: LeftArmProxy
         Active: 0
-    - rid: 4263738437767528480
+    - rid: 1662061916731736509
       type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         StatueKey: Statue
         Version: {fileID: 11400000, guid: 09a3782d0f528ad4f8521989edd0f76b, type: 2}
         FocusKey: Focus_LeftArm
-    - rid: 4263738437767528481
+    - rid: 1662061916731736510
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "\u3046\u30FC\u3093\u79C1\u306E\u30A4\u30E1\u30FC\u30B8\u3068\u30BA\u30EC\u3066\u3044\u307E\u3059\u306D\u3002\u79C1\u306E\u30A4\u30E1\u30FC\u30B8\u3060\u3068\u3053\u3093\u306A\u611F\u3058\u306A\u3093\u3067\u3059\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528482
+    - rid: 1662061916731736511
       type: {class: StrokePart, ns: DNPDemo.Interaction.Stroke, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u5DE6\u80A9\u304B\u3089\u80F8\u306E\u524D\u3078\u7DE9\u3084\u304B\u306A\u30AB\u30FC\u30D6\u3092\u63CF\u304F"
@@ -520,40 +525,40 @@ MonoBehaviour:
         StartZoneKey: Zone_LeftShoulder
         EndZoneKey: Zone_ChestFront
         MinExtent: 0.15
-    - rid: 4263738437767528483
+    - rid: 1662061916731736512
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: GuideLine_LeftArm
         Active: 1
-    - rid: 4263738437767528484
+    - rid: 1662061916731736513
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: GuideLine_LeftArm
         Active: 0
-    - rid: 4263738437767528485
+    - rid: 1662061916731736514
       type: {class: GuideSnapCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: Guide_LeftArmCurve
         TravelSeconds: 0.8
-    - rid: 4263738437767528486
+    - rid: 1662061916731736515
       type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         StatueKey: Statue
         Version: {fileID: 11400000, guid: 36ea82750fe37a347a04858e9169f2d8, type: 2}
         FocusKey: Focus_LeftArm
-    - rid: 4263738437767528487
+    - rid: 1662061916731736516
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 2
         Text: "\u3042\u30FC\u306A\u308B\u307B\u3069\u3002\u78BA\u304B\u306B\u3053\u308C\u306F\u51C4\u304F\u7DBA\u9E97\u3067\u3059\u306D\u3002\u529B\u5B66\u7684\u306B\u3082\u77DB\u76FE\u70B9\u304C\u306A\u3055\u305D\u3046\u3067\u3059\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528488
+    - rid: 1662061916731736517
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "\u5DE6\u8155\u306F\u826F\u3044\u611F\u3058\u3067\u3059\u306D\u3002\u305D\u308C\u3067\u306F\u6B21\u306B\u53F3\u8155\u306E\u8A71\u306B\u79FB\u884C\u3057\u307E\u3057\u3087\u3046\u3002\u53E4\u5178\u5F6B\u523B\u306B\u304A\u3044\u3066\u306F\u624B\u93E1\u304C\u6797\u6A8E\u3068\u4E26\u3076\u4EE3\u8868\u7684\u306A\u30B7\u30F3\u30DC\u30EB\u3068\u3055\u308C\u3066\u3044\u308B\u306E\u3067\u3001\u53F3\u8155\u306B\u306F\u624B\u93E1\u304C\u3042\u3063\u305F\u3068\u8003\u3048\u3089\u308C\u307E\u3059\u3002\u4E00\u5EA63D\u30E2\u30C7\u30EB\u306B\u3057\u3066\u307F\u307E\u3059\u306D\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528489
+    - rid: 1662061916731736518
       type: {class: StrokePart, ns: DNPDemo.Interaction.Stroke, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u7A7A\u4E2D\u306B\u624B\u93E1\u306E\u7DDA\u753B\u3092\u63CF\u304F"
@@ -565,7 +570,7 @@ MonoBehaviour:
         StartZoneKey: 
         EndZoneKey: 
         MinExtent: 0.15
-    - rid: 4263738437767528490
+    - rid: 1662061916731736519
       type: {class: VoicePart, ns: DNPDemo.Interaction.Voice, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u300C\u7DDA\u753B\u3092\u897F\u6D0B\u306E\u30A2\u30F3\u30C6\u30A3\u30FC\u30AF\u306A\u624B\u93E1\u306B\u5909\u63DB\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
@@ -575,27 +580,50 @@ MonoBehaviour:
           ZoneKeys: []
         Transcript: "\u7DDA\u753B\u3092\u897F\u6D0B\u306E\u30A2\u30F3\u30C6\u30A3\u30FC\u30AF\u306A\u624B\u93E1\u306B\u5909\u63DB"
         RequiredSpeechSeconds: 1
-    - rid: 4263738437767528491
-      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+    - rid: 1662061916731736520
+      type: {class: ManipulatePart, ns: DNPDemo.Interaction.Manipulate, asm: DNPDemo.Runtime}
       data:
-        Instruction: "\u624B\u93E1\u3092\u6240\u5B9A\u306E\u4F4D\u7F6E\u3078\u79FB\u52D5\u3059\u308B"
+        Instruction: "\u624B\u93E1\u3092\u53F3\u624B\u306E\u4F4D\u7F6E\u3078\u79FB\u52D5\u3059\u308B"
         Hint:
           DelaySeconds: 20
-          Text: "\u624B\u93E1\u306B\u30DA\u30F3\u5148\u3092\u5F53\u3066\u3001\u30C8\u30EA\u30AC\u30FC\u3092\u62BC\u3057\u305F\u307E\u307E\u53F3\u624B\u306E\u4F4D\u7F6E\u307E\u3067\u52D5\u304B\u3057\u3066\u304F\u3060\u3055\u3044"
+          Text: "\u5149\u3063\u3066\u3044\u308B\u624B\u93E1\u306B\u30DA\u30F3\u5148\u3092\u5F53\u3066\u3001\u30C8\u30EA\u30AC\u30FC\u3092\u62BC\u3057\u305F\u307E\u307E\u6C34\u8272\u306E\u624B\u93E1\u306E\u4F4D\u7F6E\u307E\u3067\u52D5\u304B\u3057\u3066\u304F\u3060\u3055\u3044"
           ZoneKeys: []
-        SimulatedMode: 3
-        RequiredPresses: 3
-    - rid: 4263738437767528492
-      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+        TargetKey: HandMirror
+        GrabZoneKey: 
+        Constraint: 0
+        GoalKey: Goal_MirrorRightHand
+        MaxDistance: 2.5
+        SnapDistance: 0.05
+        PivotKey: 
+        Axis: {x: 0, y: 1, z: 0}
+        MinAngle: -90
+        MaxAngle: 90
+        Completion: 0
+        TargetAngle: 45
+        SnapAngle: 10
+        ThresholdAngle: 30
+    - rid: 1662061916731736521
+      type: {class: PlaceAtSketchCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Key: HandMirror
+        MarkerKey: Spawn_HandMirror
+        SketchStepId: s3-draw-mirror
+        StrokesKey: Strokes
+        MaxOffset: 0.8
+        AppearSeconds: 0.5
+    - rid: 1662061916731736522
+      type: {class: SelectionPart, ns: DNPDemo.Interaction.Selection, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u53F3\u80A9\u304B\u3089\u624B\u93E1\u307E\u3067\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
         Hint:
           DelaySeconds: 20
-          Text: "\u53F3\u80A9\u304B\u3089\u624B\u93E1\u307E\u3067\u3092\u3001\u30C8\u30EA\u30AC\u30FC\u3092\u62BC\u3057\u305F\u307E\u307E\u30DA\u30F3\u5148\u3067\u306A\u305E\u3063\u3066\u304F\u3060\u3055\u3044"
+          Text: "\u5149\u3063\u3066\u3044\u308B\u53F3\u80A9\u304B\u3089\u624B\u93E1\u307E\u3067\u3092\u3001\u30C8\u30EA\u30AC\u30FC\u3092\u62BC\u3057\u305F\u307E\u307E\u30DA\u30F3\u5148\u3067\u306A\u305E\u3063\u3066\u304F\u3060\u3055\u3044"
           ZoneKeys: []
-        SimulatedMode: 1
-        RequiredPresses: 3
-    - rid: 4263738437767528493
+        TargetZoneKeys:
+        - Zone_RightArmToMirror
+        RequiredInsideRatio: 0.9
+        RequiredCoverage: 0.5
+    - rid: 1662061916731736523
       type: {class: VoicePart, ns: DNPDemo.Interaction.Voice, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u300C\u93E1\u3092\u63E1\u3089\u305B\u308B\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
@@ -605,70 +633,104 @@ MonoBehaviour:
           ZoneKeys: []
         Transcript: "\u93E1\u3092\u63E1\u3089\u305B\u308B"
         RequiredSpeechSeconds: 1
-    - rid: 4263738437767528494
+    - rid: 1662061916731736524
+      type: {class: MatchPoseCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Key: HandMirror
+        MarkerKey: Goal_MirrorRightHand
+    - rid: 1662061916731736525
+      type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Key: HandMirror
+        Active: 0
+    - rid: 1662061916731736526
       type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         StatueKey: Statue
         Version: {fileID: 11400000, guid: 4940cd742af61164eaa5972faf79652e, type: 2}
-        FocusKey: 
-    - rid: 4263738437767528495
+        FocusKey: Focus_RightArm
+    - rid: 1662061916731736527
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 2
         Text: "\u306A\u308B\u307B\u3069...\u624B\u93E1\u3092\u6301\u3063\u3066\u3044\u308B\u306E\u306F\u7D0D\u5F97\u3067\u3059\u304C\u3001\u751F\u6210\u3055\u308C\u305F\u30E2\u30C7\u30EB\u3092\u898B\u308B\u3068\u3001\u624B\u93E1\u306E\u89D2\u5EA6\u304C\u304A\u304B\u3057\u3044\u304B\u3082\u3057\u308C\u307E\u305B\u3093\u306D\u3002\u306A\u3093\u3068\u3044\u3046\u304B\u3001\u3082\u3063\u3068\u30F4\u30A3\u30FC\u30CA\u30B9\u306E\u76EE\u7DDA\u306E\u5148\u306B\u624B\u93E1\u304C\u304F\u308B\u611F\u3058\u306E\u65B9\u304C\u826F\u3055\u305D\u3046\u3067\u3059\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528496
+    - rid: 1662061916731736528
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "\u3048\u30FC\u3068\u3001\u3069\u3093\u306A\u611F\u3058\u3067\u3057\u3087\u3046\uFF1F
           \u3088\u3051\u308C\u3070B\u3055\u3093\u306B\u4FEE\u6B63\u3092\u304A\u4EFB\u305B\u3057\u305F\u3044\u306E\u3067\u3059\u304C\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528497
+    - rid: 1662061916731736529
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 2
         Text: "\u627F\u77E5\u3057\u307E\u3057\u305F\u3002\u4E00\u65E6\u3001\u624B\u9996\u306E\u3072\u306D\u308A\u3092\u5C11\u3057\u8ABF\u6574\u3057\u3066\u307F\u307E\u3057\u3087\u3046\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528498
-      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+    - rid: 1662061916731736530
+      type: {class: SelectionPart, ns: DNPDemo.Interaction.Selection, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u53F3\u624B\u9996\u3068\u624B\u93E1\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
         Hint:
           DelaySeconds: 20
-          Text: "\u53F3\u624B\u9996\u3068\u624B\u93E1\u3092\u3001\u30C8\u30EA\u30AC\u30FC\u3092\u62BC\u3057\u305F\u307E\u307E\u30DA\u30F3\u5148\u3067\u306A\u305E\u3063\u3066\u304F\u3060\u3055\u3044"
+          Text: "\u5149\u3063\u3066\u3044\u308B\u53F3\u624B\u9996\u3068\u624B\u93E1\u3092\u3001\u30C8\u30EA\u30AC\u30FC\u3092\u62BC\u3057\u305F\u307E\u307E\u30DA\u30F3\u5148\u3067\u306A\u305E\u3063\u3066\u304F\u3060\u3055\u3044"
           ZoneKeys: []
-        SimulatedMode: 1
-        RequiredPresses: 3
-    - rid: 4263738437767528499
-      type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
+        TargetZoneKeys:
+        - Zone_RightHandMirror
+        RequiredInsideRatio: 0.9
+        RequiredCoverage: 0.5
+    - rid: 1662061916731736531
+      type: {class: ManipulatePart, ns: DNPDemo.Interaction.Manipulate, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u76EE\u7DDA\u306B\u5408\u308F\u305B\u3066\u93E1\u306E\u89D2\u5EA6\u3092\u4FEE\u6B63\u3059\u308B"
         Hint:
           DelaySeconds: 20
-          Text: "\u624B\u93E1\u306B\u30DA\u30F3\u5148\u3092\u5F53\u3066\u3001\u30C8\u30EA\u30AC\u30FC\u3092\u62BC\u3057\u305F\u307E\u307E\u9854\u306E\u65B9\u3078\u56DE\u3057\u3066\u304F\u3060\u3055\u3044"
+          Text: "\u624B\u93E1\u306B\u30DA\u30F3\u5148\u3092\u5F53\u3066\u3001\u30C8\u30EA\u30AC\u30FC\u3092\u62BC\u3057\u305F\u307E\u307E\u6C34\u8272\u306E\u624B\u93E1\u306E\u5411\u304D\u307E\u3067\u56DE\u3057\u3066\u304F\u3060\u3055\u3044"
           ZoneKeys: []
-        SimulatedMode: 3
-        RequiredPresses: 3
-    - rid: 4263738437767528500
+        TargetKey: RightHandProxy
+        GrabZoneKey: RightHandProxy_Grab
+        Constraint: 1
+        GoalKey: 
+        MaxDistance: 0.5
+        SnapDistance: 0.05
+        PivotKey: Pivot_RightWrist
+        Axis: {x: 0, y: 1, z: 0}
+        MinAngle: -80
+        MaxAngle: 30
+        Completion: 0
+        TargetAngle: -50
+        SnapAngle: 12
+        ThresholdAngle: 30
+    - rid: 1662061916731736532
+      type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Key: RightHandProxy
+        Active: 1
+    - rid: 1662061916731736533
+      type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
+      data:
+        Key: RightHandProxy
+        Active: 0
+    - rid: 1662061916731736534
       type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         StatueKey: Statue
         Version: {fileID: 11400000, guid: 4b48775c74d494f4d8111dfaeaae1a4f, type: 2}
-        FocusKey: 
-    - rid: 4263738437767528501
+        FocusKey: Focus_RightArm
+    - rid: 1662061916731736535
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "\u3042\u30FC\u3001\u3044\u3044\u3067\u3059\u306D\uFF01 \u8996\u7DDA\u3068\u6240\u4F5C\u304C\u3074\u3063\u305F\u308A\u5408\u3044\u307E\u3057\u305F\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528502
+    - rid: 1662061916731736536
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 2
         Text: "\u3067\u306F\u3001\u3053\u308C\u307E\u3067\u306E\u904E\u7A0B\u3092\u632F\u308A\u8FD4\u3063\u3066\u307F\u307E\u3057\u3087\u3046\u3002\u6700\u521D\u306E\u6848\u3068\u3001\u4ECA\u306E\u6848\u3092\u4E26\u3079\u3066\u307F\u3066\u304F\u3060\u3055\u3044\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528503
+    - rid: 1662061916731736537
       type: {class: HistoryPart, ns: DNPDemo.Interaction.History, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u30E1\u30CB\u30E5\u30FC\u306E\u300C\u30E2\u30C7\u30EB\u306E\u5C65\u6B74\u300D\u3067
@@ -680,36 +742,36 @@ MonoBehaviour:
           ZoneKeys: []
         TargetVersion: {fileID: 11400000, guid: 6d031f87170b0de49add3e8d8fbb887e, type: 2}
         ComparisonStatueKey: ComparisonStatue
-    - rid: 4263738437767528504
+    - rid: 1662061916731736538
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Key: ComparisonTable
         Active: 1
-    - rid: 4263738437767528505
+    - rid: 1662061916731736539
       type: {class: StatueVersionCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         StatueKey: ComparisonStatue
         Version: {fileID: 11400000, guid: 6d031f87170b0de49add3e8d8fbb887e, type: 2}
         FocusKey: 
-    - rid: 4263738437767528506
+    - rid: 1662061916731736540
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "\u3046\u30FC\u3093\u3001\u3084\u306F\u308A\u3053\u3046\u3057\u3066\u307F\u308B\u3068\u73FE\u5728\u306E\u6848\u304C\u4E00\u756A\u7F8E\u3057\u304F\u898B\u3048\u307E\u3059\u306D\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528507
+    - rid: 1662061916731736541
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 2
         Text: "\u3048\u3048\u3001\u3068\u3066\u3082\u3044\u3044\u304B\u3093\u3058\u3067\u3059\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528508
+    - rid: 1662061916731736542
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "\u6700\u5F8C\u306B\u5FA9\u5143\u6848\u306E\u30F4\u30A3\u30FC\u30CA\u30B9\u304C\u795E\u6BBF\u3092\u80CC\u666F\u306B\u3057\u3066\u3082\u81EA\u7136\u304B\u3069\u3046\u304B\u78BA\u304B\u3081\u3066\u307F\u307E\u3057\u3087\u3046"
         Voice: {fileID: 0}
-    - rid: 4263738437767528509
+    - rid: 1662061916731736543
       type: {class: DummyInteractionPart, ns: DNPDemo.Interaction, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u50CF\u5168\u4F53\u3092\u7BC4\u56F2\u9078\u629E\u3059\u308B"
@@ -719,7 +781,7 @@ MonoBehaviour:
           ZoneKeys: []
         SimulatedMode: 1
         RequiredPresses: 3
-    - rid: 4263738437767528510
+    - rid: 1662061916731736544
       type: {class: VoicePart, ns: DNPDemo.Interaction.Voice, asm: DNPDemo.Runtime}
       data:
         Instruction: "\u300C\u9078\u629E\u3057\u305F\u50CF\u306E\u80CC\u666F\u3092\u795E\u6BBF\u306B\u5909\u66F4\u300D\u3068\u97F3\u58F0\u6307\u793A\u3059\u308B"
@@ -729,57 +791,57 @@ MonoBehaviour:
           ZoneKeys: []
         Transcript: "\u9078\u629E\u3057\u305F\u50CF\u306E\u80CC\u666F\u3092\u795E\u6BBF\u306B\u5909\u66F4"
         RequiredSpeechSeconds: 1
-    - rid: 4263738437767528511
+    - rid: 1662061916731736545
       type: {class: EnvironmentCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         EnvironmentKey: Environment
         Preset: {fileID: 11400000, guid: e0956dc4b6bd04340be655738996d8c3, type: 2}
         Duration: 2
-    - rid: 4263738437767528512
+    - rid: 1662061916731736546
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "\u304A\u30FC\u3002\u73FE\u5728\u306E\u6848\u306F\u795E\u6BBF\u3068\u3082\u304B\u306A\u308A\u3088\u304F\u8ABF\u548C\u3057\u3066\u3044\u307E\u3059\u306D\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528513
+    - rid: 1662061916731736547
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 2
         Text: "\u3048\u3048\u3001\u898B\u305F\u76EE\u306E\u7F8E\u3057\u3055\u3068\u69CB\u9020\u306E\u81EA\u7136\u3055\u304C\u3001\u3046\u307E\u304F\u4E21\u7ACB\u3067\u304D\u307E\u3057\u305F\u306D"
         Voice: {fileID: 0}
-    - rid: 4263738437767528514
+    - rid: 1662061916731736548
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 1
         Text: "B\u3055\u3093\u306E\u92ED\u3044\u3054\u6307\u6458\u3084\u7A7A\u9593\u30DA\u30F3\u306B\u3088\u308B\u4FEE\u6B63\u304C\u30F4\u30A3\u30FC\u30CA\u30B9\u50CF\u306E\u5FA9\u5143\u6848\u306E\u69CB\u7BC9\u306B\u6709\u52B9\u7684\u3067\u3057\u305F\u3002\u3042\u308A\u304C\u3068\u3046\u3054\u3056\u3044\u307E\u3059\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528515
+    - rid: 1662061916731736549
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 2
         Text: "\u3053\u3061\u3089\u3053\u305D\u672C\u65E5\u306F\u3069\u3046\u3082\u3042\u308A\u304C\u3068\u3046\u3054\u3056\u3044\u307E\u3057\u305F\u3002"
         Voice: {fileID: 0}
-    - rid: 4263738437767528516
+    - rid: 1662061916731736550
       type: {class: LineCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Speaker: 0
         Text: "\u8A00\u8449\u304B\u3089\u751F\u307E\u308C\u305F\u300E\u8A8D\u8B58\u306E\u30BA\u30EC\u300F\u306B\u3064\u3044\u3066\u3001\u7A7A\u9593\u30C4\u30FC\u30EB\u3092\u4F7F\u3063\u3066\u4E92\u3044\u306E\u30A4\u30E1\u30FC\u30B8\u3092\u300E\u3059\u308A\u5408\u308F\u305B\u308B\u300F\u3002\n\u3053\u308C\u304C\u3001XR\u3068AI\u306B\u3088\u308B\u65B0\u3057\u3044\u5171\u5275\u306E\u5F62\u3067\u3059\u3002\u6587\u5316\u8CA1\u5FA9\u5143\u30EF\u30FC\u30AF\u30B7\u30E7\u30C3\u30D7\u3001\u3053\u308C\u306B\u3066\u7D42\u4E86\u3067\u3059"
         Voice: {fileID: 0}
-    - rid: 4263738437767528517
+    - rid: 1662061916731736551
       type: {class: WaitCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Seconds: 1
-    - rid: 4263738437767528518
+    - rid: 1662061916731736552
       type: {class: BannerCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Visible: 1
         Text: WORKSHOP COMPLETE
         FadeSeconds: 1.5
-    - rid: 4263738437767528519
+    - rid: 1662061916731736553
       type: {class: WaitCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Seconds: 5
-    - rid: 4263738437767528520
+    - rid: 1662061916731736554
       type: {class: BannerCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Visible: 0

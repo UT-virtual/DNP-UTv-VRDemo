@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
+using DNPDemo.Interaction.Stroke;
 using DNPDemo.Interaction.Voice;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
@@ -242,18 +244,56 @@ namespace DNPDemo.Tests
         }
 
         [Test]
-        public void SceneOneAndTwoOperationsRunOnTheirTools()
+        public void SceneOneToThreeOperationsRunOnTheirTools()
         {
             List<ScenarioStep> steps = DefaultSteps;
-            int guide = steps.FindIndex(step => step.Id == "s2-guide-curve");
-            Assert.GreaterOrEqual(guide, 0);
-            for (int i = 0; i <= guide; i++)
+            int wrist = steps.FindIndex(step => step.Id == "s3-adjust-wrist");
+            Assert.AreEqual(17, wrist);
+            for (int i = 0; i <= wrist + 1; i++)
             {
                 foreach (InteractionPart part in steps[i].Interaction)
                 {
-                    Assert.IsNotInstanceOf<DummyInteractionPart>(part, $"{steps[i].Id}: steps 0 to 12 are played with the pen, not stand-ins.");
+                    Assert.IsNotInstanceOf<DummyInteractionPart>(part, $"{steps[i].Id}: steps 0 to 18 are played with the pen, not stand-ins.");
                 }
             }
+        }
+
+        [Test]
+        public void WristTwistOfStep17TurnsTheMirrorOfVer30IntoVer31()
+        {
+            ManipulatePart twist = DefaultSteps.Find(step => step.Id == "s3-adjust-wrist").Interaction.OfType<ManipulatePart>().Single();
+            Assert.AreEqual(ManipulateConstraintKind.Rotate, twist.Constraint);
+            Assert.AreEqual(RotateCompletion.Snap, twist.Completion);
+
+            // The pivot is turned like Ver 3.0's hand, so the axis (its local up) runs along the forearm.
+            UnityEngine.Quaternion held = VenusAssetBuilder.MirrorRotation(false);
+            UnityEngine.Vector3 axis = held * twist.Axis;
+            UnityEngine.Quaternion snapped = UnityEngine.Quaternion.AngleAxis(twist.TargetAngle, axis) * held;
+            Assert.Less(UnityEngine.Quaternion.Angle(VenusAssetBuilder.MirrorRotation(true), snapped), 0.1f,
+                "Snapped at the target angle, the hand proxy should hold the mirror as Ver 3.1 does.");
+        }
+
+        [Test]
+        public void SketchPlacedObjectsFollowASketchDrawnBeforeThem()
+        {
+            List<ScenarioStep> steps = DefaultSteps;
+            int checkedCues = 0;
+            for (int i = 0; i < steps.Count; i++)
+            {
+                foreach (ScenarioCue cue in steps[i].Cues)
+                {
+                    if (cue is not PlaceAtSketchCue place)
+                    {
+                        continue;
+                    }
+                    int sketch = steps.FindIndex(step => step.Id == place.SketchStepId);
+                    Assert.IsTrue(sketch >= 0 && sketch < i, $"{steps[i].Id}: the sketch step '{place.SketchStepId}' should come before it.");
+                    Assert.IsTrue(steps[sketch].Interaction.Exists(part => part is StrokePart { Goal: StrokeGoal.Sketch }),
+                        $"'{place.SketchStepId}' should draw a sketch.");
+                    checkedCues++;
+                }
+            }
+            Assert.AreEqual(1, checkedCues, "Step 14 puts the hand mirror where step 13's sketch was drawn.");
         }
 
         [Test]
@@ -275,7 +315,7 @@ namespace DNPDemo.Tests
                     checkedParts++;
                 }
             }
-            Assert.Greater(checkedParts, 0, "Step 6 moves the apple.");
+            Assert.AreEqual(2, checkedParts, "Step 6 moves the apple and step 14 the hand mirror.");
         }
 
         [Test]
