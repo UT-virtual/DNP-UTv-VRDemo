@@ -42,6 +42,46 @@ namespace DNPDemo.Editor
         /// <summary>Key of the marker the apple is moved to, under the hand (<see cref="ScenarioObjectBinding"/> on Statue_Original/Goal_AppleUnderHand).</summary>
         public const string AppleGoalKey = "Goal_AppleUnderHand";
 
+        /// <summary>Key of the zone around the left hand and forearm of Ver 1.0 and 1.1, selected in step 7.</summary>
+        public const string LeftForearmZoneKey = "Zone_LeftForearm";
+
+        /// <summary>Key of the zone from the left shoulder to the elbow of Ver 1.1, selected in step 9.</summary>
+        public const string LeftUpperArmZoneKey = "Zone_LeftUpperArm";
+
+        /// <summary>
+        /// Key of the translucent stand-in for Ver 1.1's left arm that step 9 turns about the shoulder: the arm is part of
+        /// the whole-body model, so the pen moves this proxy and the statue itself stays as it is (docs/PLAN.md §2.5).
+        /// Hidden at scene load and shown only during step 9.
+        /// </summary>
+        public const string LeftArmProxyKey = "LeftArmProxy";
+
+        /// <summary>Key of the zone on the arm proxy that the pen's tip grabs; it turns with the proxy.</summary>
+        public const string LeftArmProxyGrabKey = "LeftArmProxy_Grab";
+
+        /// <summary>Key of the left shoulder joint the arm proxy turns about; the axis is its local up.</summary>
+        public const string LeftShoulderPivotKey = "Pivot_LeftShoulder";
+
+        /// <summary>Key of the region of the left arm in every version, where the version transitions of steps 4 to 12 centre.</summary>
+        public const string LeftArmFocusKey = "Focus_LeftArm";
+
+        /// <summary>
+        /// Key of the set curve from the left shoulder to the front of the chest (<see cref="GuideCurve"/>), whose ends
+        /// are the centres of the guide's zones. It carries the <see cref="GuideSnapEffect"/> played as step 11 completes.
+        /// </summary>
+        public const string LeftArmGuideKey = "Guide_LeftArmCurve";
+
+        /// <summary>Key of the dashed line that shows <see cref="LeftArmGuideKey"/> while step 11 waits for the stroke.</summary>
+        public const string LeftArmGuideLineKey = "GuideLine_LeftArm";
+
+        /// <summary>Step 9: the arm turns inwards (towards the body, a negative angle about the shoulder's up) at most this far.</summary>
+        public const float ArmSlideMinAngle = -60f;
+
+        /// <summary>Step 9: the arm may turn outwards this far, so a small slip the wrong way does not stop it.</summary>
+        public const float ArmSlideMaxAngle = 10f;
+
+        /// <summary>Step 9: released past this angle inwards, the slide is done.</summary>
+        public const float ArmSlideThresholdAngle = -25f;
+
         /// <summary>
         /// Key of the comparison table (<see cref="ScenarioObjectBinding"/> on the ComparisonTable root). Hidden at scene load
         /// and shown when step 19 asks for the comparison; the statue on it is <see cref="VenusStatueKeys.Comparison"/>.
@@ -156,7 +196,7 @@ namespace DNPDemo.Editor
                     "音声生成を起動し、「現在のヴィーナスについて、手のひらに林檎がのった水平に伸びる左手を追加」と出力せよ。",
                     Voice("「手のひらに林檎がのった水平に伸びる左手を追加」と音声指示する", "現在のヴィーナスについて、手のひらに林檎がのった水平に伸びる左手を追加")),
                 Auto("s1-concerns", "Scene 1 構造の懸念",
-                    Version(VenusAssetBuilder.Ver10Id),
+                    Version(VenusAssetBuilder.Ver10Id, LeftArmFocusKey),
                     new SetObjectActiveCue(AppleKey, true),
                     A("私が考える、ヴィーナスの左手のイメージはまさにこんな感じですね。"),
                     B("ありがとうございます。うーむ...私の専門の構造力学的な観点からすると、腕をここまで水平に伸ばすことは付け根への大きな負担に繋がりそうです。ヴィーナスのような大事な像を昔の職人が、不安定な構造で作るとはとても思えないんですよね..."),
@@ -171,31 +211,40 @@ namespace DNPDemo.Editor
                         "光っている林檎のまわりを、トリガーを押したままペン先でなぞってください"),
                     WithHint(ManipulatePart.Translate("林檎を手の下へ移動する", AppleKey, AppleGoalKey, AppleMaxDistance),
                         "光っている林檎にペン先を当て、トリガーを押したまま水色の林檎の位置まで動かしてください")),
-                Operation("s2-regrip-apple", "Scene 2 [B] 林檎の持ち方を修正", DemoRole.PlayerB,
-                    "空間ペンで腕を選択し、「選択した範囲について、上からボールを包み込むように林檎を持ち直す形に修正」と入力せよ。",
-                    Select("左手から前腕を範囲選択する", "左手から前腕までを、トリガーを押したままペン先でなぞってください"),
-                    Voice("「上からボールを包み込むように林檎を持ち直す形に修正」と音声指示する", "選択した範囲について、上からボールを包み込むように林檎を持ち直す形に修正")),
+                WithCues(Operation("s2-regrip-apple", "Scene 2 [B] 林檎の持ち方を修正", DemoRole.PlayerB,
+                        "空間ペンで腕を選択し、「選択した範囲について、上からボールを包み込むように林檎を持ち直す形に修正」と入力せよ。",
+                        WithHint(new SelectionPart("左手から前腕を範囲選択する", LeftForearmZoneKey),
+                            "左手から前腕までを、トリガーを押したままペン先でなぞってください"),
+                        Voice("「上からボールを包み込むように林檎を持ち直す形に修正」と音声指示する", "選択した範囲について、上からボールを包み込むように林檎を持ち直す形に修正")),
+                    // The stage puts the apple back on the palm when the step changes; this keeps the result of step 6.
+                    new MatchPoseCue(AppleKey, AppleGoalKey)),
                 Auto("s2-natural-curve", "Scene 2 自然なカーブ",
                     // From Ver 1.1 on the apple is part of the model.
                     new SetObjectActiveCue(AppleKey, false),
-                    Version(VenusAssetBuilder.Ver11Id),
+                    Version(VenusAssetBuilder.Ver11Id, LeftArmFocusKey),
                     B("恐らくこんな感じになるかと思われます。"),
                     A("ありがとうございます。そうですね、、、私の最初の案と比べると、より手の形は自然になりましたね\nただ一点気になる点がありまして。。。腕はもっと身体の輪郭に沿って、肘を曲げて引き寄せるような自然なカーブになっていた方が美しく見えると思うんですよね。ほかの古典彫刻でも、腕の自然な曲線が美しさを生んでいます。"),
                     B("なるほど。自然なカーブですか...うーん少しイメージが難しいですね。モデルで表現するとこんな感じでしょうか。")),
-                Operation("s2-slide-arm", "Scene 2 [B] 腕を内側へ", DemoRole.PlayerB,
-                    "空間ペンで左肩から肘の領域を選択し、腕の角度を内側へスライド修正せよ。",
-                    WithHint(new SelectionPart("左肩から肘を範囲選択する", LeftShoulderZoneKey),
-                        "光っている左肩から肘までを、トリガーを押したままペン先でなぞってください"),
-                    Manipulate("腕を内側へスライドする", "腕にペン先を当て、トリガーを押したまま体の内側へ回してください")),
+                WithCues(Operation("s2-slide-arm", "Scene 2 [B] 腕を内側へ", DemoRole.PlayerB,
+                        "空間ペンで左肩から肘の領域を選択し、腕の角度を内側へスライド修正せよ。",
+                        WithHint(new SelectionPart("左肩から肘を範囲選択する", LeftUpperArmZoneKey),
+                            "光っている左肩から肘までを、トリガーを押したままペン先でなぞってください"),
+                        WithHint(SlideArmInwards(),
+                            "腕にペン先を当て、トリガーを押したまま体の内側へ回してください")),
+                    new SetObjectActiveCue(LeftArmProxyKey, true)),
                 Auto("s2-mismatch", "Scene 2 イメージのズレ",
-                    Version(VenusAssetBuilder.Ver12Id),
+                    new SetObjectActiveCue(LeftArmProxyKey, false),
+                    Version(VenusAssetBuilder.Ver12Id, LeftArmFocusKey),
                     A("うーん私のイメージとズレていますね。私のイメージだとこんな感じなんです。")),
-                Operation("s2-guide-curve", "Scene 2 [A] ガイドでカーブを描く", DemoRole.PlayerA,
-                    "空間ペン（ガイドモード）を使用し、左肩から胸の前へ「緩やかなカーブを描く軌跡」をなぞるように描け。",
-                    WithHint(StrokePart.Guide("左肩から胸の前へ緩やかなカーブを描く", LeftShoulderZoneKey, ChestFrontZoneKey),
-                        "光っている左肩と胸の前を、トリガーを押したまま一筆の線でつないでください")),
+                WithCues(Operation("s2-guide-curve", "Scene 2 [A] ガイドでカーブを描く", DemoRole.PlayerA,
+                        "空間ペン（ガイドモード）を使用し、左肩から胸の前へ「緩やかなカーブを描く軌跡」をなぞるように描け。",
+                        WithHint(StrokePart.Guide("左肩から胸の前へ緩やかなカーブを描く", LeftShoulderZoneKey, ChestFrontZoneKey),
+                            "光っている左肩と胸の前を、トリガーを押したまま一筆の線でつないでください")),
+                    new SetObjectActiveCue(LeftArmGuideLineKey, true)),
                 Auto("s3-hand-mirror", "Scene 3 右腕と手鏡",
-                    Version(VenusAssetBuilder.Ver20Id),
+                    new SetObjectActiveCue(LeftArmGuideLineKey, false),
+                    new GuideSnapCue(LeftArmGuideKey),
+                    Version(VenusAssetBuilder.Ver20Id, LeftArmFocusKey),
                     B("あーなるほど。確かにこれは凄く綺麗ですね。力学的にも矛盾点がなさそうです。"),
                     A("左腕は良い感じですね。それでは次に右腕の話に移行しましょう。古典彫刻においては手鏡が林檎と並ぶ代表的なシンボルとされているので、右腕には手鏡があったと考えられます。一度3Dモデルにしてみますね。")),
                 Operation("s3-draw-mirror", "Scene 3 [A] 手鏡の線画を変換", DemoRole.PlayerA,
@@ -281,7 +330,17 @@ namespace DNPDemo.Editor
             return step;
         }
 
-        static StatueVersionCue Version(string id) => new(VenusStatueKeys.Main, VenusAssetBuilder.LoadVersion(id));
+        static StatueVersionCue Version(string id, string focusKey = null) =>
+            new(VenusStatueKeys.Main, VenusAssetBuilder.LoadVersion(id), focusKey);
+
+        /// <summary>Step 9: the arm proxy turns inwards about the shoulder until it passes the threshold.</summary>
+        static ManipulatePart SlideArmInwards()
+        {
+            ManipulatePart part = ManipulatePart.RotatePastThreshold("腕を内側へスライドする", LeftArmProxyKey, LeftShoulderPivotKey,
+                Vector3.up, ArmSlideMinAngle, ArmSlideMaxAngle, ArmSlideThresholdAngle);
+            part.GrabZoneKey = LeftArmProxyGrabKey;
+            return part;
+        }
 
         // Stand-ins for selections and manipulations whose objects are not placed on the statue yet.
         static InteractionPart Select(string instruction, string hint) =>

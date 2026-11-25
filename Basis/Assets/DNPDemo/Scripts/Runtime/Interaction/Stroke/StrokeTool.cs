@@ -90,11 +90,23 @@ namespace DNPDemo.Interaction.Stroke
             }
         }
 
+        /// <summary>
+        /// The finished lines of the most recent stroke part, captured at the end of that part so that later effects can
+        /// refer to them. Set by <see cref="End()"/> (called when the step ends) and cleared by <see cref="Begin()"/>
+        /// (called when the next stroke part begins). Null until a stroke part has ended on this device.
+        /// Currently unused; kept for future use if the curve is later replaced with a player-drawn trajectory.
+        /// <para>
+        /// The guide's rejected lines are removed during the part, so they are not included.
+        /// </para>
+        /// </summary>
+        public StrokeResult LastResult { get; private set; }
+
         public override bool CanRun(InteractionPart part) => part is StrokePart;
 
         public override void Begin(InteractionSession session)
         {
             StopInput();
+            LastResult = null;
             _session = session;
             _part = (StrokePart)session.Part;
             ClearAll();
@@ -105,7 +117,16 @@ namespace DNPDemo.Interaction.Stroke
             }
         }
 
-        public override void End() => StopInput();
+        public override void End()
+        {
+            // End runs before Discard on every device, and guide lines that missed have been erased by then, so the
+            // set holds the lines that count on the actor's device and on the others alike.
+            if (_session != null && _part != null)
+            {
+                LastResult = StrokeResult.Capture(_session.Step, _part, _set);
+            }
+            StopInput();
+        }
 
         public override void Discard()
         {

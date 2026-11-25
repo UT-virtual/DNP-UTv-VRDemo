@@ -89,7 +89,7 @@ StepCompletion（完了条件）
    ├ Interaction  … 担当ロールの端末で操作定義の部品がすべて完了すると、InteractionRunner が ScenarioDirector.ReportInteractionComplete() を呼んで進む
    └ Manual       … 運営の操作でのみ進む（結び）
    運営スキップはどの条件でも常に使える
-ScenarioCue（キュー）… LineCue（話者＋字幕＋音声）/ WaitCue / SoundCue / SetObjectActiveCue / BannerCue / StatueVersionCue（§2.5）/ EnvironmentCue（§2.6）
+ScenarioCue（キュー）… LineCue（話者＋字幕＋音声）/ WaitCue / SoundCue / SetObjectActiveCue / BannerCue / StatueVersionCue / MatchPoseCue / GuideSnapCue（§2.5）/ EnvironmentCue（§2.6）
    └ 見た目を後に残すキュー（永続キュー）は ApplyInstant を実装する
 ScenarioPlayer … ステップに入るたびに、舞台を初期状態に戻し、それまでのステップの永続キューを即時に適用してから、
                  現在のステップのキューを頭から再生する
@@ -155,6 +155,7 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
   - 送信形式は `StrokeMessage`（1点 6 バイト）。描画中の点の追加、線の確定、消去、全体（途中参加用）の4種類を、すべて ReliableOrdered で送る。
   - 表示は `StrokeView` が、線ごとにプールした LineRenderer（幅 6mm、`Art/Interaction/Stroke/StrokeLine.mat`）で描く。フェードアウトは線を細くして表現する。
   - 線は次の部品（音声指示など）の間も表示し、ステップが進むと消す。
+  - 部品が終わったときに残っている確定済みの線は、`StrokeTool.LastResult`（`StrokeResult`。部品のステップと線ごとの点列）にコピーして保持する。ガイドで外れた線はその時点で消えているので含まれない。担当の端末でも相手の端末でも同じ手順で保持するので、通信は増えない。ステップが進んでも消さず、次の線画の部品が始まると置き換える。途中参加した端末では、その部品に入っていなければ空のままになる。後の演出から参照するための口で、ステップ12の腕のスナップは既定の形（§2.5 の `GuideCurve`）を使う。
 - 部位の操作の実装（`Scripts/Runtime/Interaction/Manipulate/`）
   - `ManipulatePart` は、動かす対象のキー（`TargetKey`）、掴む範囲のゾーンのキー（`GrabZoneKey`。空なら対象自身のゾーン）、制約（`Constraint`）を持つ。平行移動は目標マーカーのキー（`GoalKey`）、開始位置からの最大距離（`MaxDistance`）、スナップ距離（`SnapDistance`）を持ち、スナップすると目標マーカーの位置と向きに合わせる。回転は支点のキー（`PivotKey`）、支点のローカル空間の軸（`Axis`）、角度の範囲（`MinAngle` / `MaxAngle`。部品の開始時の姿勢を 0° とする）、完了条件（`Completion`：目標角度 `TargetAngle` ± `SnapAngle` でスナップ、または `ThresholdAngle` を超えて離す）を持つ。キーは範囲選択と同じく `ScenarioObjectBinding` で解決し、解決できないキーがあると操作できない（運営スキップで進める）。
   - 制約の計算は `ManipulateConstraint`。部品が始まった時点の対象のワールドの姿勢を起点にし、動かした量を `ManipulateValue`（平行移動は変位、回転は角度）で表す。平行移動は、掴んでからのペン先の変位を最大距離の球に収める。回転は、ペン先を軸に垂直な平面へ投影し、フレームごとの角度の差を積み上げる（±180° をまたいでも途切れない）。ペン先が軸から 2cm 以内のときは角度を更新しない。
@@ -216,7 +217,12 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 - 各ツールは `InteractionPart` のサブクラスと `InteractionTool` のサブクラスを1組で実装し、`InteractionRunner` のツール一覧に登録する。
 - 部品は、パラメータの検証（`Validate`）と、シーンに必要なキーの申告（`CollectRequirements`）を実装できる。`ScenarioData` の検証とキーの収集はこれを呼ぶ。
 - ツールは `ScenarioInstaller`（メニュー「DNP Demo/Setup/Install Scenario Into DemoSystems Prefab」）で DemoSystems に組み込む。インストーラーは足りないツールだけを追加するので、ツールを増やしたら再実行すればよい。
-- 本番のツールができるまでは、`DummyInteractionPart`（予定の部品のペンモードと手順文を持つ）と `DummyInteractionTool`（担当者が「完了」ボタンを規定回数押すと完了。エディタとデスクトップでは F8）で代用する。音声指示（ステップ3・7・13・15・21）はすべて `VoicePart`、履歴からの呼び出し（ステップ19）は `HistoryPart` にしている。範囲選択と部位の操作は、対象を像に置いたステップから `SelectionPart` / `ManipulatePart` に置き換える。範囲選択はステップ6（林檎）とステップ9（左肩。仮の像の `Zone_LeftShoulder`）、部位の操作はステップ6 の林檎の平行移動（仮の像の `Apple` から `Goal_AppleUnderHand` へ）にしている。仮の林檎は Ver 1.0 の手のひらの位置にあり、ステップ4 の先頭のキューで表示する。線画はステップ11（ガイド。仮の像の `Zone_LeftShoulder` から `Zone_ChestFront`）とステップ13（線画）を `StrokePart` にしている。
+- 本番のツールができるまでは、`DummyInteractionPart`（予定の部品のペンモードと手順文を持つ）と `DummyInteractionTool`（担当者が「完了」ボタンを規定回数押すと完了。エディタとデスクトップでは F8）で代用する。音声指示（ステップ3・7・13・15・21）はすべて `VoicePart`、履歴からの呼び出し（ステップ19）は `HistoryPart` にしている。範囲選択と部位の操作は、対象を像に置いたステップから `SelectionPart` / `ManipulatePart` に置き換える。ステップ0〜12 の操作はすべて本番の部品にしている。
+  - ステップ6：林檎（仮の像の `Apple`）を範囲選択し、`Goal_AppleUnderHand` へ平行移動する。仮の林檎は Ver 1.0 の手のひらの位置にあり、ステップ4 の先頭のキューで表示する。ステップが進むと舞台が林檎を元の位置に戻すので、ステップ7 の先頭の `MatchPoseCue` が手の下に置き直す。
+  - ステップ7：左手〜前腕（`Zone_LeftForearm`。Ver 1.0・1.1 の前腕から手を覆うカプセル）を範囲選択し、音声指示する。
+  - ステップ9：左肩〜肘（`Zone_LeftUpperArm`）を範囲選択し、腕の代わりの `LeftArmProxy` を `Pivot_LeftShoulder` の上向きの軸のまわりに回す。腕は全身モデルの一部で単独では動かせないので、Ver 1.1 の左腕・手・林檎を半透明で写したプロキシを回し、像そのものは動かさない（§2.5 の「ギズモで動かすのはゴーストだけ」）。プロキシはステップ9 の間だけ表示し、掴む範囲はプロキシに付けた `LeftArmProxy_Grab`。内側（体の方）が負の角度で、範囲は -60〜+10°、-25° を超えて離すと完了する。
+  - ステップ11：ガイド（`Zone_LeftShoulder` から `Zone_ChestFront`）を `StrokePart` にしている。ステップ11 の間は、なぞる形として既定のカーブ（`GuideLine_LeftArm`）を点線で表示する。判定は §2.4 の線画のガイドのとおりで、カーブとの近さは見ない。
+  - 線画（ステップ13）も `StrokePart` にしている。
 
 ### 2.5 像と版の管理
 
@@ -234,13 +240,16 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 | 履歴 | `VenusVersionHistory.Collect(ステップ列, ステップ番号, 像のキー)` が、現在より前のステップの `StatueVersionCue` がその像に表示した版を、初めて出た順に1つずつ返す |
 | `EnvironmentCue` | 永続キュー。キー `Environment` の `EnvironmentController` に環境プリセットを渡し、クロスフェードで切り替える（ステップ22「結び」の先頭で神殿へ）。後続ステップや途中参加では即時に適用する。詳細は §2.6 |
 | 仮モデル | M3 まではプリミティブを組み合わせた仮モデル（`Art/Venus/Placeholders/`）を使う。メニュー「DNP Demo/Create/Venus Versions」で、仮モデル、`VenusVersion`、カタログのうち足りないものを生成する。以後はアセットを直接編集し、本番のモデルは各 `VenusVersion` のモデルを付け替えて差し替える。Ver 1.0 の林檎は、ステップ6 で動かすため別オブジェクト（`Statue_Original/StatueAnchor/Targets/Apple`）にしていて、ステップ4〜7 の間だけ表示する。Ver 1.1 以降は林檎をモデルに含める |
-| 操作対象のオブジェクト | 部位ゾーン、目標マーカー、仮の林檎は `Statue_Original/StatueAnchor/Targets` に置き、版のモデルとは分ける |
+| 操作対象のオブジェクト | 部位ゾーン、目標マーカー、支点、仮の林檎、腕のプロキシ、ガイドのカーブは `Statue_Original/StatueAnchor/Targets` に置き、版のモデルとは分ける |
+| `MatchPoseCue` | 永続キュー。キーで指したオブジェクトを、別のキーのマーカーの位置と向きに置く。ペンで動かした結果を、次のステップ以降に表示するのに使う（ステップ7 の先頭で林檎を手の下へ） |
+| `GuideCurve` | ステップ11の「ガイドを描く」でプレイヤーが描く「軌跡」の表示用カーブ（3次ベジェ曲線）。判定は始点・終点ゾーンで行い、このカーブは判定に使わない。端点は常にガイドの始点・終点ゾーンの Transform を参照するので、ゾーンの中心と一致する（カーブが保つのは中間の制御点2つだけ）。子オブジェクト `GuideLine`（キー `GuideLine_LeftArm`）が点線として視覚的なガイドを表示し、ステップ11の先頭で表示、ステップ12の先頭で非表示になる |
+| `GuideSnapEffect` / `GuideSnapCue` | ステップ12の「ガイドの軌跡に沿って腕がスナップする」演出。ステップ12の先頭の `GuideSnapCue` が、`GuideCurve` に沿って光る線を肩から胸元へ伸ばし（先端に光る球）、届いた時点で次の `StatueVersionCue` が Ver 1.2 → Ver 2.0 を左腕の範囲で切り替える。線はその後細くなって消える。演出は既定のカーブで走らせ、描いた線は使わない（ガイドの判定は両ゾーンに届いたことなので、同じゾーンを結ぶカーブと整合する）。一時的な演出なので、ジャンプや途中参加では表示しない。ステップが変わると `IStageResettable` で止める |
 | 操作対象の定義 | 部位ゾーン（林檎、腕、手鏡など）、ギズモの原点（重心）、始点・終点ポーズ、制約（平行移動の範囲、回転の軸と角度範囲）、ゴーストの形状と大きさはステップ定義側に持つ。モデルには ID やピボットを持たせない |
 | 部位の確定 | 選択範囲がそのステップの部位ゾーンに一定割合以上重なっていれば、その部位で確定する（ざっくり選択を許容）。外れていれば選択範囲を消してやり直す。確定時、選択範囲を部位の形にスナップして見せる |
 | `GestureGizmo` | 操作用の取っ手。ステップに応じて、確定した部位の重心に移動ギズモ（XYZ 矢印）または回転ギズモ（XYZ 3リング）のどちらか一方を出す。中心は重心固定（中心可変は今回のスコープ外）。制約で使わない軸は出さない。部位の形とは無関係 |
 | `GhostPart` | 操作対象の目標表示（半透明）。ギズモで動かすのはゴーストだけで、元の像は動かさない。許容範囲内で離すと目標へスナップして完了する。標準の見た目は実物大の簡易プロキシ（林檎ならスフィア、手鏡なら板など）。実物の部位のゴーストは任意（下記） |
 | `GuideLine` | 始点から終点へ向かう直線（またはガイド線）を表示し、どこへ動かすかが一目でわかるようにする。移動のステップで使う。回転のステップでは、回転軸と目標角度の目印に置き換える |
-| `ModelTransition` | 版の切り替え演出（ディゾルブ、スキャンライン、パーティクル）。どの版の遷移でも同じ仕組みを使い、全身モデルを切り替える。変化した部位の範囲を中心に演出をかける |
+| `ModelTransition` | 版の切り替え演出（ディゾルブ、スキャンライン、パーティクル）。どの版の遷移でも同じ仕組みを使い、全身モデルを切り替える。変化した部位の範囲を中心に演出をかける：`StatueVersionCue` の `FocusKey` で指したオブジェクトの範囲（`DetectionZone` ならその形、それ以外は描画の範囲）を、その切り替えにだけ渡す（`ModelTransition.SetBounds`）。空なら像全体。ステップ4・8・10・12 は左腕の範囲（`Focus_LeftArm`）を使う |
 | 比較表示 | 比較台の `VenusStatue` に、指定した版を表示する |
 | 履歴の表示 | `HistoryPanel` が、本体の像の履歴をブランチの一覧と、1版ずつの3Dモデルで表示する（§2.4） |
  

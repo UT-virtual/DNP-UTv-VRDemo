@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Voice;
 using DNPDemo.Scenario;
@@ -11,7 +12,15 @@ namespace DNPDemo.Tests
 {
     public class ScenarioDataTests
     {
-        static List<ScenarioStep> DefaultSteps => ScenarioDataBuilder.CreateDefaultSteps();
+        static List<ScenarioStep> _defaultSteps;
+
+        [OneTimeSetUp]
+        public static void OneTimeSetUp()
+        {
+            _defaultSteps = ScenarioDataBuilder.CreateDefaultSteps();
+        }
+
+        static List<ScenarioStep> DefaultSteps => _defaultSteps;
 
         [Test]
         public void DefaultScenarioIsValid()
@@ -230,6 +239,43 @@ namespace DNPDemo.Tests
                     Assert.IsFalse(string.IsNullOrEmpty(step.Interaction[i].Instruction), $"{step.Id} part {i} needs an instruction.");
                 }
             }
+        }
+
+        [Test]
+        public void SceneOneAndTwoOperationsRunOnTheirTools()
+        {
+            List<ScenarioStep> steps = DefaultSteps;
+            int guide = steps.FindIndex(step => step.Id == "s2-guide-curve");
+            Assert.GreaterOrEqual(guide, 0);
+            for (int i = 0; i <= guide; i++)
+            {
+                foreach (InteractionPart part in steps[i].Interaction)
+                {
+                    Assert.IsNotInstanceOf<DummyInteractionPart>(part, $"{steps[i].Id}: steps 0 to 12 are played with the pen, not stand-ins.");
+                }
+            }
+        }
+
+        [Test]
+        public void MovedObjectsStayWhereTheOperationLeftThem()
+        {
+            List<ScenarioStep> steps = DefaultSteps;
+            int checkedParts = 0;
+            for (int i = 0; i < steps.Count - 1; i++)
+            {
+                foreach (InteractionPart part in steps[i].Interaction)
+                {
+                    if (part is not ManipulatePart { Constraint: ManipulateConstraintKind.Translate } move)
+                    {
+                        continue;
+                    }
+                    // The stage puts moved objects back when the step changes, so the next step has to show the result.
+                    Assert.IsTrue(steps[i + 1].Cues.Exists(cue => cue is MatchPoseCue match && match.Key == move.TargetKey && match.MarkerKey == move.GoalKey),
+                        $"{steps[i + 1].Id} should put {move.TargetKey} at {move.GoalKey}, where {steps[i].Id} left it.");
+                    checkedParts++;
+                }
+            }
+            Assert.Greater(checkedParts, 0, "Step 6 moves the apple.");
         }
 
         [Test]

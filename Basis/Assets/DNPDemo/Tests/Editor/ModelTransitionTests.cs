@@ -516,10 +516,7 @@ namespace DNPDemo.Tests
             statueSo.FindProperty("_baseline").objectReferenceValue = baseline;
             statueSo.ApplyModifiedPropertiesWithoutUndo();
 
-            var binding = statue.gameObject.AddComponent<ScenarioObjectBinding>();
-            var bindingSo = new SerializedObject(binding);
-            bindingSo.FindProperty("_key").stringValue = "RouteStatue";
-            bindingSo.ApplyModifiedPropertiesWithoutUndo();
+            TestBinding.Bind(statue.gameObject, "RouteStatue");
 
             var stage = Track(new GameObject("RouteStage")).AddComponent<ScenarioStage>();
             Assume.That(stage.gameObject.scene.isLoaded);
@@ -536,6 +533,40 @@ namespace DNPDemo.Tests
             Assert.IsFalse(statue.GetModel(baseline).activeSelf);
             Assert.IsFalse(statue.GetModel(first).activeSelf);
             Assert.IsTrue(statue.GetModel(second).activeSelf);
+        }
+
+        [Test]
+        public void StatueVersionCueCentresTheTransitionOnItsFocus()
+        {
+            VenusStatue statue = CreateStatue();
+            VenusVersion first = CreateVersion("first");
+            VenusVersion second = CreateVersion("second");
+            var transition = statue.gameObject.AddComponent<ModelTransition>();
+            SetProfile(transition, CreateProfile(1f));
+            TestBinding.Bind(statue.gameObject, "FocusStatue");
+
+            GameObject focus = Track(new GameObject("FocusZone"));
+            focus.transform.position = new Vector3(4f, 1f, -2f);
+            var zone = focus.AddComponent<DNPDemo.Interaction.DetectionZone>();
+            zone.ShapeType = DNPDemo.Interaction.ZoneShapeType.Box;
+            zone.BoxSize = new Vector3(0.5f, 0.6f, 0.7f);
+            TestBinding.Bind(focus, "FocusZone");
+
+            var stage = Track(new GameObject("FocusStage")).AddComponent<ScenarioStage>();
+            Assume.That(stage.gameObject.scene.isLoaded);
+            var context = new ScenarioCueContext(stage, Track(ScriptableObject.CreateInstance<ScenarioData>()));
+            statue.Show(first, false);
+
+            // Showing the version already shown does not leave the focus pending for a later change.
+            new StatueVersionCue("FocusStatue", first, "FocusZone").Play(context).MoveNext();
+            new StatueVersionCue("FocusStatue", second).Play(context).MoveNext();
+            Assert.IsTrue(transition.IsAnimating);
+            Assert.AreNotEqual(zone.WorldBounds, transition.ActiveBounds);
+
+            transition.CompleteImmediately();
+            new StatueVersionCue("FocusStatue", first, "FocusZone").Play(context).MoveNext();
+            Assert.IsTrue(transition.IsAnimating);
+            Assert.AreEqual(zone.WorldBounds, transition.ActiveBounds);
         }
 
         [Test]
@@ -633,10 +664,7 @@ namespace DNPDemo.Tests
             statueSo.FindProperty("_baseline").objectReferenceValue = baseline;
             statueSo.ApplyModifiedPropertiesWithoutUndo();
 
-            var binding = statue.gameObject.AddComponent<ScenarioObjectBinding>();
-            var bindingSo = new SerializedObject(binding);
-            bindingSo.FindProperty("_key").stringValue = "RebuildStatue";
-            bindingSo.ApplyModifiedPropertiesWithoutUndo();
+            TestBinding.Bind(statue.gameObject, "RebuildStatue");
 
             var stageGo = Track(new GameObject("RebuildStage"));
             var stage = stageGo.AddComponent<ScenarioStage>();
