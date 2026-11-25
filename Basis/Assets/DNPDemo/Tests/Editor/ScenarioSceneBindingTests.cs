@@ -219,6 +219,39 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void SketchPlacedObjectsReadTheSketchAndCanReachTheirGoal()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data);
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            int checkedCues = 0;
+            foreach (ScenarioStep step in data.Steps)
+            {
+                foreach (ScenarioCue cue in step.Cues)
+                {
+                    if (cue is not PlaceAtSketchCue place)
+                    {
+                        continue;
+                    }
+                    Assert.IsTrue(bindings.TryGetObject(place.StrokesKey, out UnityEngine.GameObject tool), $"'{place.StrokesKey}' is not bound.");
+                    Assert.IsTrue(tool.TryGetComponent(out StrokeTool _), $"'{place.StrokesKey}' should be the StrokeTool that keeps the sketch.");
+
+                    // The step that shows the object moves it to a goal; from anywhere it can appear, the goal must be in reach.
+                    ManipulatePart move = step.Interaction.OfType<ManipulatePart>()
+                        .FirstOrDefault(part => part.Constraint == ManipulateConstraintKind.Translate && part.TargetKey == place.Key);
+                    Assert.IsNotNull(move, $"{step.Id} should move '{place.Key}'.");
+                    Assert.IsTrue(bindings.TryGetObject(place.MarkerKey, out UnityEngine.GameObject marker), $"'{place.MarkerKey}' is not bound.");
+                    Assert.IsTrue(bindings.TryGetObject(move.GoalKey, out UnityEngine.GameObject goal), $"'{move.GoalKey}' is not bound.");
+                    float farthest = UnityEngine.Vector3.Distance(marker.transform.position, goal.transform.position) + place.MaxOffset;
+                    Assert.LessOrEqual(farthest, move.MaxDistance - move.SnapDistance,
+                        $"{step.Id}: '{place.Key}' can appear {farthest:0.##} m from '{move.GoalKey}', farther than it may move.");
+                    checkedCues++;
+                }
+            }
+            Assert.Greater(checkedCues, 0, "Step 14 should put the hand mirror where the sketch was drawn.");
+        }
+
+        [Test]
         public void CollectingAnUnloadedSceneGivesAnEmptySet()
         {
             // A scene that is still loading (as in Awake) counts as not loaded, and has nothing to collect yet.

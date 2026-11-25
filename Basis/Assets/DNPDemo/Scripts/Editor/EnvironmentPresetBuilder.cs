@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using DNPDemo.Environment;
-using DNPDemo.Scenario;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -264,12 +263,7 @@ namespace DNPDemo.Editor
                     throw new InvalidOperationException("Lighting prefab must contain a directional light and a spot light.");
                 }
 
-                ScenarioObjectBinding binding = root.GetComponent<ScenarioObjectBinding>();
-                if (binding == null)
-                {
-                    binding = root.AddComponent<ScenarioObjectBinding>();
-                }
-                SetBindingKey(binding, EnvironmentController.EnvironmentKey);
+                ScenarioBindingEditor.Bind(root, EnvironmentController.EnvironmentKey);
 
                 EnvironmentController controller = root.GetComponent<EnvironmentController>();
                 if (controller == null)
@@ -301,25 +295,13 @@ namespace DNPDemo.Editor
             GameObject root = PrefabUtility.LoadPrefabContents(ExhibitionRoomPrefabPath);
             try
             {
-                ScenarioObjectBinding binding = root.GetComponent<ScenarioObjectBinding>();
-                if (binding == null)
-                {
-                    binding = root.AddComponent<ScenarioObjectBinding>();
-                }
-                SetBindingKey(binding, EnvironmentController.ExhibitionRoomKey);
+                ScenarioBindingEditor.Bind(root, EnvironmentController.ExhibitionRoomKey);
                 PrefabUtility.SaveAsPrefabAsset(root, ExhibitionRoomPrefabPath);
             }
             finally
             {
                 PrefabUtility.UnloadPrefabContents(root);
             }
-        }
-
-        static void SetBindingKey(ScenarioObjectBinding binding, string key)
-        {
-            var serialized = new SerializedObject(binding);
-            serialized.FindProperty("_key").stringValue = key;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
     }
 }
