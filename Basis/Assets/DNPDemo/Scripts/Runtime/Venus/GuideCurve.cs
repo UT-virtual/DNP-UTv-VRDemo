@@ -77,13 +77,33 @@ namespace DNPDemo.Venus
 
         void OnEnable() => UpdateLine();
 
-        void LateUpdate() => UpdateLine();
+        void LateUpdate()
+        {
+            // Update only during play. In editor mode, end points follow zones in OnEnable after editing,
+            // but do not update every frame.
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+            UpdateLine();
+        }
 
         void OnDestroy()
         {
             if (_dashTexture != null)
             {
                 Destroy(_dashTexture);
+            }
+            if (_line != null && _line.material != null)
+            {
+                if (Application.isPlaying)
+                {
+                    Destroy(_line.material);
+                }
+                else
+                {
+                    DestroyImmediate(_line.material);
+                }
             }
         }
 

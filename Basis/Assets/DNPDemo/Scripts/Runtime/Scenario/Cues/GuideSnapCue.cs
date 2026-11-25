@@ -42,7 +42,13 @@ namespace DNPDemo.Scenario.Cues
                 yield break;
             }
             effect.Play(TravelSeconds);
-            yield return new WaitForSeconds(TravelSeconds);
+            float timeoutSeconds = TravelSeconds + 1f;
+            float elapsedSeconds = 0f;
+            while (effect.IsPlaying && elapsedSeconds < timeoutSeconds)
+            {
+                yield return null;
+                elapsedSeconds += Time.deltaTime;
+            }
         }
 
         public override void CollectRequirements(ScenarioRequirements requirements)
