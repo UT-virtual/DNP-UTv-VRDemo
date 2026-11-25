@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using DNPDemo.Scenario;
 using UnityEngine;
 
@@ -22,13 +21,10 @@ namespace DNPDemo.Venus
         [Tooltip("Object that travels at the tip of the line. Kept inactive while the effect is not playing. Optional.")]
         [SerializeField] Transform _head;
 
-        [Tooltip("Points the line is drawn with when it has reached the end.")]
-        [SerializeField, Range(4, 128)] int _resolution = 48;
-
         [Tooltip("Seconds the line takes to fade after reaching the end.")]
         [SerializeField, Min(0f)] float _fadeSeconds = 0.6f;
 
-        readonly List<Vector3> _points = new();
+        Vector3[] _points;
         GuideCurve _curve;
         float _travelSeconds;
         float _elapsed;
@@ -127,20 +123,20 @@ namespace DNPDemo.Venus
         /// <summary>Draws the line from the start of the curve to <paramref name="progress"/> (0 to 1).</summary>
         void Apply(float progress)
         {
-            int count = Mathf.Max(2, Mathf.CeilToInt(_resolution * progress) + 1);
-            _points.Clear();
+            int count = Curve.Resolution;
+            if (_points == null || _points.Length != count)
+            {
+                _points = new Vector3[count];
+            }
             for (int i = 0; i < count; i++)
             {
-                _points.Add(Curve.Evaluate(progress * i / (count - 1)));
+                _points[i] = Curve.Evaluate(progress * i / (count - 1));
             }
-            _glow.positionCount = _points.Count;
-            for (int i = 0; i < _points.Count; i++)
-            {
-                _glow.SetPosition(i, _points[i]);
-            }
+            _glow.positionCount = count;
+            _glow.SetPositions(_points);
             if (_head != null)
             {
-                _head.position = _points[_points.Count - 1];
+                _head.position = _points[count - 1];
             }
         }
     }

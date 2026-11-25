@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DNPDemo.Venus
 {
@@ -32,20 +32,28 @@ namespace DNPDemo.Venus
         [Tooltip("Dashed line that shows the curve. Optional.")]
         [SerializeField] LineRenderer _line;
 
-        [Tooltip("Points the line is drawn with.")]
-        [SerializeField, Range(4, 128)] int _resolution = 48;
+        [Tooltip("Points the line is drawn with. The snap effect draws with the same number.")]
+        [SerializeField, Range(4, 128), FormerlySerializedAs("_lineResolution")] int _resolution = 48;
 
         [Tooltip("Length of one dash and the gap after it, in metres.")]
         [SerializeField, Min(0.005f)] float _dashLength = 0.04f;
 
         Vector3[] _linePoints;
         Texture2D _dashTexture;
+        // Copy of the line's material made for the dashes; owned and destroyed by this component.
         Material _lineMaterial;
-        Vector3[] _lastStartPos;
-        Vector3[] _lastEndPos;
+
+        // What the drawn line was computed from, so it is redrawn only when the ends or the curve move.
+        bool _drawn;
+        Vector3 _drawnStart;
+        Vector3 _drawnEnd;
+        Matrix4x4 _drawnPose;
 
         /// <summary>Both ends are set.</summary>
         public bool IsValid => _start != null && _end != null;
+
+        /// <summary>Points the curve is drawn with.</summary>
+        public int Resolution => _resolution;
 
         /// <summary>The point at <paramref name="t"/> (0 at the start, 1 at the end), in world space.</summary>
         public Vector3 Evaluate(float t)
@@ -63,26 +71,16 @@ namespace DNPDemo.Venus
             return u * u * u * p0 + 3f * u * u * t * p1 + 3f * u * t * t * p2 + t * t * t * p3;
         }
 
-        void OnEnable()
-        {
-            if (Application.isPlaying)
-            {
-                UpdateLine();
-            }
-        }
-
         void LateUpdate()
         {
-            if (!Application.isPlaying || _line == null || !IsValid || !_line.gameObject.activeInHierarchy)
+            if (_line == null || !IsValid || !_line.gameObject.activeInHierarchy)
             {
                 return;
             }
-            // Check if the endpoints have moved since last update.
-            Vector3 currentStart = _start.position;
-            Vector3 currentEnd = _end.position;
-            if (_lastStartPos != null && _lastStartPos[0] == currentStart && _lastEndPos != null && _lastEndPos[0] == currentEnd)
+            if (_drawn && _drawnStart == _start.position && _drawnEnd == _end.position
+                && _drawnPose == transform.localToWorldMatrix)
             {
-                return;  // Endpoints haven't moved, skip recalculation.
+                return;
             }
             UpdateLine();
         }
@@ -95,23 +93,12 @@ namespace DNPDemo.Venus
             }
             if (_lineMaterial != null)
             {
-                if (Application.isPlaying)
-                {
-                    Destroy(_lineMaterial);
-                }
-                else
-                {
-                    DestroyImmediate(_lineMaterial);
-                }
+                Destroy(_lineMaterial);
             }
         }
 
         void UpdateLine()
         {
-            if (_line == null || !IsValid || !_line.gameObject.activeInHierarchy)
-            {
-                return;
-            }
             if (_linePoints == null || _linePoints.Length != _resolution)
             {
                 _linePoints = new Vector3[_resolution];
@@ -128,21 +115,12 @@ namespace DNPDemo.Venus
             _line.useWorldSpace = true;
             _line.positionCount = _linePoints.Length;
             _line.SetPositions(_linePoints);
-            if (Application.isPlaying)
-            {
-                ApplyDashes(length);
-            }
-            // Store current positions for endpoint change detection.
-            if (_lastStartPos == null)
-            {
-                _lastStartPos = new[] { _start.position };
-                _lastEndPos = new[] { _end.position };
-            }
-            else
-            {
-                _lastStartPos[0] = _start.position;
-                _lastEndPos[0] = _end.position;
-            }
+            ApplyDashes(length);
+
+            _drawn = true;
+            _drawnStart = _start.position;
+            _drawnEnd = _end.position;
+            _drawnPose = transform.localToWorldMatrix;
         }
 
         /// <summary>Tiles a half-opaque, half-clear texture along the line, one tile per dash and gap.</summary>
@@ -164,17 +142,14 @@ namespace DNPDemo.Venus
                 _dashTexture.SetPixels32(pixels);
                 _dashTexture.Apply();
             }
-            if (_lineMaterial == null)
+            if (_lineMaterial == null && _line.sharedMaterial != null)
             {
-                _lineMaterial = new Material(_line.material)
-                {
-                    name = _line.material.name + " (Instance)",
-                };
-                _line.material = _lineMaterial;
+                // A copy, so the shared material asset never holds the runtime texture.
+                _lineMaterial = new Material(_line.sharedMaterial) { name = _line.sharedMaterial.name + " (GuideDash)" };
+                _lineMaterial.mainTexture = _dashTexture;
+                _line.sharedMaterial = _lineMaterial;
+                _line.textureMode = LineTextureMode.Tile;
             }
-            // The instanced material holds the texture, so we can destroy it cleanly in OnDestroy.
-            _lineMaterial.mainTexture = _dashTexture;
-            _line.textureMode = LineTextureMode.Tile;
             // In Tile mode one texture repeat spans (line width / textureScale.x) metres.
             float width = Mathf.Max(_line.widthMultiplier, 1e-4f);
             _line.textureScale = new Vector2(width / (_dashLength * 2f), 1f);
