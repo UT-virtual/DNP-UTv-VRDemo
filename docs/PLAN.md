@@ -274,7 +274,11 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 
 `EnvironmentPreset`（ScriptableObject）に、2:1 の Skybox パノラマと露出・回転、展示室の壁の表示、Directional / Spot Light、Ambient、Reflection の設定をまとめて持たせる。`EnvironmentController` は描画中のパノラマをスナップショットしてから次の環境へクロスフェードするため、遷移中の再指定でも画面を飛ばさず目標へ収束する。遷移先のパノラマは最初から自分の露出・回転で描き、混ぜる割合だけを変える。無効のスポットライトは強度 0 として補間するので、点くときは暗い状態から、消えるときは暗くなってから切り替わる。スポットライトの点灯は Keep / On / Off で指定し、Keep は点灯状態を変えない（遷移中に再指定されたときは進行中の遷移先の点灯状態を引き継ぐ）。色・強度・向きなどはどの指定でも適用する。展示室は Keep、神殿は Off。Reflection の解像度とバウンス数はベイク時にしか使われないため、プリセットには持たせずシーンの Lighting 設定に任せる。壁の表示は透明度だけを変え、移動用 Collider は維持する。
 
-プリセットは「展示室」と「神殿（エーゲ海の青空と自然光）」の2つ。神殿では像の大理石に自然光と影が落ちるよう、ディレクショナルライトの向き・強さ・ソフトシャドウを設定する。仮のパノラマとプリセットは `DNP Demo/Setup/Build Environment Presets` で生成し、Lighting / Env_ExhibitionRoom Prefab に `Environment` / `ExhibitionRoom` のバインディングを設定する。共有シーンは編集しない。
+プリセットは「展示室」と「神殿（エーゲ海の青空と自然光）」の2つ。神殿のパノラマは JPEG（LDR）で、太陽の明るさを持たないため、背景と反射にだけ使う。像の陰影はディレクショナルライトと Ambient で作る。ディレクショナルライトは、パノラマ上の太陽の位置（u, v）から向きを決める。Skybox は u を方位 `360·(u−0.5) − 回転` 度（+Z から +X 方向）に、v を高度 `180·(v−0.5)` 度に置くので、ライトの Euler は（高度, 方位 − 180, 0）になる。Android の URP アセットはソフトシャドウに対応しないため、神殿の影は Hard にする。Skybox の Reflection は空から作ったキューブマップなので、パノラマが確定したとき（遷移の終わりと即時適用）に `DynamicGI.UpdateEnvironment` で作り直す。
+
+`DNP Demo/Setup/Build Environment Presets` は、展示室の仮パノラマとプリセットを生成し、神殿パノラマのインポート設定（2D、sRGB、Mipmap、Wrap U=Repeat / V=Clamp、2の累乗に縮めない、Android は最大 4096・ASTC 6x6）を適用し、Lighting / Env_ExhibitionRoom Prefab に `Environment` / `ExhibitionRoom` のバインディングを設定する。神殿のパノラマ（`Art/Environment/Environment_Temple_Panorama.jpg`）は生成せず、ないときはエラーにする。共有シーンは編集しない。
+
+影の品質はプリセットの `ShadowQualitySettings`（Override、メインライトのシャドウマップ解像度、影の距離、カスケード数）で上書きできる。Basis は影品質の設定（Quest の既定は Very Low：256px・5m・1カスケード）を `SMModuleShadowQualityURP` で URP アセットに書き込むため、神殿だけ Override を有効にし（2048px・8m・1カスケード）、展示室は Basis の値のまま使う。`EnvironmentController` は他の離散値と同じく遷移の t ≥ 0.5 で（`ApplyInstant` と舞台リセットでは即座に）切り替え、Override が有効になる最初の1回にその時点の値を退避してから書き込み、Override のないプリセットへ切り替えたら退避した値に戻す。Override 中は `LateUpdate` で値を比べ、パフォーマンスモードや品質変更で Basis に書き換えられたら上書きし直し、そのとき Basis が書いた値を新たな戻し先にする。品質レベルの切り替えで URP アセット自体が替わったときは、元のアセットへ値を戻してから新しいアセットを上書きする。URP アセットはプロジェクトのアセットで、エディタの Play 中の変更が .asset に残るため、`OnDisable` / `OnDestroy` では必ず元の値に戻す。
 
 シナリオ step 21 までは展示室を基準とし、step 22「結び」の先頭にある永続 `EnvironmentCue` が神殿へ切り替える。後続ステップや途中参加では `ApplyInstant` で同じ状態を即時再構築し、舞台リセットでは展示室プリセットへ戻す。
 
@@ -352,7 +356,7 @@ M3 まではプリミティブを組み合わせた仮モデルで進め、M4 �
 | | 移動ギズモ（XYZ 矢印）、回転ギズモ（XYZ 3リング）、始点から終点へのガイド線 | Blender 風。軸ごとに掴める。プリミティブで組む |
 | | 空間ペン（先端スフィアつき）、比較台、展示室 | 展示室は簡素でよい |
 | | 学者A/B のアバター | 仮置きは Basis の標準アバターやカプセル |
-| 環境 | 古代ギリシア風神殿の360度パノラマ | Skybox 用（HDR 推奨）。エーゲ海の青空と自然光 |
+| 環境 | 古代ギリシア風神殿の360度パノラマ | Skybox 用。2:1 の JPEG（LDR）。陰影はライトで作る。エーゲ海の青空と自然光 |
 | 音声 | ナレーター、学者A、学者B の台詞 | 生声または合成音声で台詞ごとに1ファイル。台本を字幕データにする |
 | SE | 生成、変形、選択確定、スナップ、音声入力の開始と終了、タスク表示、完了 | |
 | UI | 日本語フォント（TMP SDF。Noto Sans JP など）、HUD アイコン、履歴パネル | |
