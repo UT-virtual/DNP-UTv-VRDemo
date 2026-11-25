@@ -12,6 +12,7 @@ using DNPDemo.Venus;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace DNPDemo.Tests
@@ -291,41 +292,59 @@ namespace DNPDemo.Tests
         }
 
         [Test]
-        public void LeftAndRightKeysOnTheStatueAreHerOwnSides()
+        public void ArmOperationsFollowTheStatuesOwnShoulders()
         {
             ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
-            Assert.IsTrue(bindings.TryGetObject(VenusStatueKeys.Main, out UnityEngine.GameObject statue));
-            // The statue faces -Z of its anchor, so her left is +X and her right is -X (docs/PLAN.md §2.5).
-            UnityEngine.Transform anchor = statue.transform.parent;
-            int left = 0;
-            int right = 0;
-            foreach (KeyValuePair<string, UnityEngine.GameObject> pair in bindings.Objects)
+            Assert.IsTrue(bindings.TryGetObject(VenusStatueKeys.Main, out GameObject statue));
+            Transform anchor = statue.transform.parent;
+
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.LeftShoulderPivotKey, out GameObject leftShoulder));
+            Assert.Greater(anchor.InverseTransformPoint(leftShoulder.transform.position).x, 0f);
+
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.RightArmToMirrorZoneKey, out GameObject rightArm));
+            Assert.IsTrue(rightArm.TryGetComponent(out DetectionZone rightArmZone));
+            Vector3 rightShoulder = rightArm.transform.TransformPoint(
+                Vector3.down * (rightArmZone.Height * 0.5f - rightArmZone.Radius));
+            Assert.Less(anchor.InverseTransformPoint(rightShoulder).x, 0f);
+
+            // The right forearm crosses the torso. The zone runs from the right shoulder to the held mirror.
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.MirrorGoalKey, out GameObject goal));
+            Assert.IsTrue(rightArmZone.ContainsPoint(goal.transform.position));
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.RightWristPivotKey, out GameObject wrist));
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.RightHandMirrorZoneKey, out GameObject rightHand));
+            Assert.IsTrue(rightHand.TryGetComponent(out DetectionZone rightHandZone));
+            Assert.IsTrue(rightHandZone.ContainsPoint(wrist.transform.position));
+            Assert.IsTrue(rightHandZone.ContainsPoint(goal.transform.position));
+        }
+
+        [Test]
+        public void MirrorAtTheGoalMatchesTheMirrorInVersion30()
+        {
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(VenusStatueKeys.Main, out GameObject statue));
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.HandMirrorKey, out GameObject prop));
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.MirrorGoalKey, out GameObject goal));
+
+            GameObject model = VenusAssetBuilder.LoadVersion(VenusAssetBuilder.Ver30Id).Model;
+            MeshFilter held = model.GetComponentsInChildren<MeshFilter>()
+                .Single(filter => filter.name == "Venus_HandMirror");
+            MeshFilter movable = prop.GetComponentInChildren<MeshFilter>(true);
+            Assert.AreSame(held.sharedMesh, movable.sharedMesh);
+            CollectionAssert.AreEqual(held.GetComponent<Renderer>().sharedMaterials, movable.GetComponent<Renderer>().sharedMaterials);
+            Assert.IsTrue(prop.TryGetComponent(out DetectionZone grabZone));
+            foreach (Vector3 vertex in movable.sharedMesh.vertices)
             {
-                if (pair.Value == null || !pair.Value.transform.IsChildOf(anchor))
-                {
-                    continue;
-                }
-                // A curve sits at the origin and lies where its points are; other objects on the centre line (such as the
-                // dashed line under the curve) are containers that tell no side.
-                UnityEngine.Vector3 point = pair.Value.TryGetComponent(out GuideCurve curve) ? curve.Evaluate(0.5f) : pair.Value.transform.position;
-                float x = anchor.InverseTransformPoint(point).x;
-                if (UnityEngine.Mathf.Abs(x) < 0.01f)
-                {
-                    continue;
-                }
-                if (pair.Key.Contains("Left"))
-                {
-                    Assert.Greater(x, 0f, $"'{pair.Key}' should be on her left, the +X side.");
-                    left++;
-                }
-                else if (pair.Key.Contains("Right"))
-                {
-                    Assert.Less(x, 0f, $"'{pair.Key}' should be on her right, the -X side.");
-                    right++;
-                }
+                Assert.IsTrue(grabZone.ContainsPoint(movable.transform.TransformPoint(vertex)),
+                    "The pen should be able to grab every part of the mirror, including the handle.");
             }
-            Assert.Greater(left, 0, "The statue should have keys for her left arm.");
-            Assert.Greater(right, 0, "The statue should have keys for her right arm.");
+
+            Matrix4x4 heldPose = model.transform.worldToLocalMatrix * held.transform.localToWorldMatrix;
+            Matrix4x4 goalPose = statue.transform.parent.worldToLocalMatrix
+                * goal.transform.localToWorldMatrix * prop.transform.worldToLocalMatrix * movable.transform.localToWorldMatrix;
+            for (int column = 0; column < 4; column++)
+            {
+                Assert.Less(Vector4.Distance(heldPose.GetColumn(column), goalPose.GetColumn(column)), 0.001f);
+            }
         }
 
         [Test]
