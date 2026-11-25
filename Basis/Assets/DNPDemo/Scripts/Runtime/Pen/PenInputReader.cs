@@ -15,16 +15,19 @@ namespace DNPDemo.Pen
         public float StickY;
         /// <summary>The holding hand's laser is on a UI element, so a trigger press there is meant for the UI.</summary>
         public bool PointingAtUI;
+        /// <summary>The mode button is down: the lower face button of the holding hand (A on the right, X on the left).</summary>
+        public bool ModeButton;
     }
 
     /// <summary>
     /// The one place that reads the pen's controls from Basis. Grabbing is Basis's own pickup input; this reads what
     /// happens while the pen is held:
     /// <list type="bullet">
-    /// <item>VR: the trigger of the hand that holds the pen, and the right thumbstick up/down whichever hand holds it
-    /// (the left stick walks).</item>
-    /// <item>Desktop and editor: keys stand in for the controller (T trigger, N/M radius), because the mouse buttons
-    /// already grab and drop.</item>
+    /// <item>VR: the trigger and the lower face button (A/X) of the hand that holds the pen, and the right thumbstick
+    /// up/down whichever hand holds it (the left stick walks). The demo removes Basis's own actions on A and X
+    /// (<c>DemoInputPolicy</c>), so the face button is free for the pen.</item>
+    /// <item>Desktop and editor: keys stand in for the controller (T trigger, N/M stick, G mode button), because the
+    /// mouse buttons already grab and drop.</item>
     /// </list>
     /// </summary>
     public static class PenInputReader
@@ -38,6 +41,7 @@ namespace DNPDemo.Pen
             if (holder != null)
             {
                 frame.Trigger = holder.CurrentInputState.Trigger;
+                frame.ModeButton = holder.CurrentInputState.PrimaryButtonGetState;
                 frame.PointingAtUI = holder.HasRaycaster && holder.BasisUIRaycast != null
                     && holder.BasisUIRaycast.WasCorrectLayer && holder.BasisUIRaycast.HadRaycastUITarget;
             }
@@ -60,6 +64,7 @@ namespace DNPDemo.Pen
             }
             frame.Trigger = keyboard.tKey.isPressed ? 1f : 0f;
             frame.StickY = (keyboard.mKey.isPressed ? 1f : 0f) - (keyboard.nKey.isPressed ? 1f : 0f);
+            frame.ModeButton = keyboard.gKey.isPressed;
             return frame;
         }
     }

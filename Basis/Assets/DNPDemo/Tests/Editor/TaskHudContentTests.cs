@@ -72,7 +72,7 @@ namespace DNPDemo.Tests
             TaskHudContent wrongMode = TaskHudContent.Build(step, 1, isLocalActor: true, PenMode.Select);
             TaskHudContent rightMode = TaskHudContent.Build(step, 1, isLocalActor: true, PenMode.Manipulate);
 
-            Assert.AreEqual("メニューの「空間ペン」で「操作」を選んでください", wrongMode.ModeHint);
+            Assert.AreEqual("メニューの「空間ペン」で「物体移動」を選んでください", wrongMode.ModeHint);
             Assert.AreEqual(string.Empty, rightMode.ModeHint);
         }
 

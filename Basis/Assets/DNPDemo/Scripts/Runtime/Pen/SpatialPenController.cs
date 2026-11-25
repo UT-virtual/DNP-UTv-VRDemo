@@ -13,8 +13,10 @@ namespace DNPDemo.Pen
     /// <item>Grabbing and holding are Basis's pickup: grip near the pen with either hand, and it keeps the hand-to-pen
     /// offset; letting go leaves it floating there. This class only follows which hand holds it.</item>
     /// <item>While held: the holding hand's trigger counts as pressed (unless the press began on a menu or panel), and
-    /// in select mode the right thumbstick up/down changes the selection radius.</item>
-    /// <item>The mode comes from the main menu (<see cref="PenModeSelection"/>).</item>
+    /// the right thumbstick up/down extends and shortens the pen. In select mode it changes the selection radius and
+    /// the length follows the radius; in the other modes it sets the length directly.</item>
+    /// <item>The mode comes from the main menu or from the holding hand's mode button (A/X), which steps to the next
+    /// mode (<see cref="PenModeSelection"/>).</item>
     /// </list>
     /// <see cref="SpatialPenSync"/> hands it the pen of the local role with <see cref="Bind"/>.
     /// Tools read <see cref="IsTriggerHeld"/>, <see cref="TipPosition"/>, <see cref="Radius"/> and <see cref="Mode"/>,
@@ -29,12 +31,18 @@ namespace DNPDemo.Pen
         [Tooltip("Seconds of a full thumbstick push to go from the smallest to the largest selection radius.")]
         [SerializeField, Min(0.1f)] float _radiusFullRangeSeconds = 1.5f;
 
+        [Tooltip("Seconds of a full thumbstick push to go from the shortest to the longest pen, in the modes other than select.")]
+        [SerializeField, Min(0.1f)] float _extensionFullRangeSeconds = 1.5f;
+
         // Hands currently holding the pen, oldest first. Handing it over can briefly overlap two hands.
         readonly List<BasisInput> _holders = new();
         SpatialPenView _view;
         float _radius = PenGeometry.DefaultSelectRadius;
+        float _extension;
         bool _triggerDown;
         bool _triggerIgnoredUntilRelease;
+        // Starts true so a button already down when the pen is grabbed does not switch the mode.
+        bool _modeButtonWasDown = true;
 
         /// <summary>The pen this device operates, or null while the local player has no role.</summary>
         public SpatialPenView View => _view;
@@ -72,6 +80,7 @@ namespace DNPDemo.Pen
         {
             Mode = Mode,
             Radius = _radius,
+            Extension = _extension,
             IsHeld = IsHeld,
             IsTriggerHeld = IsTriggerHeld,
         };
@@ -121,12 +130,43 @@ namespace DNPDemo.Pen
                 return;
             }
             PenInputFrame input = PenInputReader.Read(Holder);
+            UpdateModeButton(input);
             UpdateTrigger(input);
-            if (IsHeld && Mode == PenMode.Select)
+            if (IsHeld)
             {
-                _radius = PenGeometry.AdjustRadius(_radius, input.StickY, Time.deltaTime, _radiusFullRangeSeconds);
+                UpdateLength(input.StickY);
             }
             ShowState();
+        }
+
+        void UpdateLength(float stickY)
+        {
+            if (Mode == PenMode.Select)
+            {
+                _radius = PenGeometry.AdjustRadius(_radius, stickY, Time.deltaTime, _radiusFullRangeSeconds);
+            }
+            else
+            {
+                _extension = PenGeometry.AdjustExtension(_extension, stickY, Time.deltaTime, _extensionFullRangeSeconds);
+            }
+        }
+
+        /// <summary>
+        /// A press of the mode button while the pen is held steps to the next mode. The button has to be released
+        /// after grabbing first, so a press that began before the grab does not count.
+        /// </summary>
+        void UpdateModeButton(PenInputFrame input)
+        {
+            if (!IsHeld)
+            {
+                _modeButtonWasDown = true;
+                return;
+            }
+            if (input.ModeButton && !_modeButtonWasDown)
+            {
+                PenModeSelection.SelectNext();
+            }
+            _modeButtonWasDown = input.ModeButton;
         }
 
         void HandleGrabbed(BasisInput input)
@@ -214,7 +254,7 @@ namespace DNPDemo.Pen
 
         void HandleModeChanged(PenMode mode)
         {
-            // Switching modes from the menu ends any press, so a tool never sees a press that spans two modes.
+            // Switching modes ends any press, so a tool never sees a press that spans two modes.
             SetTriggerDown(false);
             _triggerIgnoredUntilRelease = true;
             ShowState();
