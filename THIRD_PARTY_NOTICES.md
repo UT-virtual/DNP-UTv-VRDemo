@@ -77,7 +77,7 @@ This project includes third-party software under the following licenses:
   - 使用素材：システム35（音声入力の開始・終了で使用）
   - 利用規約: https://maou.audio/rule/（商用利用可、ゲームへの組み込み可、素材としての再配布は不可）
 
-アプリ内のクレジット画面にも、同じ内容を載せる予定です。
+アプリでは、起動直後の役割選択画面の下部に、音声（VOICEVOX のキャラクター名）と効果音（配布元）のクレジットを表示しています。文言は `Basis/Assets/DNPDemo/Scripts/Runtime/Lobby/DemoCredits.cs` にまとめていて、ここに載っていない名前を足すとテストが失敗します。
 
 `Audio/SE/` の音声ファイルはリポジトリに含めていません。各自が上記サイトから入手し、同フォルダに配置してください。ファイル名の対応と手順は [README.md の「効果音（SE）の配置」](README.md#効果音seの配置) にあります。
 
