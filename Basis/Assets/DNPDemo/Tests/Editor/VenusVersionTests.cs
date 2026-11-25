@@ -52,10 +52,7 @@ namespace DNPDemo.Tests
         VenusStatue CreateStatue()
         {
             GameObject go = Track(new GameObject(StatueKey));
-            var binding = go.AddComponent<ScenarioObjectBinding>();
-            var so = new SerializedObject(binding);
-            so.FindProperty("_key").stringValue = StatueKey;
-            so.ApplyModifiedPropertiesWithoutUndo();
+            TestBinding.Bind(go, StatueKey);
             return go.AddComponent<VenusStatue>();
         }
 
@@ -184,6 +181,31 @@ namespace DNPDemo.Tests
             Assert.IsNull(statue.Current);
             Assert.IsFalse(statue.GetModel(first).activeSelf);
             Assert.IsFalse(statue.GetModel(second).activeSelf);
+        }
+
+        [Test]
+        public void StageModelIsSpecificToTheMainStatueAndFallsBackToTheCompleteModel()
+        {
+            VenusVersion withProp = CreateVersion("with-prop");
+            VenusVersion regular = CreateVersion("regular");
+            GameObject stagePrefab = Track(new GameObject("DetachedPropModel"));
+            var versionSettings = new SerializedObject(withProp);
+            versionSettings.FindProperty("_stageModel").objectReferenceValue = stagePrefab;
+            versionSettings.ApplyModifiedPropertiesWithoutUndo();
+
+            VenusStatue main = CreateStatue();
+            var mainSettings = new SerializedObject(main);
+            mainSettings.FindProperty("_useStageModels").boolValue = true;
+            mainSettings.ApplyModifiedPropertiesWithoutUndo();
+            VenusStatue comparison = Track(new GameObject("Comparison")).AddComponent<VenusStatue>();
+
+            main.Show(withProp, animate: false);
+            comparison.Show(withProp, animate: false);
+            Assert.AreEqual(stagePrefab.name, main.GetModel(withProp).name);
+            Assert.AreEqual(withProp.Model.name, comparison.GetModel(withProp).name);
+
+            main.Show(regular, animate: false);
+            Assert.AreEqual(regular.Model.name, main.GetModel(regular).name);
         }
 
         [Test]

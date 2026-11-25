@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using DNPDemo.Editor;
 using DNPDemo.Environment;
 using DNPDemo.Scenario;
@@ -8,19 +9,25 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
 
 namespace DNPDemo.Tests
 {
     public class EnvironmentPresetTests
     {
+        /// <summary>The temple panorama is used as generated, 2912 x 1440 (2.022:1); the skybox maps any width to 360 degrees.</summary>
+        const float PanoramaAspectTolerance = 0.025f;
+
         Scene _scene;
         Scene _previousActiveScene;
         bool _sceneOpenedAdditively;
         EnvironmentPreset _exhibition;
         EnvironmentPreset _temple;
         Material _wallMaterial;
-        readonly System.Collections.Generic.List<EnvironmentFixture> _fixtures = new();
+        Material _fadeMaterial;
+        readonly List<EnvironmentFixture> _fixtures = new();
 
         [SetUp]
         public void SetUp()
@@ -56,6 +63,10 @@ namespace DNPDemo.Tests
             {
                 Object.DestroyImmediate(_wallMaterial);
             }
+            if (_fadeMaterial != null)
+            {
+                Object.DestroyImmediate(_fadeMaterial);
+            }
             if (_previousActiveScene.IsValid() && _previousActiveScene.isLoaded)
             {
                 SceneManager.SetActiveScene(_previousActiveScene);
@@ -69,17 +80,402 @@ namespace DNPDemo.Tests
             Assert.IsNotNull(_temple);
             Assert.IsNotNull(_exhibition.Panorama);
             Assert.IsNotNull(_temple.Panorama);
-            Assert.AreEqual(2f, (float)_exhibition.Panorama.width / _exhibition.Panorama.height, 0.01f);
-            Assert.AreEqual(2f, (float)_temple.Panorama.width / _temple.Panorama.height, 0.01f);
+            Assert.AreEqual(2f, (float)_exhibition.Panorama.width / _exhibition.Panorama.height, PanoramaAspectTolerance);
+            Assert.AreEqual(2f, (float)_temple.Panorama.width / _temple.Panorama.height, PanoramaAspectTolerance);
             Assert.IsTrue(_exhibition.ExhibitionRoomVisible);
             Assert.IsFalse(_temple.ExhibitionRoomVisible);
             Assert.Greater(_temple.DirectionalLight.Intensity, _exhibition.DirectionalLight.Intensity);
-            Assert.AreEqual(LightShadows.Soft, _temple.DirectionalLight.Shadows);
+            Assert.AreEqual(LightShadows.Hard, _temple.DirectionalLight.Shadows, "Quest's URP asset has no soft shadows.");
             Assert.Greater(_temple.DirectionalLight.ShadowStrength, 0f);
-            Assert.AreEqual(DefaultReflectionMode.Skybox, _temple.Reflection.Mode);
-            Assert.AreEqual(AmbientMode.Trilight, _temple.Ambient.Mode);
+            Assert.AreEqual(AmbientMode.Skybox, _temple.Ambient.Mode, "The temple is lit by its panorama.");
+            Assert.IsTrue(_temple.HasSkyboxAmbientProbe, "The temple's ambient light is baked from its panorama.");
+            Assert.AreEqual(AmbientMode.Trilight, _exhibition.Ambient.Mode);
             AssertPresetComplete(_exhibition);
             AssertPresetComplete(_temple);
+        }
+
+        [Test]
+        public void PresetsReflectCubemapsBakedFromTheirPanoramas()
+        {
+            foreach (EnvironmentPreset preset in new[] { _exhibition, _temple })
+            {
+                Cubemap cubemap = preset.Reflection.Cubemap;
+                Assert.IsNotNull(cubemap, preset.name);
+                string path = AssetDatabase.GetAssetPath(cubemap);
+                Assert.AreEqual(EnvironmentLightingBaker.ReflectionPath(preset), path, preset.name);
+                Assert.AreEqual(EnvironmentLightingBaker.FaceSize, cubemap.width, $"{preset.name}: the importer keeps the face size of the baked layout.");
+                Assert.Greater(cubemap.mipmapCount, 1, $"{preset.name}: rough surfaces sample the blurred mips.");
+                var settings = new TextureImporterSettings();
+                ((TextureImporter)AssetImporter.GetAtPath(path)).ReadTextureSettings(settings);
+                Assert.AreEqual(TextureImporterCubemapConvolution.Specular, settings.cubemapConvolution, preset.name);
+            }
+            Assert.AreNotSame(_exhibition.Reflection.Cubemap, _temple.Reflection.Cubemap);
+        }
+
+        /// <summary>
+        /// Renders the temple's sky and its baked reflection cubemap from the same views and compares their average colours.
+        /// A cubemap turned by a quarter turn differs by more than 0.2 in some view; filtering differences stay below 0.05.
+        /// </summary>
+        [Test]
+        public void BakedReflectionFacesTheSameWayAsTheSky()
+        {
+            const float Tolerance = 0.12f;
+            var sky = new Material(AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.CrossfadeShaderPath));
+            var cube = new Material(Shader.Find("Skybox/Cubemap"));
+            try
+            {
+                sky.SetTexture("_PanoramaA", _temple.Panorama);
+                sky.SetTexture("_PanoramaB", _temple.Panorama);
+                sky.SetFloat("_Blend", 0f);
+                sky.SetFloat("_ExposureA", _temple.Exposure);
+                sky.SetFloat("_ExposureB", _temple.Exposure);
+                sky.SetFloat("_RotationA", _temple.Rotation);
+                sky.SetFloat("_RotationB", _temple.Rotation);
+                cube.SetTexture("_Tex", _temple.Reflection.Cubemap);
+
+                foreach (Vector3 euler in new[]
+                         {
+                             new Vector3(0f, 0f, 0f), new Vector3(0f, 90f, 0f), new Vector3(0f, 180f, 0f), new Vector3(0f, 270f, 0f),
+                             new Vector3(-60f, 45f, 0f), new Vector3(60f, 135f, 0f), new Vector3(-89f, 0f, 0f), new Vector3(89f, 0f, 0f),
+                         })
+                {
+                    Quaternion view = Quaternion.Euler(euler);
+                    Color expected = RenderSkyAverage(sky, view);
+                    Color actual = RenderSkyAverage(cube, view);
+                    float difference = Mathf.Abs(expected.r - actual.r) + Mathf.Abs(expected.g - actual.g) + Mathf.Abs(expected.b - actual.b);
+                    Assert.Less(difference, Tolerance, $"view {euler}: sky {expected}, reflection {actual}");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(sky);
+                Object.DestroyImmediate(cube);
+            }
+        }
+
+        [Test]
+        public void BakedSkyboxAmbientMatchesUnitysSkyboxAmbient()
+        {
+            var sky = new Material(AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.CrossfadeShaderPath));
+            try
+            {
+                sky.SetTexture("_PanoramaA", _temple.Panorama);
+                sky.SetTexture("_PanoramaB", _temple.Panorama);
+                sky.SetFloat("_Blend", 0f);
+                sky.SetFloat("_ExposureA", _temple.Exposure);
+                sky.SetFloat("_ExposureB", _temple.Exposure);
+                sky.SetFloat("_RotationA", _temple.Rotation);
+                sky.SetFloat("_RotationB", _temple.Rotation);
+                RenderSettings.skybox = sky;
+                RenderSettings.ambientMode = AmbientMode.Skybox;
+                RenderSettings.ambientIntensity = 1f;
+                DynamicGI.UpdateEnvironment();
+
+                AssertProbesMatch(RenderSettings.ambientProbe, _temple.SkyboxAmbientProbe, 0.03f);
+            }
+            finally
+            {
+                RenderSettings.skybox = null;
+                Object.DestroyImmediate(sky);
+            }
+        }
+
+        [Test]
+        public void AmbientFadesBetweenTheGradientAndTheSky()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            fixture.Controller.ApplyInstant(_exhibition);
+            Assert.AreEqual(AmbientMode.Trilight, RenderSettings.ambientMode);
+            SphericalHarmonicsL2 exhibition = RenderSettings.ambientProbe;
+            SphericalHarmonicsL2 temple = _temple.SkyboxAmbientProbe;
+            for (int channel = 0; channel < 3; channel++)
+            {
+                for (int coefficient = 0; coefficient < 9; coefficient++)
+                {
+                    temple[channel, coefficient] *= _temple.Ambient.Intensity;
+                }
+            }
+
+            fixture.Controller.TransitionTo(_temple, 2f);
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.AreEqual(AmbientMode.Custom, RenderSettings.ambientMode, "The ambient light blends as spherical harmonics.");
+            Color halfway = EvaluateUp(RenderSettings.ambientProbe);
+            Color expected = Color.Lerp(EvaluateUp(exhibition), EvaluateUp(temple), 0.5f);
+            Assert.AreEqual(expected.b, halfway.b, 0.005f, "Halfway shows the average of the gradient and the sky.");
+
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.AreEqual(AmbientMode.Custom, RenderSettings.ambientMode, "The Skybox source is the probe baked from the panorama.");
+            AssertProbesMatch(temple, RenderSettings.ambientProbe, 0.001f);
+
+            fixture.Controller.TransitionTo(_exhibition, 2f);
+            fixture.Controller.AdvanceTransition(0.5f);
+            SphericalHarmonicsL2 onScreen = RenderSettings.ambientProbe;
+            fixture.Controller.TransitionTo(_temple, 2f);
+            fixture.Controller.AdvanceTransition(0f);
+            AssertProbesMatch(onScreen, RenderSettings.ambientProbe, 0.001f, "A retarget begins from the ambient light on screen.");
+
+            fixture.Controller.TransitionTo(_exhibition, 2f);
+            fixture.Controller.AdvanceTransition(2f);
+            Assert.AreEqual(AmbientMode.Trilight, RenderSettings.ambientMode, "The gradient's own mode takes over at the end.");
+            AssertProbesMatch(exhibition, RenderSettings.ambientProbe, 0.001f, "Handing over to the gradient does not jump.");
+        }
+
+        static readonly Vector3[] ProbeDirections =
+        {
+            Vector3.up, Vector3.down, Vector3.forward, Vector3.back, Vector3.right, Vector3.left,
+            new Vector3(1f, 1f, 1f).normalized, new Vector3(-1f, -1f, 1f).normalized,
+        };
+
+        static void AssertProbesMatch(SphericalHarmonicsL2 expected, SphericalHarmonicsL2 actual, float tolerance, string message = "")
+        {
+            var expectedColors = new Color[ProbeDirections.Length];
+            var actualColors = new Color[ProbeDirections.Length];
+            expected.Evaluate(ProbeDirections, expectedColors);
+            actual.Evaluate(ProbeDirections, actualColors);
+            for (int i = 0; i < ProbeDirections.Length; i++)
+            {
+                string context = $"{message} direction {ProbeDirections[i]}: expected {expectedColors[i]}, was {actualColors[i]}";
+                Assert.AreEqual(expectedColors[i].r, actualColors[i].r, tolerance, context);
+                Assert.AreEqual(expectedColors[i].g, actualColors[i].g, tolerance, context);
+                Assert.AreEqual(expectedColors[i].b, actualColors[i].b, tolerance, context);
+            }
+        }
+
+        static Color EvaluateUp(SphericalHarmonicsL2 probe)
+        {
+            var colors = new Color[1];
+            probe.Evaluate(new[] { Vector3.up }, colors);
+            return colors[0];
+        }
+
+        static Color RenderSkyAverage(Material skybox, Quaternion view)
+        {
+            var preview = new PreviewRenderUtility();
+            try
+            {
+                Camera camera = preview.camera;
+                camera.clearFlags = CameraClearFlags.Skybox;
+                camera.fieldOfView = 30f;
+                camera.transform.SetPositionAndRotation(Vector3.zero, view);
+                camera.gameObject.AddComponent<Skybox>().material = skybox;
+                preview.BeginStaticPreview(new Rect(0f, 0f, 32f, 32f));
+                camera.Render();
+                Texture2D image = preview.EndStaticPreview();
+                Color[] pixels = image.GetPixels();
+                Object.DestroyImmediate(image);
+                Color sum = Color.clear;
+                foreach (Color pixel in pixels)
+                {
+                    sum += pixel;
+                }
+                return sum / pixels.Length;
+            }
+            finally
+            {
+                preview.Cleanup();
+            }
+        }
+
+        static float Frac(float value) => value - Mathf.Floor(value);
+
+        [Test]
+        public void ExhibitionRoomPrefabFadesEveryRendererWithPreparedTransparentMaterials()
+        {
+            var room = AssetDatabase.LoadAssetAtPath<GameObject>(EnvironmentPresetBuilder.ExhibitionRoomPrefabPath);
+            Assert.IsNotNull(room, EnvironmentPresetBuilder.ExhibitionRoomPrefabPath);
+            var group = room.GetComponent<EnvironmentFadeGroup>();
+            Assert.IsNotNull(group, "Env_ExhibitionRoom needs an EnvironmentFadeGroup. Run DNP Demo/Setup/Build Environment Presets.");
+
+            Renderer[] renderers = room.GetComponentsInChildren<Renderer>(true);
+            var listed = new HashSet<Renderer>();
+            for (int i = 0; i < group.EntryCount; i++)
+            {
+                EnvironmentFadeGroup.Entry entry = group.GetEntry(i);
+                Assert.IsNotNull(entry.Renderer, $"entry {i}");
+                listed.Add(entry.Renderer);
+                Material[] originals = entry.Renderer.sharedMaterials;
+                Assert.AreEqual(originals.Length, entry.FadeMaterials.Length, entry.Renderer.name);
+                for (int slot = 0; slot < originals.Length; slot++)
+                {
+                    Material original = originals[slot];
+                    Material fade = entry.FadeMaterials[slot];
+                    if (original == null)
+                    {
+                        Assert.IsNull(fade);
+                        continue;
+                    }
+                    string context = $"{entry.Renderer.name}[{slot}] {original.name}";
+                    Assert.IsNotNull(fade, context);
+                    StringAssert.StartsWith(EnvironmentPresetBuilder.ExhibitionRoomFadeMaterialFolder + "/", AssetDatabase.GetAssetPath(fade),
+                        $"{context}: the fade material must be an asset so its shader variant is built.");
+                    Assert.AreSame(original.shader, fade.shader, context);
+                    Assert.AreEqual(1f, fade.GetFloat("_Surface"), context);
+                    Assert.IsTrue(fade.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT"), context);
+                    Assert.AreEqual((int)RenderQueue.Transparent, fade.renderQueue, context);
+                    Assert.AreEqual(0f, fade.GetFloat("_BlendModePreserveSpecular"), $"{context}: highlights must fade with the wall.");
+                    Assert.IsFalse(fade.IsKeywordEnabled("_ALPHAPREMULTIPLY_ON"), context);
+                    Assert.AreEqual((float)BlendMode.SrcAlpha, fade.GetFloat("_SrcBlend"), context);
+                    Assert.AreEqual(original.GetColor("_BaseColor"), fade.GetColor("_BaseColor"), context);
+                    Assert.AreSame(original.GetTexture("_BaseMap"), fade.GetTexture("_BaseMap"), context);
+                }
+            }
+            CollectionAssert.AreEquivalent(renderers, listed, "Every renderer of the room fades with it.");
+        }
+
+        [Test]
+        public void TemplePresetUsesThePanoramaJpegAndOverridesShadowQuality()
+        {
+            Assert.AreEqual(EnvironmentPresetBuilder.TemplePanoramaPath, AssetDatabase.GetAssetPath(_temple.Panorama));
+            StringAssert.EndsWith("/Environment_Temple_Panorama.jpg", EnvironmentPresetBuilder.TemplePanoramaPath);
+            Assert.AreEqual(2f, (float)_temple.Panorama.width / _temple.Panorama.height, PanoramaAspectTolerance,
+                "The temple panorama is an equirectangular image.");
+
+            ShadowQualitySettings temple = _temple.ShadowQuality;
+            Assert.IsTrue(temple.Override);
+            Assert.GreaterOrEqual(temple.MainLightShadowmapResolution, 1024);
+            Assert.Greater(temple.ShadowDistance, 0f);
+            Assert.That(temple.CascadeCount, Is.InRange(1, 4));
+            Assert.IsFalse(_exhibition.ShadowQuality.Override, "The exhibition keeps Basis' shadow quality.");
+        }
+
+        [Test]
+        public void SkyShaderHasASinglePassAndTheSnapshotIsSeparate()
+        {
+            // Unity draws every pass of the skybox material, so any extra pass would be drawn over the sky.
+            Shader sky = AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.CrossfadeShaderPath);
+            Shader snapshot = AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.SnapshotShaderPath);
+            Assert.IsNotNull(sky);
+            Assert.IsNotNull(snapshot);
+            Assert.AreEqual(1, sky.passCount);
+            Assert.AreEqual(1, snapshot.passCount);
+            Assert.IsTrue(sky.isSupported && snapshot.isSupported);
+        }
+
+        [Test]
+        public void PanoramaUvAndDirectionMappingsAreInverses()
+        {
+            for (int i = 0; i <= 16; i++)
+            {
+                for (int j = 1; j < 16; j++)
+                {
+                    var uv = new Vector2(i / 16f, j / 16f);
+                    Vector3 direction = PanoramaMapping.DirectionFromUv(uv);
+                    Assert.AreEqual(1f, direction.magnitude, 1e-5f);
+                    Vector2 back = PanoramaMapping.UvFromDirection(direction, 0f);
+                    float du = Mathf.Abs(back.x - uv.x);
+                    Assert.Less(Mathf.Min(du, 1f - du), 1e-4f, $"u at {uv}");
+                    Assert.AreEqual(uv.y, back.y, 1e-4f, $"v at {uv}");
+                }
+            }
+
+            // The image centre is +Z and the horizon; u grows towards +X; the top row is the zenith.
+            AssertDirection(new Vector3(0f, 0f, 1f), PanoramaMapping.DirectionFromUv(new Vector2(0.5f, 0.5f)));
+            AssertDirection(new Vector3(1f, 0f, 0f), PanoramaMapping.DirectionFromUv(new Vector2(0.75f, 0.5f)));
+            AssertDirection(Vector3.up, PanoramaMapping.DirectionFromUv(new Vector2(0.5f, 1f)));
+            // A positive rotation moves a direction to a larger u.
+            Assert.AreEqual(0.75f, PanoramaMapping.UvFromDirection(Vector3.forward, 90f).x, 1e-4f);
+        }
+
+        static void AssertDirection(Vector3 expected, Vector3 actual) =>
+            Assert.Less(Vector3.Distance(expected, actual), 1e-4f, $"expected {expected}, was {actual}");
+
+        /// <summary>C# copy of EnvironmentPanorama.cginc's mappings between a direction and equirectangular UV.</summary>
+        static class PanoramaMapping
+        {
+            public static Vector2 UvFromDirection(Vector3 direction, float rotation)
+            {
+                direction.Normalize();
+                float longitude = Mathf.Atan2(direction.x, direction.z) / (2f * Mathf.PI) + rotation / 360f;
+                float latitude = Mathf.Asin(Mathf.Clamp(direction.y, -1f, 1f)) / Mathf.PI + 0.5f;
+                return new Vector2(Frac(longitude + 0.5f), latitude);
+            }
+
+            public static Vector3 DirectionFromUv(Vector2 uv)
+            {
+                float longitude = (uv.x - 0.5f) * 2f * Mathf.PI;
+                float latitude = (uv.y - 0.5f) * Mathf.PI;
+                float latitudeCos = Mathf.Cos(latitude);
+                return new Vector3(Mathf.Sin(longitude) * latitudeCos, Mathf.Sin(latitude), Mathf.Cos(longitude) * latitudeCos);
+            }
+        }
+
+        [Test]
+        public void ShadowQualityOverrideSwitchesHalfwayAndResetRestoresBasisValues()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            Values basis = Values.Read(fixture.Urp);
+
+            fixture.Controller.TransitionTo(_temple, 2f);
+            fixture.Controller.AdvanceTransition(0.4f);
+            Assert.AreEqual(basis, Values.Read(fixture.Urp), "The shadow quality switches with the other discrete values at t = 0.5.");
+            fixture.Controller.AdvanceTransition(0.8f);
+            Assert.AreEqual(Values.From(_temple.ShadowQuality), Values.Read(fixture.Urp));
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.AreEqual(Values.From(_temple.ShadowQuality), Values.Read(fixture.Urp));
+
+            fixture.Stage.ResetToBaseline();
+            Assert.AreEqual(basis, Values.Read(fixture.Urp));
+
+            fixture.Controller.ApplyInstant(_temple);
+            Assert.AreEqual(Values.From(_temple.ShadowQuality), Values.Read(fixture.Urp));
+            fixture.Controller.ApplyInstant(_exhibition);
+            Assert.AreEqual(basis, Values.Read(fixture.Urp));
+        }
+
+        [Test]
+        public void ShadowQualityOverrideSurvivesBasisRewritingTheAsset()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            fixture.Controller.ApplyInstant(_temple);
+
+            var basisTier = new Values { Resolution = 4096, Distance = 150f, Cascades = 4 };
+            basisTier.Write(fixture.Urp);
+            fixture.Controller.MaintainShadowQuality();
+            Assert.AreEqual(Values.From(_temple.ShadowQuality), Values.Read(fixture.Urp));
+
+            fixture.Controller.MaintainShadowQuality();
+            Assert.AreEqual(Values.From(_temple.ShadowQuality), Values.Read(fixture.Urp));
+
+            fixture.Stage.ResetToBaseline();
+            Assert.AreEqual(basisTier, Values.Read(fixture.Urp), "The tier Basis chose last is the one to return to.");
+        }
+
+        [Test]
+        public void SuspendedShadowQualityOverrideRestoresTheAssetAndResumes()
+        {
+            UniversalRenderPipelineAsset first = CreateUrpAsset();
+            UniversalRenderPipelineAsset second = CreateUrpAsset();
+            try
+            {
+                UniversalRenderPipelineAsset active = first;
+                var shadowQuality = new ShadowQualityOverride(() => active);
+                Values basis = Values.Read(first);
+                Values temple = Values.From(_temple.ShadowQuality);
+
+                shadowQuality.Request(_temple.ShadowQuality);
+                Assert.AreEqual(temple, Values.Read(first));
+
+                shadowQuality.Suspend();
+                Assert.AreEqual(basis, Values.Read(first), "Disabling the controller must leave the project asset as it was.");
+                shadowQuality.Maintain();
+                Assert.AreEqual(basis, Values.Read(first), "A suspended override stays off.");
+
+                shadowQuality.Resume();
+                Assert.AreEqual(temple, Values.Read(first));
+
+                active = second;
+                shadowQuality.Maintain();
+                Assert.AreEqual(basis, Values.Read(first), "A quality level switch returns the old asset to its values.");
+                Assert.AreEqual(temple, Values.Read(second));
+
+                shadowQuality.Request(_exhibition.ShadowQuality);
+                Assert.AreEqual(basis, Values.Read(second));
+            }
+            finally
+            {
+                Object.DestroyImmediate(first);
+                Object.DestroyImmediate(second);
+            }
         }
 
         [Test]
@@ -95,7 +491,7 @@ namespace DNPDemo.Tests
             Assert.AreEqual(_temple.DirectionalLight.Intensity, fixture.Directional.intensity);
             Assert.IsFalse(fixture.Spot.gameObject.activeSelf);
             Assert.AreSame(_temple.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
-            Assert.AreEqual(0f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.001f);
+            Assert.IsFalse(fixture.WallRenderer.enabled, "A hidden room is not drawn, so it casts no shadows.");
             Assert.IsTrue(fixture.WallCollider.enabled, "Fading the display must not disable the navigation collider.");
 
             fixture.Stage.ResetToBaseline();
@@ -103,7 +499,55 @@ namespace DNPDemo.Tests
             Assert.AreEqual(_exhibition.DirectionalLight.Intensity, fixture.Directional.intensity);
             Assert.IsFalse(fixture.Spot.gameObject.activeSelf, "The exhibition keeps the spot light as the temple left it.");
             Assert.AreSame(_exhibition.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
-            Assert.AreEqual(1f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.001f);
+            AssertWallOpaque(fixture);
+        }
+
+        [Test]
+        public void ApplyingTheBaselineKeepsTheRoomOnItsOpaqueMaterials()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+
+            // Entering a step after connecting resets the stage, which is what first initializes the controller.
+            fixture.Stage.ResetToBaseline();
+
+            AssertWallOpaque(fixture);
+        }
+
+        [Test]
+        public void SwitchingEnvironmentsLogsNoWarnings()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            fixture.Controller.ApplyInstant(_exhibition);
+            var logged = new List<string>();
+            void Collect(string message, string stackTrace, LogType type)
+            {
+                if (type != LogType.Log)
+                {
+                    logged.Add($"{type}: {message}");
+                }
+            }
+
+            Application.logMessageReceived += Collect;
+            try
+            {
+                // Every frame of a transition applies the lights, so a setter that only the Built-In pipeline supports
+                // (Light.shadowResolution) would warn once per light per frame.
+                fixture.Controller.TransitionTo(_temple, 2f);
+                for (int frame = 0; frame < 20; frame++)
+                {
+                    fixture.Controller.AdvanceTransition(0.1f);
+                }
+                fixture.Controller.ApplyInstant(_exhibition);
+                fixture.Controller.ApplyInstant(_temple);
+                fixture.Stage.ResetToBaseline();
+            }
+            finally
+            {
+                Application.logMessageReceived -= Collect;
+            }
+
+            Assert.IsEmpty(logged, string.Join("\n", logged));
+            LogAssert.NoUnexpectedReceived();
         }
 
         [Test]
@@ -120,7 +564,16 @@ namespace DNPDemo.Tests
             float halfwayIntensity = fixture.Directional.intensity;
             Assert.Greater(halfwayIntensity, _exhibition.DirectionalLight.Intensity);
             Assert.Less(halfwayIntensity, _temple.DirectionalLight.Intensity);
-            Assert.AreEqual(0.5f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.02f);
+            Material fading = fixture.WallRenderer.sharedMaterial;
+            Assert.AreNotSame(_wallMaterial, fading);
+            Assert.AreNotSame(_fadeMaterial, fading, "The room fades with a runtime copy, so the fade asset is not modified.");
+            Assert.IsTrue(fading.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT"), "The copy keeps the asset's keywords, so it uses the built variant.");
+            Assert.AreEqual((int)RenderQueue.Transparent, fading.renderQueue);
+            Assert.AreEqual(1f, fading.GetFloat("_ZWrite"), "The fading room keeps writing depth so its faces occlude each other.");
+            Assert.AreEqual(0.5f, fading.GetColor("_BaseColor").a, 0.02f);
+            Assert.AreEqual(1f, _fadeMaterial.GetColor("_BaseColor").a, "The fade asset is not modified.");
+            Assert.AreEqual(ShadowCastingMode.Off, fixture.WallRenderer.shadowCastingMode, "A fading room casts no shadows.");
+            Assert.IsTrue(fixture.WallRenderer.enabled);
 
             Texture currentSky = RenderSettings.skybox.GetTexture("_PanoramaA");
             fixture.Controller.TransitionTo(_exhibition, 2f);
@@ -134,7 +587,7 @@ namespace DNPDemo.Tests
             Assert.IsFalse(fixture.Controller.IsTransitioning);
             Assert.AreEqual(_exhibition.DirectionalLight.Intensity, fixture.Directional.intensity);
             Assert.AreSame(_exhibition.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
-            Assert.AreEqual(1f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.001f);
+            AssertWallOpaque(fixture);
 
             fixture.Controller.TransitionTo(_temple, 2f);
             fixture.Controller.AdvanceTransition(0.5f);
@@ -142,6 +595,31 @@ namespace DNPDemo.Tests
             Assert.IsFalse(fixture.Controller.IsTransitioning);
             Assert.AreEqual(_temple.DirectionalLight.Intensity, fixture.Directional.intensity);
             Assert.AreSame(_temple.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
+        }
+
+        [Test]
+        public void ReflectionDimsToZeroAndSwitchesCubemapsHalfway()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            fixture.Controller.ApplyInstant(_exhibition);
+            Assert.AreEqual(DefaultReflectionMode.Custom, RenderSettings.defaultReflectionMode);
+            Assert.AreSame(_exhibition.Reflection.Cubemap, RenderSettings.customReflectionTexture);
+            Assert.AreEqual(_exhibition.Reflection.Intensity, RenderSettings.reflectionIntensity, 1e-4f);
+
+            fixture.Controller.TransitionTo(_temple, 2f);
+            fixture.Controller.AdvanceTransition(0.5f);
+            Assert.AreSame(_exhibition.Reflection.Cubemap, RenderSettings.customReflectionTexture);
+            Assert.Less(RenderSettings.reflectionIntensity, _exhibition.Reflection.Intensity, "The outgoing reflection dims first.");
+            Assert.Greater(RenderSettings.reflectionIntensity, 0f);
+
+            fixture.Controller.AdvanceTransition(0.5f);
+            Assert.AreSame(_temple.Reflection.Cubemap, RenderSettings.customReflectionTexture, "The cubemap switches at the midpoint.");
+            Assert.AreEqual(0f, RenderSettings.reflectionIntensity, 1e-4f, "The switch happens while the reflection is dark.");
+
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.IsFalse(fixture.Controller.IsTransitioning);
+            Assert.AreSame(_temple.Reflection.Cubemap, RenderSettings.customReflectionTexture);
+            Assert.AreEqual(_temple.Reflection.Intensity, RenderSettings.reflectionIntensity, 1e-4f);
         }
 
         [Test]
@@ -213,30 +691,81 @@ namespace DNPDemo.Tests
 
             var room = fixture.Track(new GameObject("ExhibitionRoom"));
             fixture.Room = room;
-            SetBindingKey(room.AddComponent<ScenarioObjectBinding>(), "ExhibitionRoom");
+            TestBinding.Bind(room, "ExhibitionRoom");
             fixture.WallCollider = room.AddComponent<BoxCollider>();
             var wall = new GameObject("WallDisplay");
             wall.transform.SetParent(room.transform, false);
-            var renderer = wall.AddComponent<MeshRenderer>();
-            renderer.sharedMaterial = _wallMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            fixture.WallRenderer = wall.AddComponent<MeshRenderer>();
+            fixture.WallRenderer.sharedMaterial = _wallMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            fixture.WallRenderer.shadowCastingMode = ShadowCastingMode.On;
+            _fadeMaterial = new Material(_wallMaterial);
+            EnvironmentPresetBuilder.ConfigureFadeMaterial(_fadeMaterial);
+            room.AddComponent<EnvironmentFadeGroup>().SetEntries(new[]
+            {
+                new EnvironmentFadeGroup.Entry { Renderer = fixture.WallRenderer, FadeMaterials = new[] { _fadeMaterial } },
+            });
 
             var environment = fixture.Track(new GameObject("Environment"));
-            SetBindingKey(environment.AddComponent<ScenarioObjectBinding>(), "Environment");
+            TestBinding.Bind(environment, "Environment");
             fixture.Controller = environment.AddComponent<EnvironmentController>();
             var serialized = new SerializedObject(fixture.Controller);
             serialized.FindProperty("_baselinePreset").objectReferenceValue = _exhibition;
             serialized.FindProperty("_directionalLight").objectReferenceValue = fixture.Directional;
             serialized.FindProperty("_spotLight").objectReferenceValue = fixture.Spot;
-            serialized.FindProperty("_crossfadeShader").objectReferenceValue = Shader.Find("DNPDemo/Environment Crossfade Panorama");
+            serialized.FindProperty("_crossfadeShader").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.CrossfadeShaderPath);
+            serialized.FindProperty("_snapshotShader").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.SnapshotShaderPath);
             serialized.ApplyModifiedPropertiesWithoutUndo();
+            // The shadow override writes to the URP asset; keep the project's asset out of the tests.
+            fixture.Urp = fixture.Track(CreateUrpAsset());
+            fixture.Controller.SetShadowQualityAssetProvider(() => fixture.Urp);
             return fixture;
         }
 
-        static void SetBindingKey(ScenarioObjectBinding binding, string key)
+        /// <summary>An in-memory URP asset holding a tier that differs from the temple's override in every field.</summary>
+        static UniversalRenderPipelineAsset CreateUrpAsset()
         {
-            var serialized = new SerializedObject(binding);
-            serialized.FindProperty("_key").stringValue = key;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var asset = ScriptableObject.CreateInstance<UniversalRenderPipelineAsset>();
+            asset.hideFlags = HideFlags.DontSave;
+            new Values { Resolution = 512, Distance = 50f, Cascades = 2 }.Write(asset);
+            return asset;
+        }
+
+        struct Values
+        {
+            public int Resolution;
+            public float Distance;
+            public int Cascades;
+
+            public static Values Read(UniversalRenderPipelineAsset asset) => new()
+            {
+                Resolution = asset.mainLightShadowmapResolution,
+                Distance = asset.shadowDistance,
+                Cascades = asset.shadowCascadeCount,
+            };
+
+            public static Values From(ShadowQualitySettings settings) => new()
+            {
+                Resolution = settings.MainLightShadowmapResolution,
+                Distance = settings.ShadowDistance,
+                Cascades = settings.CascadeCount,
+            };
+
+            public void Write(UniversalRenderPipelineAsset asset)
+            {
+                asset.mainLightShadowmapResolution = Resolution;
+                asset.shadowDistance = Distance;
+                asset.shadowCascadeCount = Cascades;
+            }
+
+            public override string ToString() => $"{Resolution}px, {Distance}m, {Cascades} cascade(s)";
+        }
+
+        void AssertWallOpaque(EnvironmentFixture fixture)
+        {
+            Assert.AreSame(_wallMaterial, fixture.WallRenderer.sharedMaterial, "A fully visible room is drawn with its own opaque material.");
+            Assert.IsTrue(fixture.WallRenderer.enabled);
+            Assert.AreEqual(ShadowCastingMode.On, fixture.WallRenderer.shadowCastingMode, "A fully visible room casts shadows as authored.");
+            Assert.AreEqual(0f, _wallMaterial.GetFloat("_Surface"), "The shared wall material must stay opaque.");
         }
 
         static void AssertPresetComplete(EnvironmentPreset preset)
@@ -255,6 +784,7 @@ namespace DNPDemo.Tests
         {
             EnvironmentPreset preset = fixture.Track(ScriptableObject.CreateInstance<EnvironmentPreset>());
             preset.Configure(
+                source.DisplayName,
                 source.Panorama,
                 source.Exposure,
                 rotation,
@@ -262,31 +792,29 @@ namespace DNPDemo.Tests
                 source.DirectionalLight,
                 spot,
                 source.Ambient,
-                source.Reflection);
+                source.Reflection,
+                source.ShadowQuality);
+            preset.SetSkyboxAmbientProbe(source.SkyboxAmbientProbe);
             return preset;
         }
 
         sealed class EnvironmentFixture
         {
-            readonly System.Collections.Generic.List<Object> _objects = new();
+            readonly List<Object> _objects = new();
 
             public ScenarioStage Stage;
             public EnvironmentController Controller;
             public Light Directional;
             public Light Spot;
             public BoxCollider WallCollider;
+            public Renderer WallRenderer;
             public GameObject Room;
+            public UniversalRenderPipelineAsset Urp;
 
             public T Track<T>(T target) where T : Object
             {
                 _objects.Add(target);
                 return target;
-            }
-
-            public Material WallMaterial()
-            {
-                Renderer renderer = Room.GetComponentInChildren<Renderer>(true);
-                return renderer.sharedMaterial;
             }
 
             public void Dispose()

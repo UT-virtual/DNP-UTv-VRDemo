@@ -11,12 +11,19 @@ namespace DNPDemo.Editor
     /// Android がダウングレードとしてインストールを拒否する。versionCode が同じなら上書きインストールできるので、
     /// 固定値にしておけば常にインストールできる。Basis の処理の後に実行し、値を固定値に戻す。
     /// ストアなどを通して、インストール済みのアプリを置き換える必要が出たら <see cref="AndroidVersionCode"/> を上げる。
+    /// リリースビルド（<see cref="DemoReleaseBuild"/>）では、どのビルドが入っているか端末上で確かめられるよう、
+    /// versionName をビルドの日時とコミットに置き換える。
     /// </summary>
     public class DemoBuildVersionPolicy : IPreprocessBuildWithReport
     {
-        // 固定する前にヘッドセットへ入ったことのある最大の versionCode（223）より大きい値。
-        public const int AndroidVersionCode = 224;
+        // これまでヘッドセットに入れたことのある versionCode（最大 224）より大きい値。
+        public const int AndroidVersionCode = 300;
         public const string BundleVersion = "2.0.1";
+
+        /// <summary>
+        /// リリースビルドの間だけ設定する versionName。null のときは <see cref="BundleVersion"/> を使う。
+        /// </summary>
+        public static string ReleaseVersionName { get; set; }
 
         // Basis のビルド前処理は 0。これより大きい値にすると、その後に実行される。
         public int callbackOrder => 100;
@@ -24,6 +31,10 @@ namespace DNPDemo.Editor
         public void OnPreprocessBuild(BuildReport report)
         {
             Apply();
+            if (ReleaseVersionName != null)
+            {
+                PlayerSettings.bundleVersion = ReleaseVersionName;
+            }
         }
 
         public static void Apply()

@@ -22,7 +22,6 @@ namespace DNPDemo.Environment
         public float Intensity;
         public Vector3 Rotation;
         public LightShadows Shadows;
-        public LightShadowResolution ShadowResolution;
         public float ShadowStrength;
         public float ShadowBias;
         public float ShadowNormalBias;
@@ -40,13 +39,17 @@ namespace DNPDemo.Environment
         public float SpotAngle;
         public float InnerSpotAngle;
         public LightShadows Shadows;
-        public LightShadowResolution ShadowResolution;
         public float ShadowStrength;
         public float ShadowBias;
         public float ShadowNormalBias;
         public float ShadowNearPlane;
     }
 
+    /// <summary>
+    /// Ambient light. Trilight and Flat use the colours, as Unity does. Skybox uses the spherical harmonics baked from the
+    /// preset's panorama (DNP Demo/Setup/Bake Environment Lighting) scaled by the intensity, so it needs no capture at
+    /// runtime. As in Unity, the intensity only scales Skybox.
+    /// </summary>
     [Serializable]
     public struct AmbientSettings
     {
@@ -59,20 +62,34 @@ namespace DNPDemo.Environment
     }
 
     /// <summary>
-    /// Environment reflection applied at runtime. Resolution and bounces are only read when lighting is baked, so they are
-    /// left to the scene's Lighting settings.
+    /// Environment reflection, applied as the scene's custom reflection. The cubemap is baked from the preset's panorama in
+    /// the Editor (DNP Demo/Setup/Bake Environment Lighting), so switching presets needs no capture at runtime.
     /// </summary>
     [Serializable]
     public struct ReflectionSettings
     {
-        public DefaultReflectionMode Mode;
-        public Texture CustomReflectionTexture;
+        public Cubemap Cubemap;
         public float Intensity;
+    }
+
+    /// <summary>
+    /// Main light shadow quality written to the active URP asset while the preset is shown. Override off leaves the values
+    /// that Basis' shadow quality setting chose; Override on replaces them until a preset without it is applied.
+    /// </summary>
+    [Serializable]
+    public struct ShadowQualitySettings
+    {
+        public bool Override;
+        public int MainLightShadowmapResolution;
+        public float ShadowDistance;
+        [Range(1, 4)] public int CascadeCount;
     }
 
     [CreateAssetMenu(menuName = "DNP Demo/Environment Preset", fileName = "EnvironmentPreset")]
     public sealed class EnvironmentPreset : ScriptableObject
     {
+        [Tooltip("Name shown to players, such as on the background panel.")]
+        [SerializeField] string _displayName;
         [SerializeField] Texture2D _panorama;
         [SerializeField] float _exposure;
         [SerializeField] float _rotation;
@@ -81,7 +98,14 @@ namespace DNPDemo.Environment
         [SerializeField] SpotLightSettings _spotLight;
         [SerializeField] AmbientSettings _ambient;
         [SerializeField] ReflectionSettings _reflection;
+        [SerializeField] ShadowQualitySettings _shadowQuality;
+        /// <summary>Spherical harmonics baked from the panorama for the Skybox ambient source: 9 coefficients per RGB channel.</summary>
+        [SerializeField, HideInInspector] float[] _skyboxAmbientProbe = Array.Empty<float>();
 
+        const int ProbeCoefficients = 9;
+
+        /// <summary>Name shown to players. Falls back to the asset name when it is not set.</summary>
+        public string DisplayName => string.IsNullOrWhiteSpace(_displayName) ? name : _displayName;
         public Texture2D Panorama => _panorama;
         public float Exposure => _exposure;
         public float Rotation => _rotation;
@@ -90,8 +114,35 @@ namespace DNPDemo.Environment
         public SpotLightSettings SpotLight => _spotLight;
         public AmbientSettings Ambient => _ambient;
         public ReflectionSettings Reflection => _reflection;
+        public ShadowQualitySettings ShadowQuality => _shadowQuality;
+
+        public bool HasSkyboxAmbientProbe => _skyboxAmbientProbe != null && _skyboxAmbientProbe.Length == 3 * ProbeCoefficients;
+
+        /// <summary>The ambient light of the panorama at intensity 1, for the Skybox ambient source.</summary>
+        public SphericalHarmonicsL2 SkyboxAmbientProbe
+        {
+            get
+            {
+                var probe = new SphericalHarmonicsL2();
+                if (!HasSkyboxAmbientProbe)
+                {
+                    return probe;
+                }
+                for (int channel = 0; channel < 3; channel++)
+                {
+                    for (int coefficient = 0; coefficient < ProbeCoefficients; coefficient++)
+                    {
+                        probe[channel, coefficient] = _skyboxAmbientProbe[channel * ProbeCoefficients + coefficient];
+                    }
+                }
+                return probe;
+            }
+        }
+
+        public override string ToString() => DisplayName;
 
         internal void Configure(
+            string displayName,
             Texture2D panorama,
             float exposure,
             float rotation,
@@ -99,8 +150,10 @@ namespace DNPDemo.Environment
             DirectionalLightSettings directionalLight,
             SpotLightSettings spotLight,
             AmbientSettings ambient,
-            ReflectionSettings reflection)
+            ReflectionSettings reflection,
+            ShadowQualitySettings shadowQuality)
         {
+            _displayName = displayName;
             _panorama = panorama;
             _exposure = exposure;
             _rotation = rotation;
@@ -109,6 +162,23 @@ namespace DNPDemo.Environment
             _spotLight = spotLight;
             _ambient = ambient;
             _reflection = reflection;
+            _shadowQuality = shadowQuality;
+        }
+
+        /// <summary>Assigns the cubemap baked from the panorama, keeping the rest of the preset as authored.</summary>
+        internal void SetReflectionCubemap(Cubemap cubemap) => _reflection.Cubemap = cubemap;
+
+        /// <summary>Stores the spherical harmonics baked from the panorama, keeping the rest of the preset as authored.</summary>
+        internal void SetSkyboxAmbientProbe(SphericalHarmonicsL2 probe)
+        {
+            _skyboxAmbientProbe = new float[3 * ProbeCoefficients];
+            for (int channel = 0; channel < 3; channel++)
+            {
+                for (int coefficient = 0; coefficient < ProbeCoefficients; coefficient++)
+                {
+                    _skyboxAmbientProbe[channel * ProbeCoefficients + coefficient] = probe[channel, coefficient];
+                }
+            }
         }
     }
 }

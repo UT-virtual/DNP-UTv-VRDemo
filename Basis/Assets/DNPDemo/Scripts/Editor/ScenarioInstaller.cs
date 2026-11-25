@@ -1,5 +1,6 @@
 using DNPDemo.Audio;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Background;
 using DNPDemo.Interaction.Hint;
 using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
@@ -168,6 +169,15 @@ namespace DNPDemo.Editor
                 WorldUiBuilder.Assign(history, "_stage", scenario.GetComponent<ScenarioStage>());
                 WorldUiBuilder.Assign(history.GetComponentInChildren<HistoryPanel>(true), "_director", scenario.GetComponent<ScenarioDirector>());
                 RegisterTool(runner, history);
+                changed = true;
+            }
+            if (interaction.GetComponentInChildren<BackgroundTool>(true) == null)
+            {
+                var background = InstantiatePrefab<BackgroundTool>(InteractionPrefabBuilder.BackgroundToolPath, interaction);
+                var panel = background.GetComponentInChildren<BackgroundPanel>(true);
+                WorldUiBuilder.Assign(panel, "_director", scenario.GetComponent<ScenarioDirector>());
+                WorldUiBuilder.Assign(panel, "_stage", scenario.GetComponent<ScenarioStage>());
+                RegisterTool(runner, background);
                 changed = true;
             }
             if (interaction.GetComponentInChildren<DummyInteractionTool>(true) == null)

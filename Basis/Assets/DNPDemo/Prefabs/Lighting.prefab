@@ -64,6 +64,7 @@ MonoBehaviour:
   _directionalLight: {fileID: 240152703250384453}
   _spotLight: {fileID: 1429037978030560603}
   _crossfadeShader: {fileID: 4800000, guid: 6dff28a51fb2b6947aae4f0ae6a38cd6, type: 3}
+  _snapshotShader: {fileID: 4800000, guid: d871424c171903143b99ef4a158403a6, type: 3}
   _transitionDuration: 2
 --- !u!1 &4285524975826606217
 GameObject:

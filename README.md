@@ -22,8 +22,8 @@ Built with [Basis](https://github.com/BasisVR/basis)
 3. Unity で開く前に、[効果音（SE）の配置](#効果音seの配置) の手順で効果音を置く。
 4. Unity Hub で `Basis/` フォルダをプロジェクトとして開く（Unity 6000.5.10f1）。
 5. メニュー `DNP Demo > Setup > Run All` を実行する。Player Settings（アプリ名、Android のパッケージ名 `com.dnputv.vrdemo`）とビルドシーンの順序が設定されます。
-6. Build Profiles でプラットフォームを Android に切り替え、APK をビルドする。
-7. 次の節の手順で Quest にインストールする。
+6. Build Profiles でプラットフォームを Android に切り替える。
+7. [リリース APK のビルド](#リリース-apk-のビルド) の手順で APK をビルドし、Quest にインストールする。
 
 ビルドの先頭シーンは `Assets/DNPDemo/Scenes/DNPDemo_Main.unity` です。
 
@@ -51,31 +51,53 @@ Built with [Basis](https://github.com/BasisVR/basis)
 - ビルドの前に9件そろっていることを確認してください。足りない SE は APK に入らず、その場面では無音になります。
 - シェーダーのマテリアルを既定値に戻すときは、メニュー `DNP Demo > Setup > Reset Effect Materials` を実行してください。手で調整した値は上書きされます。
 
+## リリース APK のビルド
+
+展示で使う APK は、メニュー `DNP Demo > Build > Release APK` でビルドします。セットアップ（`DNP Demo > Setup > Run All`）の適用、Development Build の解除、出力先の決定までを一度に行います。
+
+- 出力先: `Builds/Release/DNPDemo_<日時>-<コミット>.apk`（例: `DNPDemo_20261125-1830-0861ec3.apk`）
+- コミットしていない変更があると確認のダイアログが出ます。どのコードからビルドしたかを APK の名前で追えるよう、コミットしてからビルドしてください。
+- ビルドが終わると、続けて USB でつないでいる Quest すべてにインストールします（次の節のインストールスクリプトを実行します）。進み具合は Console に出て、終わると結果がダイアログで表示されます。Quest をつないでいなければ、インストールは行いません。
+
+Unity を開かずにバッチモードでもビルドできます（Unity を閉じてから実行します）。バッチモードではビルドだけ行います。
+
+```powershell
+& "<Unity.exe のパス>" -batchmode -quit -projectPath Basis -buildTarget Android -executeMethod DNPDemo.Editor.DemoReleaseBuild.BuildFromCommandLine -logFile Logs/release-build.log
+```
+
+### 署名
+
+署名用のキーストアは作らず、ビルドした PC の debug 鍵（`%USERPROFILE%\.android\debug.keystore`）で署名します。そのため、リリース APK は決めた1台の PC（ビルド担当 PC）でビルドしてください。
+
+Android は、入っているアプリと署名が同じ APK しか上書きインストールしません。別の PC でビルドした APK を入れるときは、一度アンインストールする必要があります。次の節のインストールスクリプトは、署名の違いを検出すると、自動でアンインストールしてから入れ直します。
+
+### バージョン
+
+- versionCode は 300 に固定しています（`DemoBuildVersionPolicy`）。どのビルドも、入っているアプリに上書きインストールできます。
+- versionName は、リリース APK ではファイル名と同じ `<日時>-<コミット>` になります。Quest に入っているビルドは、次のコマンドで確かめられます。
+
+  ```powershell
+  adb shell dumpsys package com.dnputv.vrdemo | Select-String "versionName"
+  ```
+
 ## Quest へのインストール
 
-アプリはマイクを使います（音声指示）。インストールしたあとにマイクの権限を許可しておかないと、初めて起動したときに、ロビーの上に権限のダイアログが出ます。体験者が操作しなくて済むよう、インストールのたびに次の手順で許可しておいてください。
+アプリはマイクを使います（音声指示）。インストールしたあとにマイクの権限を許可しておかないと、初めて起動したときに、ロビーの上に権限のダイアログが出ます。体験者が操作しなくて済むよう、インストールスクリプトでインストールと権限の許可をまとめて行います。メニューからビルドしたときはこのスクリプトが自動で実行されるので、次の手順は、ビルド済みの APK を入れるときに使います。
 
-PC と Quest を USB でつなぎ、PowerShell で実行します。
+事前に、Quest で開発者モードを有効にしておいてください（Meta Horizon アプリから設定します）。
 
-1. APK をインストールする。
-
-   ```powershell
-   adb install -r <APK のパス>
-   ```
-
-2. マイクの権限を許可する。
+1. PC と Quest を USB でつなぐ。初めてつないだ PC では、ヘッドセットの中に USB デバッグを許可するダイアログが出るので、許可する。2台同時につないでもかまいません。
+2. PowerShell で、リポジトリのルートから実行する。
 
    ```powershell
-   adb shell pm grant com.dnputv.vrdemo android.permission.RECORD_AUDIO
+   powershell -ExecutionPolicy Bypass -File tools\install-quest.ps1 <APK のパス>
    ```
 
-3. 許可されたことを確かめる。`granted=true` と表示されれば完了です。
+3. Quest ごとに `完了しました（versionName …、マイクの権限を許可済み）` と表示されれば完了です。
 
-   ```powershell
-   adb shell dumpsys package com.dnputv.vrdemo | Select-String "RECORD_AUDIO"
-   ```
+スクリプトは、つないだすべての Quest に対して、インストール（署名が違えばアンインストールしてから入れ直す）、マイクの権限の許可、許可されたことの確認を行います。
 
-アンインストールすると許可も消えます。入れ直したときは、もう一度 2 から実行してください。
+アンインストールすると権限の許可も消えます。手でアンインストールしたときも、このスクリプトで入れ直してください。
 
 ## 体験の流れ
 
