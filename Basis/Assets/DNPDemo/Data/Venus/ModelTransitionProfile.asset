@@ -15,8 +15,8 @@ MonoBehaviour:
   _transitionMaterial: {fileID: 2100000, guid: 62f9bd06f89d7384a8c74c6af83cf93f, type: 2}
   _particlePrefab: {fileID: 0}
   _duration: 1
-  _dissolvePropertyName: _Dissolve
-  _scanLinePropertyName: _ScanLine
+  _dissolvePropertyName: _Cutoff
+  _scanLinePropertyName: _ScanFade
   _boundsMinPropertyName: _BoundsMin
   _boundsMaxPropertyName: _BoundsMax
   _baseMapPropertyName: _BaseMap

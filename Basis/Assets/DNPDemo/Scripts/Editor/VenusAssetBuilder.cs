@@ -175,13 +175,7 @@ namespace DNPDemo.Editor
                 return;
             }
 
-            var transitionMaterial = AssetDatabase.LoadAssetAtPath<Material>(TransitionMaterialPath);
-            if (transitionMaterial == null)
-            {
-                transitionMaterial = new Material(shader);
-                transitionMaterial.name = "M_ModelTransition";
-                AssetDatabase.CreateAsset(transitionMaterial, TransitionMaterialPath);
-            }
+            Material transitionMaterial = EffectMaterials.CreateIfMissing(EffectMaterials.Transition);
 
             var profile = AssetDatabase.LoadAssetAtPath<ModelTransitionProfile>(TransitionProfilePath);
             if (profile == null)

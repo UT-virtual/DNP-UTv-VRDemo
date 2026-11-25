@@ -215,23 +215,28 @@ namespace DNPDemo.Venus
             materials.Clear();
         }
 
+        /// <summary>
+        /// The old model goes from shown to hidden and the new one from hidden to shown. The shader takes the dissolve as a
+        /// cutoff (0 shown, 1 hidden), and the scan line, which runs by itself, fades in and out over the transition.
+        /// </summary>
         void SetShaderProgress(float progress)
         {
             _previousDissolve = _previousModel != null ? 1f - progress : 0f;
             _currentDissolve = progress;
-            SetShaderProgress(_previousMaterials, 1f - progress, progress);
-            SetShaderProgress(_currentMaterials, progress, progress);
+            float scanFade = Mathf.Sin(progress * Mathf.PI);
+            SetShaderProgress(_previousMaterials, 1f - progress, scanFade);
+            SetShaderProgress(_currentMaterials, progress, scanFade);
         }
 
-        void SetShaderProgress(List<ModelTransitionMaterial> materials, float dissolve, float scanLine)
+        void SetShaderProgress(List<ModelTransitionMaterial> materials, float shown, float scanFade)
         {
             foreach (ModelTransitionMaterial material in materials)
             {
                 material.SetProperties(
                     _dissolveId,
-                    dissolve,
+                    1f - shown,
                     _scanLineId,
-                    scanLine,
+                    scanFade,
                     _boundsMinId,
                     _bounds.min,
                     _boundsMaxId,
