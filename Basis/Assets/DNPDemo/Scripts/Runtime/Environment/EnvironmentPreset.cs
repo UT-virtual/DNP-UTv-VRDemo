@@ -70,6 +70,19 @@ namespace DNPDemo.Environment
         public float Intensity;
     }
 
+    /// <summary>
+    /// Main light shadow quality written to the active URP asset while the preset is shown. Override off leaves the values
+    /// that Basis' shadow quality setting chose; Override on replaces them until a preset without it is applied.
+    /// </summary>
+    [Serializable]
+    public struct ShadowQualitySettings
+    {
+        public bool Override;
+        public int MainLightShadowmapResolution;
+        public float ShadowDistance;
+        [Range(1, 4)] public int CascadeCount;
+    }
+
     [CreateAssetMenu(menuName = "DNP Demo/Environment Preset", fileName = "EnvironmentPreset")]
     public sealed class EnvironmentPreset : ScriptableObject
     {
@@ -81,6 +94,7 @@ namespace DNPDemo.Environment
         [SerializeField] SpotLightSettings _spotLight;
         [SerializeField] AmbientSettings _ambient;
         [SerializeField] ReflectionSettings _reflection;
+        [SerializeField] ShadowQualitySettings _shadowQuality;
 
         public Texture2D Panorama => _panorama;
         public float Exposure => _exposure;
@@ -90,6 +104,7 @@ namespace DNPDemo.Environment
         public SpotLightSettings SpotLight => _spotLight;
         public AmbientSettings Ambient => _ambient;
         public ReflectionSettings Reflection => _reflection;
+        public ShadowQualitySettings ShadowQuality => _shadowQuality;
 
         internal void Configure(
             Texture2D panorama,
@@ -99,8 +114,10 @@ namespace DNPDemo.Environment
             DirectionalLightSettings directionalLight,
             SpotLightSettings spotLight,
             AmbientSettings ambient,
-            ReflectionSettings reflection)
+            ReflectionSettings reflection,
+            ShadowQualitySettings shadowQuality)
         {
+            _shadowQuality = shadowQuality;
             _panorama = panorama;
             _exposure = exposure;
             _rotation = rotation;

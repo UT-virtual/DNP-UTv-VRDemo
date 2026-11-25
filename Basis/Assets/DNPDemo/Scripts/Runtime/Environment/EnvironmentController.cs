@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DNPDemo.Scenario;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 
 namespace DNPDemo.Environment
@@ -75,6 +76,7 @@ namespace DNPDemo.Environment
             public DefaultReflectionMode ReflectionMode;
             public Texture CustomReflection;
             public float ReflectionIntensity;
+            public ShadowQualitySettings ShadowQuality;
             public float WallAlpha;
 
             /// <param name="spotEnabled">Spot light activation already resolved from the preset's <see cref="SpotLightMode"/>.</param>
@@ -117,6 +119,7 @@ namespace DNPDemo.Environment
                     ReflectionMode = reflection.Mode,
                     CustomReflection = reflection.CustomReflectionTexture,
                     ReflectionIntensity = reflection.Intensity,
+                    ShadowQuality = preset.ShadowQuality,
                     WallAlpha = preset.ExhibitionRoomVisible ? 1f : 0f,
                 };
             }
@@ -162,6 +165,7 @@ namespace DNPDemo.Environment
                     ReflectionMode = t < 0.5f ? from.ReflectionMode : to.ReflectionMode,
                     CustomReflection = t < 0.5f ? from.CustomReflection : to.CustomReflection,
                     ReflectionIntensity = Mathf.Lerp(from.ReflectionIntensity, to.ReflectionIntensity, t),
+                    ShadowQuality = t < 0.5f ? from.ShadowQuality : to.ShadowQuality,
                     WallAlpha = Mathf.Lerp(from.WallAlpha, to.WallAlpha, t),
                 };
             }
@@ -174,6 +178,8 @@ namespace DNPDemo.Environment
         RenderTexture _activeSkySnapshot;
         Material _originalSkybox;
         RuntimeState _originalState;
+        Func<UniversalRenderPipelineAsset> _shadowQualityAssetProvider = ShadowQualityOverride.ActiveAsset;
+        ShadowQualityOverride _shadowQuality;
         RuntimeState _transitionStart;
         EnvironmentPreset _transitionTarget;
         bool _transitionTargetSpotEnabled;
@@ -189,6 +195,13 @@ namespace DNPDemo.Environment
         public bool IsTransitioning => _isTransitioning;
 
         void Update() => AdvanceTransition(Time.unscaledDeltaTime);
+
+        void LateUpdate() => MaintainShadowQuality();
+
+        void OnEnable() => _shadowQuality?.Resume();
+
+        /// <summary>The URP asset is a project asset, so the shadow override must not outlive this component.</summary>
+        void OnDisable() => _shadowQuality?.Suspend();
 
         /// <summary>Begins a fade from the currently displayed state; a new request replaces an in-flight destination.</summary>
         public void TransitionTo(EnvironmentPreset preset, float duration = -1f)
@@ -233,6 +246,22 @@ namespace DNPDemo.Environment
             ApplyState(state);
             SetSkyboxPreset(preset);
             ReleaseSnapshots();
+        }
+
+        /// <summary>
+        /// Re-applies the preset's shadow quality if Basis rewrote the URP asset. Runs after the frame's other updates so the
+        /// override is in place before rendering. Internal so EditMode tests can drive it.
+        /// </summary>
+        internal void MaintainShadowQuality() => _shadowQuality?.Maintain();
+
+        /// <summary>Replaces the URP asset the shadow override writes to. Tests call it before the controller initializes.</summary>
+        internal void SetShadowQualityAssetProvider(Func<UniversalRenderPipelineAsset> provider)
+        {
+            if (_initialized)
+            {
+                throw new InvalidOperationException("The shadow quality asset must be set before the controller initializes.");
+            }
+            _shadowQualityAssetProvider = provider ?? throw new ArgumentNullException(nameof(provider));
         }
 
         /// <summary>Advances the transition clock. Internal so EditMode tests can drive it deterministically.</summary>
@@ -337,6 +366,9 @@ namespace DNPDemo.Environment
             _skyboxMaterial.SetFloat(ExposureBId, preset.Exposure);
             _skyboxMaterial.SetFloat(RotationAId, preset.Rotation);
             _skyboxMaterial.SetFloat(RotationBId, preset.Rotation);
+            // The Skybox reflection is a cubemap captured from the sky, not the live sky. Recapture it once the panorama has
+            // settled so reflective materials show the new environment.
+            DynamicGI.UpdateEnvironment();
         }
 
         RuntimeState CaptureCurrentState()
@@ -374,6 +406,7 @@ namespace DNPDemo.Environment
                 ReflectionMode = RenderSettings.defaultReflectionMode,
                 CustomReflection = RenderSettings.customReflectionTexture,
                 ReflectionIntensity = RenderSettings.reflectionIntensity,
+                ShadowQuality = _shadowQuality != null ? _shadowQuality.Requested : default,
                 WallAlpha = _wallAlpha,
             };
         }
@@ -428,6 +461,8 @@ namespace DNPDemo.Environment
             RenderSettings.defaultReflectionMode = state.ReflectionMode;
             RenderSettings.customReflectionTexture = state.CustomReflection;
             RenderSettings.reflectionIntensity = state.ReflectionIntensity;
+
+            _shadowQuality?.Request(state.ShadowQuality);
         }
 
         void SetWallAlpha(float alpha)
@@ -557,6 +592,7 @@ namespace DNPDemo.Environment
             }
             _originalSkybox = RenderSettings.skybox;
             _originalState = CaptureCurrentState();
+            _shadowQuality = new ShadowQualityOverride(_shadowQualityAssetProvider);
             _skyboxMaterial = new Material(_crossfadeShader)
             {
                 name = "Environment Crossfade Runtime",
@@ -647,6 +683,7 @@ namespace DNPDemo.Environment
 
         void OnDestroy()
         {
+            _shadowQuality?.Suspend();
             if (_initialized)
             {
                 RestoreWallMaterials();

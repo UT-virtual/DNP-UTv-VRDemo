@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: adc590f12d8057745ac026cd6bf71119, type: 3}
   m_Name: EnvironmentPreset_Temple
   m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Environment.EnvironmentPreset
-  _panorama: {fileID: 2800000, guid: b1732f8e71795c24a94198cc95014e13, type: 3}
-  _exposure: 0.2
+  _panorama: {fileID: 2800000, guid: 1c7ffb6ba0e7aaa478b8efe9b57f0b93, type: 3}
+  _exposure: 0
   _rotation: 0
   _exhibitionRoomVisible: 0
   _directionalLight:
-    Color: {r: 1, g: 0.91, b: 0.76, a: 1}
-    Intensity: 1.4
-    Rotation: {x: 38, y: -42, z: 0}
-    Shadows: 2
+    Color: {r: 1, g: 0.95, b: 0.87, a: 1}
+    Intensity: 1
+    Rotation: {x: 50, y: -108, z: 0}
+    Shadows: 1
     ShadowResolution: 2
     ShadowStrength: 0.85
     ShadowBias: 0.035
@@ -42,12 +42,17 @@ MonoBehaviour:
     ShadowNearPlane: 0.2
   _ambient:
     Mode: 1
-    SkyColor: {r: 0.48, g: 0.65, b: 0.83, a: 1}
-    EquatorColor: {r: 0.3, g: 0.43, b: 0.57, a: 1}
-    GroundColor: {r: 0.13, g: 0.16, b: 0.2, a: 1}
-    FlatColor: {r: 0.3, g: 0.43, b: 0.57, a: 1}
+    SkyColor: {r: 0.48, g: 0.53, b: 0.62, a: 1}
+    EquatorColor: {r: 0.54, g: 0.53, b: 0.54, a: 1}
+    GroundColor: {r: 0.61, g: 0.6, b: 0.6, a: 1}
+    FlatColor: {r: 0.54, g: 0.53, b: 0.54, a: 1}
     Intensity: 1
   _reflection:
     Mode: 0
     CustomReflectionTexture: {fileID: 0}
-    Intensity: 0.9
+    Intensity: 0.5
+  _shadowQuality:
+    Override: 1
+    MainLightShadowmapResolution: 2048
+    ShadowDistance: 8
+    CascadeCount: 1

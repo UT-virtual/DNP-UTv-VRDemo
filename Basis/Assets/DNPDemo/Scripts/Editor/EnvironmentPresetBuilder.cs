@@ -8,20 +8,24 @@ using UnityEngine.Rendering;
 
 namespace DNPDemo.Editor
 {
-    /// <summary>Creates the temporary environment panoramas and presets, and wires their scene prefabs.</summary>
+    /// <summary>
+    /// Creates the environment presets and the exhibition's temporary panorama, configures the temple panorama's
+    /// import, and wires the scene prefabs.
+    /// </summary>
     public static class EnvironmentPresetBuilder
     {
         public const string DataFolder = DNPDemoProjectSetup.Root + "/Data/Environment";
         public const string ExhibitionPresetPath = DataFolder + "/EnvironmentPreset_Exhibition.asset";
         public const string TemplePresetPath = DataFolder + "/EnvironmentPreset_Temple.asset";
         public const string ExhibitionPanoramaPath = DNPDemoProjectSetup.Root + "/Art/Environment/Environment_Exhibition_Panorama.png";
-        public const string TemplePanoramaPath = DNPDemoProjectSetup.Root + "/Art/Environment/Environment_Temple_Panorama.png";
+        public const string TemplePanoramaPath = DNPDemoProjectSetup.Root + "/Art/Environment/Environment_Temple_Panorama.jpg";
         public const string CrossfadeShaderPath = DNPDemoProjectSetup.Root + "/Scripts/Runtime/Environment/EnvironmentCrossfadePanorama.shader";
 
         const string LightingPrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Lighting.prefab";
         const string ExhibitionRoomPrefabPath = DNPDemoProjectSetup.Root + "/Prefabs/Env_ExhibitionRoom.prefab";
         const int PanoramaWidth = 512;
         const int PanoramaHeight = 256;
+        const int TemplePanoramaMaxSize = 4096;
 
         [MenuItem("DNP Demo/Setup/Build Environment Presets")]
         public static void BuildAssetsAndPrefabs()
@@ -38,9 +42,14 @@ namespace DNPDemo.Editor
         public static void CreatePresetsIfMissing()
         {
             Directory.CreateDirectory(AbsolutePath(DataFolder));
-            EnsurePanorama(ExhibitionPanoramaPath, temple: false);
-            EnsurePanorama(TemplePanoramaPath, temple: true);
+            EnsureExhibitionPanorama();
+            if (!File.Exists(AbsolutePath(TemplePanoramaPath)))
+            {
+                throw new FileNotFoundException(
+                    $"The temple panorama is missing. Place a 2:1 equirectangular JPEG at {TemplePanoramaPath}.", TemplePanoramaPath);
+            }
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            ConfigureTemplePanoramaImport();
 
             Texture2D exhibitionPanorama = AssetDatabase.LoadAssetAtPath<Texture2D>(ExhibitionPanoramaPath);
             Texture2D templePanorama = AssetDatabase.LoadAssetAtPath<Texture2D>(TemplePanoramaPath);
@@ -98,21 +107,28 @@ namespace DNPDemo.Editor
                     Mode = DefaultReflectionMode.Skybox,
                     CustomReflectionTexture = null,
                     Intensity = 0.6f,
-                });
+                },
+                shadowQuality: new ShadowQualitySettings { Override = false });
 
             EnsurePreset(
                 TemplePresetPath,
                 "EnvironmentPreset_Temple",
                 templePanorama,
-                exposure: 0.2f,
+                // The JPEG is LDR and the marble in it is already near white, so it is shown as is.
+                exposure: 0f,
                 rotation: 0f,
                 exhibitionRoomVisible: false,
+                // The sun is hidden behind the cornice in the panorama. Its glow peaks at u = 0.70 and keeps brightening down
+                // to the cornice at 50 degrees, which matches the column shadows on the floor. The skybox puts u at the
+                // azimuth 360 * (u - 0.5) - rotation, measured from +Z towards +X, so the sun sits at 72 degrees and the
+                // light, which points away from it, has a yaw of 72 - 180.
                 directional: new DirectionalLightSettings
                 {
-                    Color = new Color(1f, 0.91f, 0.76f),
-                    Intensity = 1.4f,
-                    Rotation = new Vector3(38f, -42f, 0f),
-                    Shadows = LightShadows.Soft,
+                    Color = new Color(1f, 0.95f, 0.87f),
+                    Intensity = 1f,
+                    Rotation = new Vector3(50f, -108f, 0f),
+                    // Android's URP asset has no soft shadows; Hard keeps the Editor identical to Quest.
+                    Shadows = LightShadows.Hard,
                     ShadowResolution = LightShadowResolution.High,
                     ShadowStrength = 0.85f,
                     ShadowBias = 0.035f,
@@ -138,23 +154,35 @@ namespace DNPDemo.Editor
                 ambient: new AmbientSettings
                 {
                     Mode = AmbientMode.Trilight,
-                    SkyColor = new Color(0.48f, 0.65f, 0.83f),
-                    EquatorColor = new Color(0.3f, 0.43f, 0.57f),
-                    GroundColor = new Color(0.13f, 0.16f, 0.2f),
-                    FlatColor = new Color(0.3f, 0.43f, 0.57f),
+                    // The panorama's linear mean over the zenith (45 to 90 degrees), the horizon (within 15 degrees) and
+                    // the floor (below -45 degrees), scaled by 0.6 so the side away from the sun keeps its contrast. The
+                    // sunlit marble floor makes the ground the brightest.
+                    SkyColor = new Color(0.48f, 0.53f, 0.62f),
+                    EquatorColor = new Color(0.54f, 0.53f, 0.54f),
+                    GroundColor = new Color(0.61f, 0.6f, 0.6f),
+                    FlatColor = new Color(0.54f, 0.53f, 0.54f),
                     Intensity = 1f,
                 },
                 reflection: new ReflectionSettings
                 {
                     Mode = DefaultReflectionMode.Skybox,
                     CustomReflectionTexture = null,
-                    Intensity = 0.9f,
+                    Intensity = 0.5f,
+                },
+                // Basis' Very Low tier on Quest leaves a 256 px map over 5 m, too coarse for the statue's shadow.
+                shadowQuality: new ShadowQualitySettings
+                {
+                    Override = true,
+                    MainLightShadowmapResolution = 2048,
+                    ShadowDistance = 8f,
+                    CascadeCount = 1,
                 });
             AssetDatabase.SaveAssets();
         }
 
-        static void EnsurePanorama(string assetPath, bool temple)
+        static void EnsureExhibitionPanorama()
         {
+            string assetPath = ExhibitionPanoramaPath;
             string fullPath = AbsolutePath(assetPath);
             if (File.Exists(fullPath))
             {
@@ -171,10 +199,7 @@ namespace DNPDemo.Editor
                 float v = y / (PanoramaHeight - 1f);
                 for (int x = 0; x < PanoramaWidth; x++)
                 {
-                    float u = x / (PanoramaWidth - 1f);
-                    pixels[y * PanoramaWidth + x] = temple
-                        ? TempleSkyColor(u, v)
-                        : ExhibitionSkyColor(v);
+                    pixels[y * PanoramaWidth + x] = ExhibitionSkyColor(v);
                 }
             }
             texture.SetPixels(pixels);
@@ -195,15 +220,36 @@ namespace DNPDemo.Editor
             return Color.Lerp(new Color(0.19f, 0.17f, 0.15f), new Color(0.36f, 0.33f, 0.29f), t);
         }
 
-        static Color TempleSkyColor(float u, float v)
+        /// <summary>
+        /// Imports the temple panorama as an equirectangular sky: it wraps around in longitude only, keeps its full
+        /// resolution (it is not a power of two), and uses ASTC 6x6 on Quest.
+        /// </summary>
+        static void ConfigureTemplePanoramaImport()
         {
-            float t = Mathf.SmoothStep(0f, 1f, v);
-            Color sky = Color.Lerp(new Color(0.38f, 0.69f, 0.87f), new Color(0.055f, 0.26f, 0.58f), t);
-            float deltaU = Mathf.Min(Mathf.Abs(u - 0.71f), 1f - Mathf.Abs(u - 0.71f));
-            float distance = Mathf.Sqrt(deltaU * deltaU + (v - 0.62f) * (v - 0.62f));
-            float sun = 1f - Mathf.SmoothStep(0.018f, 0.045f, distance);
-            float glow = Mathf.Exp(-distance * 24f) * 0.35f;
-            return Color.Lerp(sky, new Color(1f, 0.84f, 0.56f), Mathf.Clamp01(sun + glow));
+            var importer = AssetImporter.GetAtPath(TemplePanoramaPath) as TextureImporter;
+            if (importer == null)
+            {
+                throw new InvalidOperationException($"The temple panorama could not be imported: {TemplePanoramaPath}");
+            }
+            importer.textureType = TextureImporterType.Default;
+            importer.textureShape = TextureImporterShape.Texture2D;
+            importer.sRGBTexture = true;
+            importer.mipmapEnabled = true;
+            importer.npotScale = TextureImporterNPOTScale.None;
+            importer.wrapModeU = TextureWrapMode.Repeat;
+            importer.wrapModeV = TextureWrapMode.Clamp;
+            importer.filterMode = FilterMode.Bilinear;
+            importer.maxTextureSize = TemplePanoramaMaxSize;
+            importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings
+            {
+                name = "Android",
+                overridden = true,
+                maxTextureSize = TemplePanoramaMaxSize,
+                format = TextureImporterFormat.ASTC_6x6,
+                textureCompression = TextureImporterCompression.Compressed,
+                compressionQuality = (int)TextureCompressionQuality.Normal,
+            });
+            importer.SaveAndReimport();
         }
 
         static void EnsurePreset(
@@ -216,7 +262,8 @@ namespace DNPDemo.Editor
             DirectionalLightSettings directional,
             SpotLightSettings spot,
             AmbientSettings ambient,
-            ReflectionSettings reflection)
+            ReflectionSettings reflection,
+            ShadowQualitySettings shadowQuality)
         {
             EnvironmentPreset preset = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(assetPath);
             bool created = preset == null;
@@ -236,7 +283,8 @@ namespace DNPDemo.Editor
                     directional,
                     spot,
                     ambient,
-                    reflection);
+                    reflection,
+                    shadowQuality);
                 EditorUtility.SetDirty(preset);
             }
         }
