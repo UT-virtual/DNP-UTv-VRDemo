@@ -95,7 +95,7 @@ namespace DNPDemo.Tests
             Assert.AreEqual(_temple.DirectionalLight.Intensity, fixture.Directional.intensity);
             Assert.IsFalse(fixture.Spot.gameObject.activeSelf);
             Assert.AreSame(_temple.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
-            Assert.AreEqual(0f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.001f);
+            Assert.IsFalse(fixture.WallRenderer().enabled, "A hidden room is not drawn, so it casts no shadows.");
             Assert.IsTrue(fixture.WallCollider.enabled, "Fading the display must not disable the navigation collider.");
 
             fixture.Stage.ResetToBaseline();
@@ -103,7 +103,18 @@ namespace DNPDemo.Tests
             Assert.AreEqual(_exhibition.DirectionalLight.Intensity, fixture.Directional.intensity);
             Assert.IsFalse(fixture.Spot.gameObject.activeSelf, "The exhibition keeps the spot light as the temple left it.");
             Assert.AreSame(_exhibition.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
-            Assert.AreEqual(1f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.001f);
+            AssertWallOpaque(fixture);
+        }
+
+        [Test]
+        public void ApplyingTheBaselineKeepsTheRoomOnItsOpaqueMaterials()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+
+            // Entering a step after connecting resets the stage, which is what first initializes the controller.
+            fixture.Stage.ResetToBaseline();
+
+            AssertWallOpaque(fixture);
         }
 
         [Test]
@@ -120,7 +131,12 @@ namespace DNPDemo.Tests
             float halfwayIntensity = fixture.Directional.intensity;
             Assert.Greater(halfwayIntensity, _exhibition.DirectionalLight.Intensity);
             Assert.Less(halfwayIntensity, _temple.DirectionalLight.Intensity);
-            Assert.AreEqual(0.5f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.02f);
+            Material fading = fixture.WallMaterial();
+            Assert.AreNotSame(_wallMaterial, fading, "The shared wall material must not be modified.");
+            Assert.AreEqual(0.5f, fading.GetColor("_BaseColor").a, 0.02f);
+            Assert.AreEqual((int)RenderQueue.Transparent, fading.renderQueue);
+            Assert.AreEqual(1f, fading.GetFloat("_ZWrite"), "The fading room keeps writing depth so its faces occlude each other.");
+            Assert.IsTrue(fixture.WallRenderer().enabled);
 
             Texture currentSky = RenderSettings.skybox.GetTexture("_PanoramaA");
             fixture.Controller.TransitionTo(_exhibition, 2f);
@@ -134,7 +150,7 @@ namespace DNPDemo.Tests
             Assert.IsFalse(fixture.Controller.IsTransitioning);
             Assert.AreEqual(_exhibition.DirectionalLight.Intensity, fixture.Directional.intensity);
             Assert.AreSame(_exhibition.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
-            Assert.AreEqual(1f, fixture.WallMaterial().GetColor("_BaseColor").a, 0.001f);
+            AssertWallOpaque(fixture);
 
             fixture.Controller.TransitionTo(_temple, 2f);
             fixture.Controller.AdvanceTransition(0.5f);
@@ -232,6 +248,13 @@ namespace DNPDemo.Tests
             return fixture;
         }
 
+        void AssertWallOpaque(EnvironmentFixture fixture)
+        {
+            Assert.AreSame(_wallMaterial, fixture.WallMaterial(), "A fully visible room is drawn with its own opaque material.");
+            Assert.IsTrue(fixture.WallRenderer().enabled);
+            Assert.AreEqual(0f, _wallMaterial.GetFloat("_Surface"), "The shared wall material must stay opaque.");
+        }
+
         static void AssertPresetComplete(EnvironmentPreset preset)
         {
             Assert.Greater(preset.DirectionalLight.Intensity, 0f, preset.name);
@@ -277,11 +300,9 @@ namespace DNPDemo.Tests
                 return target;
             }
 
-            public Material WallMaterial()
-            {
-                Renderer renderer = Room.GetComponentInChildren<Renderer>(true);
-                return renderer.sharedMaterial;
-            }
+            public Renderer WallRenderer() => Room.GetComponentInChildren<Renderer>(true);
+
+            public Material WallMaterial() => WallRenderer().sharedMaterial;
 
             public void Dispose()
             {

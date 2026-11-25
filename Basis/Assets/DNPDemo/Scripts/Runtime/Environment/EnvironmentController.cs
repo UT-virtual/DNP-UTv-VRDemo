@@ -33,10 +33,26 @@ namespace DNPDemo.Environment
         [SerializeField] Shader _crossfadeShader;
         [SerializeField, Min(0f)] float _transitionDuration = 2f;
 
+        /// <summary>
+        /// How the exhibition room is drawn. Transparent materials do not sort correctly against the room's own faces or
+        /// other transparent objects, so they are only used while the room is partially visible.
+        /// </summary>
+        enum WallDisplay
+        {
+            /// <summary>Fully visible with the room's own opaque materials.</summary>
+            Opaque,
+            /// <summary>Partially visible with transparent copies of the materials.</summary>
+            Fading,
+            /// <summary>Not drawn at all, so it casts no shadows either. Colliders are left untouched.</summary>
+            Hidden,
+        }
+
         sealed class WallRenderer
         {
             public Renderer Renderer;
+            public bool OriginallyEnabled;
             public Material[] OriginalMaterials;
+            /// <summary>Transparent copies created on the first fade; entries that cannot fade keep the original.</summary>
             public Material[] FadeMaterials;
             public Color[] BaseColors;
             public int[] ColorPropertyIds;
@@ -179,6 +195,7 @@ namespace DNPDemo.Environment
         bool _transitionTargetSpotEnabled;
         ScenarioStage _stage;
         float _wallAlpha = 1f;
+        WallDisplay _wallDisplay = WallDisplay.Opaque;
         float _elapsed;
         float _duration;
         bool _initialized;
@@ -440,16 +457,48 @@ namespace DNPDemo.Environment
                 return;
             }
             _wallAlpha = alpha;
+            WallDisplay display = alpha >= 1f ? WallDisplay.Opaque : alpha <= 0f ? WallDisplay.Hidden : WallDisplay.Fading;
+            if (display == WallDisplay.Fading)
+            {
+                SetFadeAlpha(alpha);
+            }
+            if (display == _wallDisplay)
+            {
+                return;
+            }
+            _wallDisplay = display;
             foreach (WallRenderer wall in _wallRenderers)
             {
                 if (wall.Renderer == null)
                 {
                     continue;
                 }
+                switch (display)
+                {
+                    case WallDisplay.Opaque:
+                        wall.Renderer.sharedMaterials = wall.OriginalMaterials;
+                        wall.Renderer.enabled = wall.OriginallyEnabled;
+                        break;
+                    case WallDisplay.Fading:
+                        wall.Renderer.sharedMaterials = wall.FadeMaterials;
+                        wall.Renderer.enabled = wall.OriginallyEnabled;
+                        break;
+                    case WallDisplay.Hidden:
+                        wall.Renderer.enabled = false;
+                        break;
+                }
+            }
+        }
+
+        void SetFadeAlpha(float alpha)
+        {
+            foreach (WallRenderer wall in _wallRenderers)
+            {
+                EnsureFadeMaterials(wall);
                 for (int i = 0; i < wall.FadeMaterials.Length; i++)
                 {
                     Material material = wall.FadeMaterials[i];
-                    if (material == null)
+                    if (material == null || material == wall.OriginalMaterials[i])
                     {
                         continue;
                     }
@@ -460,6 +509,7 @@ namespace DNPDemo.Environment
             }
         }
 
+        /// <summary>Records the room's renderers as they are; their materials are only replaced while the room fades.</summary>
         bool EnsureWallRenderers()
         {
             if (_wallRenderers.Count > 0)
@@ -482,47 +532,57 @@ namespace DNPDemo.Environment
 
             foreach (Renderer renderer in room.GetComponentsInChildren<Renderer>(true))
             {
-                Material[] originals = renderer.sharedMaterials;
-                var fades = new Material[originals.Length];
-                var colors = new Color[originals.Length];
-                var colorProperties = new int[originals.Length];
-                for (int i = 0; i < originals.Length; i++)
-                {
-                    Material original = originals[i];
-                    if (original == null)
-                    {
-                        continue;
-                    }
-                    int colorProperty = original.HasProperty(BaseColorId) ? BaseColorId : original.HasProperty(LegacyColorId) ? LegacyColorId : 0;
-                    if (colorProperty == 0 || !original.HasProperty("_Surface"))
-                    {
-                        fades[i] = original;
-                        if (!_reportedWallMaterial)
-                        {
-                            Debug.LogWarning($"[DNPDemo] 壁のマテリアル「{original.name}」は URP Lit の透明フェードに対応していません。", renderer);
-                            _reportedWallMaterial = true;
-                        }
-                        continue;
-                    }
-                    Material fade = new(original) { hideFlags = HideFlags.DontSave };
-                    ConfigureTransparentMaterial(fade);
-                    fades[i] = fade;
-                    colors[i] = fade.GetColor(colorProperty);
-                    colorProperties[i] = colorProperty;
-                }
-                renderer.sharedMaterials = fades;
                 _wallRenderers.Add(new WallRenderer
                 {
                     Renderer = renderer,
-                    OriginalMaterials = originals,
-                    FadeMaterials = fades,
-                    BaseColors = colors,
-                    ColorPropertyIds = colorProperties,
+                    OriginallyEnabled = renderer.enabled,
+                    OriginalMaterials = renderer.sharedMaterials,
                 });
             }
+            _wallDisplay = WallDisplay.Opaque;
             return _wallRenderers.Count > 0;
         }
 
+        void EnsureFadeMaterials(WallRenderer wall)
+        {
+            if (wall.FadeMaterials != null)
+            {
+                return;
+            }
+            Material[] originals = wall.OriginalMaterials;
+            wall.FadeMaterials = new Material[originals.Length];
+            wall.BaseColors = new Color[originals.Length];
+            wall.ColorPropertyIds = new int[originals.Length];
+            for (int i = 0; i < originals.Length; i++)
+            {
+                Material original = originals[i];
+                if (original == null)
+                {
+                    continue;
+                }
+                int colorProperty = original.HasProperty(BaseColorId) ? BaseColorId : original.HasProperty(LegacyColorId) ? LegacyColorId : 0;
+                if (colorProperty == 0 || !original.HasProperty("_Surface"))
+                {
+                    wall.FadeMaterials[i] = original;
+                    if (!_reportedWallMaterial)
+                    {
+                        Debug.LogWarning($"[DNPDemo] 壁のマテリアル「{original.name}」は URP Lit の透明フェードに対応していません。", wall.Renderer);
+                        _reportedWallMaterial = true;
+                    }
+                    continue;
+                }
+                Material fade = new(original) { name = $"{original.name} (Fade)", hideFlags = HideFlags.DontSave };
+                ConfigureTransparentMaterial(fade);
+                wall.FadeMaterials[i] = fade;
+                wall.BaseColors[i] = fade.GetColor(colorProperty);
+                wall.ColorPropertyIds[i] = colorProperty;
+            }
+        }
+
+        /// <summary>
+        /// Converts a URP Lit copy to alpha blending. It keeps writing depth so the room's own faces, including the back faces
+        /// of double-sided materials, still occlude each other while it fades.
+        /// </summary>
         static void ConfigureTransparentMaterial(Material material)
         {
             material.SetFloat("_Surface", 1f);
@@ -531,7 +591,7 @@ namespace DNPDemo.Environment
             material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
             material.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
             material.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
-            material.SetFloat("_ZWrite", 0f);
+            material.SetFloat("_ZWrite", 1f);
             material.SetOverrideTag("RenderType", "Transparent");
             material.renderQueue = (int)RenderQueue.Transparent;
             material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
@@ -635,6 +695,11 @@ namespace DNPDemo.Environment
                 if (wall.Renderer != null)
                 {
                     wall.Renderer.sharedMaterials = wall.OriginalMaterials;
+                    wall.Renderer.enabled = wall.OriginallyEnabled;
+                }
+                if (wall.FadeMaterials == null)
+                {
+                    continue;
                 }
                 for (int i = 0; i < wall.FadeMaterials.Length; i++)
                 {
@@ -646,6 +711,7 @@ namespace DNPDemo.Environment
                 }
             }
             _wallRenderers.Clear();
+            _wallDisplay = WallDisplay.Opaque;
         }
 
         void OnDestroy()
