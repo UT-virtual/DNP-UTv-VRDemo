@@ -12,7 +12,7 @@ namespace DNPDemo.Interaction.Voice
     /// <see cref="VoiceCommandSettings"/>. Once the sound adds up to <see cref="RequiredSpeechSeconds"/>, the press is
     /// recognised: <see cref="Recognized"/> is raised and the microphone is released, while the press goes on.</item>
     /// <item>The release raises <see cref="Finished"/> with what the press captured, recognised or not. If the pen's
-    /// mode changes during a press (the menu ends the press), the press ends with <see cref="Abandoned"/> instead.</item>
+    /// mode changes during a press (switching modes ends the press), the press ends with <see cref="Abandoned"/> instead.</item>
     /// </list>
     /// The owner must call <see cref="Stop"/> when it is disabled, so the microphone hold is always released.
     /// </summary>

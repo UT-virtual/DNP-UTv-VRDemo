@@ -9,8 +9,8 @@ namespace DNPDemo.Interaction.Manipulate
     /// <item>A press of the trigger in the listened mode grabs the object when the tip sphere
     /// (<see cref="PenGeometry.GrabRadius"/>) touches the grab zone. A press elsewhere does nothing until it is released.</item>
     /// <item>While grabbed, every <see cref="Tick"/> moves <see cref="Value"/> with the tip (<see cref="ManipulateDrag"/>).</item>
-    /// <item>Releasing the trigger raises <see cref="Released"/>. If the pen's mode changed during the grab (the menu ends
-    /// the press), the release is not meant as a placement and is reported as not to be judged.</item>
+    /// <item>Releasing the trigger raises <see cref="Released"/>. If the pen's mode changed during the grab (switching modes
+    /// ends the press), the release is not meant as a placement and is reported as not to be judged.</item>
     /// </list>
     /// It only computes the value; showing the object, judging and sending are up to the owner.
     /// Shared by <see cref="ManipulateTool"/> and the pen test scene, which runs it without a session.
