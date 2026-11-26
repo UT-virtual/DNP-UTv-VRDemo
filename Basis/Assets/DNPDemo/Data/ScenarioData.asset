@@ -863,35 +863,35 @@ MonoBehaviour:
       type: {class: SoundCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Clip: {fileID: 8300000, guid: 97ed247aa660b5441a31773995e1c3f2, type: 3}
-        Volume: 0.3
+        Volume: 1
         WaitForEnd: 0
     - rid: 4263738448548987102
       type: {class: SoundCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Clip: {fileID: 8300000, guid: c8dfd2ac6dbc750429367399b31dbb25, type: 3}
-        Volume: 0.3
+        Volume: 1
         WaitForEnd: 0
     - rid: 4263738448548987103
       type: {class: SoundCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Clip: {fileID: 8300000, guid: c8dfd2ac6dbc750429367399b31dbb25, type: 3}
-        Volume: 0.3
+        Volume: 1
         WaitForEnd: 0
     - rid: 4263738448548987104
       type: {class: SoundCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Clip: {fileID: 8300000, guid: c8dfd2ac6dbc750429367399b31dbb25, type: 3}
-        Volume: 0.3
+        Volume: 1
         WaitForEnd: 0
     - rid: 4263738448548987105
       type: {class: SoundCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Clip: {fileID: 8300000, guid: 97ed247aa660b5441a31773995e1c3f2, type: 3}
-        Volume: 0.3
+        Volume: 1
         WaitForEnd: 0
     - rid: 4263738448548987106
       type: {class: SoundCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}
       data:
         Clip: {fileID: 8300000, guid: c8dfd2ac6dbc750429367399b31dbb25, type: 3}
-        Volume: 0.3
+        Volume: 1
         WaitForEnd: 0

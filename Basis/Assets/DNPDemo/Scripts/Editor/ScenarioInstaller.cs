@@ -244,7 +244,8 @@ namespace DNPDemo.Editor
 
         /// <summary>
         /// Places the sound effect player (<see cref="SePlayer"/>, with a source of its own) under <paramref name="scenario"/>
-        /// unless it is there, and wires its catalog, the stage whose lines it waits for, and the runner. Returns true when
+        /// unless it is there, and wires its catalog, the stage whose lines it waits for, the runner, and the stage's
+        /// catalog (the master volume of the sound cues). Returns true when
         /// anything was added or wired.
         /// </summary>
         static bool InstallMissingSoundEffects(Transform scenario, Transform interaction)
@@ -254,13 +255,13 @@ namespace DNPDemo.Editor
             if (player == null)
             {
                 AudioSource source = CreateAudioSource(SoundEffectsObjectName, scenario);
-                source.volume = SePlayer.DefaultSourceVolume;
                 player = source.gameObject.AddComponent<SePlayer>();
                 WorldUiBuilder.Assign(player, "_source", source);
                 changed = true;
             }
             changed |= AssignIfEmpty(player, "_catalog", () => SoundEffectsSetup.CreateOrUpdateCatalog());
             changed |= AssignIfEmpty(player, "_stage", () => scenario.GetComponent<ScenarioStage>());
+            changed |= AssignIfEmpty(scenario.GetComponent<ScenarioStage>(), "_catalog", () => SoundEffectsSetup.CreateOrUpdateCatalog());
             changed |= AssignIfEmpty(interaction.GetComponent<InteractionRunner>(), "_sounds", () => player);
             return changed;
         }

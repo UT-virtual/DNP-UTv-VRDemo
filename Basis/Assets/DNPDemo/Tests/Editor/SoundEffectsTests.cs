@@ -32,6 +32,23 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void MasterVolumeSetsTheLevelAndPerSoundVolumesDefaultToFull()
+        {
+            var catalog = ScriptableObject.CreateInstance<SeCatalog>();
+            try
+            {
+                Assert.AreEqual(SeCatalog.DefaultMasterVolume, catalog.MasterVolume);
+                Assert.AreEqual(SeCatalog.DefaultMasterVolume, SeCatalog.MasterVolumeOf(null), "Without a catalog the default is used.");
+                Assert.AreEqual(1f, catalog.GetOrAdd(SeEvent.Snap).Volume, "A catalog entry only lowers its sound when set.");
+                Assert.AreEqual(1f, new SoundCue().Volume, "A sound cue only lowers its sound when set.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(catalog);
+            }
+        }
+
+        [Test]
         public void PlayerWithoutCatalogOrSourceDoesNothing()
         {
             var go = new GameObject("SePlayer");
@@ -212,6 +229,9 @@ namespace DNPDemo.Tests
             var source = so.FindProperty("_source").objectReferenceValue as AudioSource;
             Assert.IsNotNull(source, "SePlayer._source is not set.");
             Assert.AreEqual(0f, source.spatialBlend, "Interaction sounds are not positional.");
+            var stage = systems.GetComponentInChildren<ScenarioStage>(true);
+            Assert.AreSame(so.FindProperty("_catalog").objectReferenceValue, new SerializedObject(stage).FindProperty("_catalog").objectReferenceValue,
+                $"ScenarioStage._catalog must be the player's catalog, so the sound cues play at the same master volume (run {InstallMenu}).");
         }
 
         /// <summary>

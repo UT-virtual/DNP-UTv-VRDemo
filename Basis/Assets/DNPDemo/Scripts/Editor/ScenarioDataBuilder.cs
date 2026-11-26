@@ -247,12 +247,6 @@ namespace DNPDemo.Editor
         }
 
         /// <summary>
-        /// Volume of a new sound cue of <see cref="VersionSounds"/>. The clips are normalized on import, so at full volume
-        /// they drown the voice lines. A cue already in the asset keeps the volume it has.
-        /// </summary>
-        public const float VersionSoundVolume = 0.3f;
-
-        /// <summary>
         /// Steps whose statue change has a sound, played by a <see cref="SoundCue"/> right after the step's first line
         /// (<see cref="EnsureVersionSounds"/>). A part added to
         /// the statue is <see cref="SeEvent.Generate"/>, a reshape is <see cref="SeEvent.Morph"/>. The comparison table
@@ -312,7 +306,7 @@ namespace DNPDemo.Editor
                 SoundCue cue;
                 if (previousIndex < 0)
                 {
-                    cue = new SoundCue { Clip = clip, Volume = VersionSoundVolume };
+                    cue = new SoundCue { Clip = clip };
                 }
                 else
                 {

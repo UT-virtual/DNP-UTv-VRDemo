@@ -15,12 +15,7 @@ namespace DNPDemo.Audio
     /// </summary>
     public sealed class SePlayer : MonoBehaviour
     {
-        /// <summary>
-        /// Volume of the source a new player gets. The clips are normalized on import, so at full volume the effects
-        /// drown the voice lines; the catalog's per-event volume scales on top of this.
-        /// </summary>
-        public const float DefaultSourceVolume = 0.3f;
-
+        [Tooltip("Clips, per-event volumes and the master volume of the effects.")]
         [SerializeField] SeCatalog _catalog;
 
         [Tooltip("Non-positional source the effects are played on.")]
@@ -32,27 +27,15 @@ namespace DNPDemo.Audio
         readonly SeHold _hold = new();
         readonly SeDucking _ducking = new();
 
-        // The source's volume as set in the inspector; the ducking gain multiplies it every frame.
-        float _sourceVolume = DefaultSourceVolume;
-
         public SeCatalog Catalog => _catalog;
 
-        /// <summary>Editor only: a player added by hand takes the source next to it at the default volume.</summary>
+        /// <summary>Editor only: a player added by hand takes the source next to it.</summary>
         void Reset()
         {
             if (TryGetComponent(out _source))
             {
                 _source.playOnAwake = false;
                 _source.spatialBlend = 0f;
-                _source.volume = DefaultSourceVolume;
-            }
-        }
-
-        void Awake()
-        {
-            if (_source != null)
-            {
-                _sourceVolume = _source.volume;
             }
         }
 
@@ -60,18 +43,15 @@ namespace DNPDemo.Audio
         {
             _hold.Clear();
             _ducking.Reset();
-            if (_source != null)
-            {
-                _source.volume = _sourceVolume;
-            }
         }
 
+        /// <summary>Sets the source to the catalog's master volume, lowered while a line plays (<see cref="SeDucking"/>).</summary>
         void Update()
         {
             bool linePlaying = IsLinePlaying();
             if (_source != null)
             {
-                _source.volume = _sourceVolume * _ducking.Step(linePlaying, Time.unscaledDeltaTime);
+                _source.volume = SeCatalog.MasterVolumeOf(_catalog) * _ducking.Step(linePlaying, Time.unscaledDeltaTime);
             }
             if (_hold.IsHolding && _hold.TryRelease(Time.unscaledTime, linePlaying, out SeEvent held))
             {

@@ -22,6 +22,9 @@ namespace DNPDemo.Scenario
         [Tooltip("Non-positional source for sound effects.")]
         [SerializeField] AudioSource _effects;
 
+        [Tooltip("Master volume of the sound effects (SeCatalog). Without it the default master volume is used.")]
+        [SerializeField] SeCatalog _catalog;
+
         [SerializeField] BannerView _banner;
 
         readonly struct Baseline
@@ -43,17 +46,6 @@ namespace DNPDemo.Scenario
         readonly SeDucking _effectsDucking = new();
         ScenarioBindingSet _bindings;
 
-        // The effects source's volume as set in the inspector; the ducking gain multiplies it every frame.
-        float _effectsVolume = 1f;
-
-        void Awake()
-        {
-            if (_effects != null)
-            {
-                _effectsVolume = _effects.volume;
-            }
-        }
-
         /// <summary>
         /// Collects the bindings before any cue runs, so the baseline is the state at scene load. Awake is too early:
         /// the scene still counts as loading there and has no bindings to find.
@@ -63,22 +55,20 @@ namespace DNPDemo.Scenario
             EnsureBindings();
         }
 
-        /// <summary>Lowers the effects (sound cues) while a line plays (<see cref="SeDucking"/>).</summary>
+        /// <summary>
+        /// Sets the effects (sound cues) to the catalog's master volume, lowered while a line plays (<see cref="SeDucking"/>).
+        /// </summary>
         void Update()
         {
             if (_effects != null)
             {
-                _effects.volume = _effectsVolume * _effectsDucking.Step(IsLinePlaying, Time.unscaledDeltaTime);
+                _effects.volume = SeCatalog.MasterVolumeOf(_catalog) * _effectsDucking.Step(IsLinePlaying, Time.unscaledDeltaTime);
             }
         }
 
         void OnDisable()
         {
             _effectsDucking.Reset();
-            if (_effects != null)
-            {
-                _effects.volume = _effectsVolume;
-            }
         }
 
         public void ShowLine(ScenarioSpeaker speaker, string text, AudioClip voice)

@@ -505,6 +505,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Scenario.ScenarioStage
   _effects: {fileID: 571984059327579538}
+  _catalog: {fileID: 11400000, guid: b2921e5201ea43a4db2e89a54a125810, type: 2}
   _banner: {fileID: 2587707539051054735}
 --- !u!114 &5635448625506376212
 MonoBehaviour:
