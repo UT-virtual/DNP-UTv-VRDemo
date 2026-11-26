@@ -46,10 +46,9 @@ namespace DNPDemo.Editor
         public const string SelectionVolumeShaderName = "DNPDemo/SelectionVolume";
         public const string SelectionVolumeMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/Selection/SelectionVolume.mat";
 
-        public const string StrokeLineShaderName = "Universal Render Pipeline/Unlit";
         public const string StrokeLineMaterialPath = DNPDemoProjectSetup.Root + "/Art/Interaction/Stroke/StrokeLine.mat";
 
-        /// <summary>Shader of the translucent overlays: the manipulate ghost and the hint zones.</summary>
+        /// <summary>Shader of the hint zones' translucent overlay.</summary>
         public const string TransparentUnlitShaderName = "Universal Render Pipeline/Unlit";
 
         public const string HistoryPanelBackgroundShaderName = "UI/Default";
@@ -61,13 +60,7 @@ namespace DNPDemo.Editor
 
         static readonly Color PanelBackground = new(0.06f, 0.08f, 0.14f, 0.92f);
 
-        // Same red as the pen's tip sphere (PenSelectAreaMaterial), a little lighter so the volume does not hide the statue.
-        static readonly Color SelectionVolumeColor = new(1f, 0f, 0f, 0.3f);
-
-        // Pale cyan, apart from the red selection, so the goal reads as a different thing.
-        static readonly Color ManipulateGhostColor = new(0.45f, 0.85f, 1f, 0.35f);
-
-        // Warm yellow, apart from the red selection and the cyan ghost. HintZoneView replaces it with its own colour.
+        // Warm yellow, apart from the teal selection and the light blue ghost. HintZoneView replaces it with its own colour.
         static readonly Color HintZoneColor = new(1f, 0.85f, 0.2f, 0.3f);
 
         [MenuItem("DNP Demo/Create/Interaction Prefabs")]
@@ -113,26 +106,8 @@ namespace DNPDemo.Editor
             }
         }
 
-        /// <summary>Material of <see cref="SelectionVolumeView"/>: the selection shader with GPU instancing on.</summary>
-        public static Material CreateSelectionVolumeMaterial()
-        {
-            var existing = AssetDatabase.LoadAssetAtPath<Material>(SelectionVolumeMaterialPath);
-            if (existing != null)
-            {
-                return existing;
-            }
-            Shader shader = Shader.Find(SelectionVolumeShaderName);
-            if (shader == null)
-            {
-                throw new InvalidOperationException($"Shader {SelectionVolumeShaderName} was not found.");
-            }
-            var material = new Material(shader) { enableInstancing = true };
-            material.SetColor("_BaseColor", SelectionVolumeColor);
-            Directory.CreateDirectory(Path.GetDirectoryName(SelectionVolumeMaterialPath));
-            AssetDatabase.CreateAsset(material, SelectionVolumeMaterialPath);
-            Debug.Log($"[DNPDemo] Created {SelectionVolumeMaterialPath}");
-            return material;
-        }
+        /// <summary>Material of <see cref="SelectionVolumeView"/>: the selection shader with GPU instancing on (<see cref="EffectMaterials.Selection"/>).</summary>
+        public static Material CreateSelectionVolumeMaterial() => EffectMaterials.CreateIfMissing(EffectMaterials.Selection);
 
         /// <summary>
         /// Tool for <see cref="StrokePart"/>, with the view that draws the lines. The pen and the stage live in
@@ -166,26 +141,8 @@ namespace DNPDemo.Editor
             }
         }
 
-        /// <summary>Material of <see cref="StrokeView"/>: opaque unlit white, the colour of the pen's lines.</summary>
-        public static Material CreateStrokeLineMaterial()
-        {
-            var existing = AssetDatabase.LoadAssetAtPath<Material>(StrokeLineMaterialPath);
-            if (existing != null)
-            {
-                return existing;
-            }
-            Shader shader = Shader.Find(StrokeLineShaderName);
-            if (shader == null)
-            {
-                throw new InvalidOperationException($"Shader {StrokeLineShaderName} was not found.");
-            }
-            var material = new Material(shader);
-            material.SetColor("_BaseColor", Color.white);
-            Directory.CreateDirectory(Path.GetDirectoryName(StrokeLineMaterialPath));
-            AssetDatabase.CreateAsset(material, StrokeLineMaterialPath);
-            Debug.Log($"[DNPDemo] Created {StrokeLineMaterialPath}");
-            return material;
-        }
+        /// <summary>Material of <see cref="StrokeView"/>: the pen's cyan lines (<see cref="EffectMaterials.Stroke"/>).</summary>
+        public static Material CreateStrokeLineMaterial() => EffectMaterials.CreateIfMissing(EffectMaterials.Stroke);
 
         /// <summary>
         /// Tool for <see cref="ManipulatePart"/>, with the view that draws the ghost. The pen and the stage live in
@@ -274,13 +231,12 @@ namespace DNPDemo.Editor
         }
 
         /// <summary>
-        /// Material of <see cref="ManipulateGhostView"/>: translucent unlit, without depth writes so the object behind the
-        /// ghost stays visible.
+        /// Material of <see cref="ManipulateGhostView"/>: translucent with a rim, without depth writes so the object behind
+        /// the ghost stays visible (<see cref="EffectMaterials.Ghost"/>).
         /// </summary>
-        public static Material CreateManipulateGhostMaterial() =>
-            CreateTransparentUnlitMaterialIfMissing(ManipulateGhostMaterialPath, ManipulateGhostColor);
+        public static Material CreateManipulateGhostMaterial() => EffectMaterials.CreateIfMissing(EffectMaterials.Ghost);
 
-        /// <summary>Material of <see cref="HintZoneView"/>: translucent unlit like the ghost, in the hint's colour.</summary>
+        /// <summary>Material of <see cref="HintZoneView"/>: translucent unlit, in the hint's colour.</summary>
         public static Material CreateHintZoneMaterial() =>
             CreateTransparentUnlitMaterialIfMissing(HintZoneMaterialPath, HintZoneColor);
 

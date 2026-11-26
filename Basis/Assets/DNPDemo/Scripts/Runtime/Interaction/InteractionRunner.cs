@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Basis;
 using Basis.Network.Core;
+using DNPDemo.Audio;
 using DNPDemo.Roles;
 using DNPDemo.Scenario;
 using UnityEngine;
@@ -34,10 +35,14 @@ namespace DNPDemo.Interaction
         [Tooltip("Tools available for running parts. The first one whose CanRun accepts a part runs it.")]
         [SerializeField] List<InteractionTool> _tools = new();
 
+        [Tooltip("Plays the interaction sounds on this device. Without it the interaction is silent.")]
+        [SerializeField] SePlayer _sounds;
+
         readonly InteractionProgress _progress = new();
         readonly List<InteractionTool> _startedTools = new();
         readonly HashSet<string> _reportedMissingTools = new();
         readonly ushort[] _singleRecipient = new ushort[1];
+        readonly PartSoundGate _soundGate = new();
 
         InteractionSession _session;
         InteractionTool _currentTool;
@@ -156,12 +161,18 @@ namespace DNPDemo.Interaction
 
         internal bool IsCurrent(InteractionSession session) => session != null && session == _session;
 
-        internal void Complete(InteractionSession session)
+        /// <summary>
+        /// Moves on after the actor completed <paramref name="session"/>'s part, with the part's completion sound
+        /// (<see cref="PartSoundGate.CompletionSound"/>: <see cref="SeEvent.Complete"/> for the last part, otherwise
+        /// <paramref name="feedback"/>). The next part's task sound is skipped when a completion sound played.
+        /// </summary>
+        internal void Complete(InteractionSession session, SeEvent? feedback)
         {
             if (!IsCurrent(session) || !session.IsLocalActor || !_progress.CompletePart(session.PartIndex))
             {
                 return;
             }
+            PlayCompletionSound(session, feedback);
             Send(new InteractionMessage(InteractionMessageType.PartAdvanced, _progress.Sequence, _progress.StepIndex, _progress.PartIndex),
                 null, DeliveryMethod.ReliableOrdered, null);
             StartCurrentPart();
@@ -177,6 +188,54 @@ namespace DNPDemo.Interaction
             {
                 Send(new InteractionMessage(InteractionMessageType.Progress, _progress.Sequence, _progress.StepIndex, session.PartIndex),
                     payload, deliveryMethod, null);
+            }
+        }
+
+        /// <summary>Actor only: plays <paramref name="seEvent"/> for how the current operation is going.</summary>
+        internal void PlayFeedback(InteractionSession session, SeEvent seEvent)
+        {
+            if (IsCurrent(session) && session.IsLocalActor)
+            {
+                PlaySound(seEvent);
+            }
+        }
+
+        /// <summary>
+        /// Not the actor: the actor completed <paramref name="session"/>'s part with the operation of
+        /// <paramref name="feedback"/>, as received from it. Plays the same completion sound as the actor's device.
+        /// </summary>
+        internal void PlayRemoteCompletion(InteractionSession session, SeEvent feedback)
+        {
+            if (IsCurrent(session) && !session.IsLocalActor)
+            {
+                PlayCompletionSound(session, feedback);
+            }
+        }
+
+        void PlayCompletionSound(InteractionSession session, SeEvent? feedback)
+        {
+            SeEvent? sound = PartSoundGate.CompletionSound(session.PartIndex, session.PartCount, feedback);
+            if (sound.HasValue)
+            {
+                PlaySound(sound.Value);
+                _soundGate.MarkCompletedWithSound(_progress.Sequence, _progress.StepIndex, session.PartIndex);
+            }
+        }
+
+        void PlaySound(SeEvent seEvent)
+        {
+            if (_sounds != null)
+            {
+                _sounds.Play(seEvent);
+            }
+        }
+
+        /// <summary>Plays <see cref="SeEvent.TaskShow"/> on every device when the part that begins needs it (<see cref="PartSoundGate.TryAnnounce"/>).</summary>
+        void AnnounceCurrentPart()
+        {
+            if (_soundGate.TryAnnounce(_progress.Sequence, _progress.StepIndex, _progress.PartIndex))
+            {
+                PlaySound(SeEvent.TaskShow);
             }
         }
 
@@ -256,6 +315,7 @@ namespace DNPDemo.Interaction
             }
             InteractionPart part = step.Interaction[_progress.PartIndex];
             _session = new InteractionSession(this, step, part, _progress.PartIndex, _progress.PartCount, step.Actor, IsActorForCurrentStep());
+            AnnounceCurrentPart();
             _currentTool = FindTool(part);
             if (_currentTool == null)
             {

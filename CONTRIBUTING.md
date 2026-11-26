@@ -170,6 +170,7 @@ git mergetool --tool=unityyamlmerge -- <衝突したファイル>
 - UI の日本語フォント（`UI/Fonts/NotoSansJP-Regular SDF.asset`）は、文字セット `UI/Fonts/JapaneseCharacterSet-3353.txt` から作った静的な SDF です。セットにない文字は □ で表示されます。UI や台詞に新しい文字や記号を使うときは、文字セットに加えてから SDF を作り直してください（フォントアセットを選び、インスペクターの Update Atlas Texture → Generate Font Atlas → Save）。作り直し忘れは Editor テスト `UiFontTests` が検出します。作成設定の Get Font Features（`includeFontFeatures`）はオフにしています。この SDF ではカーニングが元のフォントの約 12 倍の値で取り込まれ、「Ver」の V と e が重なるためです。
 - Unity が自動で書き換えただけのファイルはコミットしません。例: Basis のフォントアセット（`Poppins-Regular SDF NamePlate.asset` など）、`ProjectSettings/QualitySettings.asset`、`UniversalRenderPipelineGlobalSettings.asset`、`AddressableAssetSettings.asset`。設定を意図して変えた場合だけコミットします。
 - `.meta` ファイルは Unity に生成させます。手で作らないでください。アセットを移動するときは、Unity のプロジェクトウィンドウで移動するか、`.meta` ごと移動してください（GUID が保たれ、参照が切れません）。
+- SE の mp3（`Audio/SE/`）はリポジトリに含めず、`.meta` だけを管理します。素材の利用規約で再配布が禁止されているためです。配置手順は [README.md](README.md#効果音seの配置) にあります。
 
 ## Git LFS
 

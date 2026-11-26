@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Basis.Network.Core;
+using DNPDemo.Audio;
 using DNPDemo.Pen;
 using DNPDemo.Scenario;
 using UnityEngine;
@@ -121,12 +122,17 @@ namespace DNPDemo.Interaction.Selection
             {
                 Debug.Log($"[DNPDemo] 範囲選択をやり直します。{verdict}", this);
                 _view.Clear(_rejectFadeSeconds);
+                // Missing zone keys are a setup problem the player cannot fix, so only a rejected selection sounds.
+                if (_targetsComplete)
+                {
+                    _session.PlayFeedback(SeEvent.Fail);
+                }
                 return;
             }
             Debug.Log($"[DNPDemo] 範囲選択を確定しました。{verdict}", this);
             InteractionSession session = _session;
             session.SendProgress(SelectionMessage.Serialize(samples), DeliveryMethod.ReliableOrdered);
-            session.Complete();
+            session.Complete(SeEvent.SelectConfirm);
         }
 
         /// <summary>

@@ -146,7 +146,7 @@ ScenarioStage  … シーン側の窓口（効果音、バナー）。SO はシ�
 - 範囲選択の実装（`Scripts/Runtime/Interaction/Selection/`）
   - `SelectionPart` は対象ゾーンをキーの列（`TargetZoneKeys`）、はみ出しの許容率（`RequiredInsideRatio`）、被覆率（`RequiredCoverage`）で持つ。被覆率は `SelectionCoverage` が、ゾーンの外接ボックスに約 1000 点の格子を張り、ゾーン内の点のうち選択球に入る割合として求める。`DetectionZoneGroup` は1つのゾーンとして扱い、含まれるゾーン全体に対する被覆率を見る。キーで指すオブジェクトには `DetectionZoneGroup` か `DetectionZone` を付け、`ScenarioObjectBinding` でキーを登録する。キーの割り当て漏れは `ScenarioSceneBindingTests` が、キーの空や重複は `ScenarioData.Validate` が検出する。キーが1つでも解決できない部品は、判定が常に失敗する（運営スキップで進める）。
   - `SelectionSampler` は、前のサンプルから「半径 × 0.5」以上動いたら（半径の変化も移動に数える）サンプルを足し、1フレームで大きく動いたときは間を補間する。1回の選択は最大 512 サンプル。判定は `SelectionJudge`、送信形式は `SelectionMessage`（1サンプル 8 バイト、最大約 4KB）。
-  - 表示は `SelectionVolumeView` が、低ポリの球（320 ポリゴン）を `Graphics.RenderMeshInstanced` で1回の描画呼び出しにまとめて描く。シェーダー `DNPDemo/SelectionVolume`（`Art/Interaction/Selection/`）はステンシルの最上位ビットで各ピクセルを1回だけ塗るので、球の重なりが濃くならない。その代わり色は単色になる。
+  - 表示は `SelectionVolumeView` が、低ポリの球（320 ポリゴン）を `Graphics.RenderMeshInstanced` で1回の描画呼び出しにまとめて描く。シェーダー `DNPDemo/SelectionVolume`（`Art/Interaction/Selection/`）はステンシルの最上位ビットで各ピクセルを1回だけ塗るので、球の重なりが濃くならない。色は半透明で、全体がゆっくり明滅し、各球の縁を視線の向きに応じて明るく光らせる（フレネル）。
   - 押している途中でメニューからモードを変えると、その選択は判定せずに破棄する。
   - 確定した選択範囲は、次の部品（音声指示など）の間も表示し、ステップが進むと消す。次の部品の途中で再接続した端末には、確定済みの選択範囲は表示されない（`InteractionRunner` が現在の部品宛ての途中経過だけを配るため）。
 - 線画の実装（`Scripts/Runtime/Interaction/Stroke/`）
@@ -332,6 +332,33 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 - 学者の見た目は VRoid の VRM を Variant（`Scholar_A_Archaeologist` / `Scholar_B_Engineer`）の子 `Avatar` に置く。待機アニメーション（`Art/Scholars/AC_ScholarIdle.controller`）で立ち、音源は口、字幕は頭の上に、モデルごとに合わせる。口パクは uLipSync の母音を顔の `Fcl_MTH_A`〜`O` に `uLipSyncBlendShape` でつなぐ。母音の判定は uLipSync 付属の `uLipSync-Profile-Sample` を使う。
 - ナレーターは位置を持たない 2D 音声で、視界の下に字幕を出す。
 
+### 2.9 効果音（SE）
+
+コードは `Scripts/Runtime/Audio/`、データは `Data/SeCatalog.asset`。mp3 はリポジトリに含めない（README「効果音（SE）の配置」）。
+
+```
+SeEvent    … 効果音を鳴らす場面（生成、変形、選択確定、スナップ、音声入力の開始と終了、タスク表示、完了、失敗）。値はアセットに保存されるので変えない
+SeCatalog (ScriptableObject) … 場面ごとのクリップと音量、全体のマスター音量（既定 0.3）。クリップが無い場面は無音
+SePlayer   … 操作の効果音をこの端末だけで鳴らす（InteractionRunner から呼ぶ）。ステップが変わっても止まらないよう、シナリオの効果音とは別の AudioSource を持つ
+SeHold     … 台詞の再生中に要求された効果音を保留し、台詞が終わったら鳴らす。保留するのは最新の1つだけで、2秒待っても台詞が続くときはその時点で鳴らす
+SeDucking  … 台詞の再生中は効果音の音量を 0.3 倍に下げる（0.15 秒でフェード）。SePlayer と ScenarioStage の両方に掛ける
+```
+
+- 像の生成と変形の音は、シナリオの `SoundCue`（そのステップの最初の台詞の直後）が `ScenarioStage` の効果音のソースで鳴らす。
+- 1回の操作で鳴る効果音は1つ。部品の完了音（最後の部品なら完了、それ以外は操作の音）を鳴らしたときは、次の部品のタスク表示の音を鳴らさない。ステップの最初の部品ではタスク表示の音を鳴らす。相手の端末も同じ規則で、操作した端末と同じ音を鳴らす（`PartSoundGate`）。
+- 全体の音量は `SeCatalog` のマスター音量で変える。場面ごとの音量と `SoundCue` の音量は既定 1 で、個別に下げたいときだけ使う。
+
+### 2.10 セットアップ用のメニュー
+
+DemoSystems への組み込み（§2.2 の Install Scenario Into DemoSystems Prefab）のほかに、次のメニューがある。
+
+| メニュー「DNP Demo/Setup/…」 | 役割 |
+|---|---|
+| Assign Voice Clips | 現在の音声セット（`Audio/Voice/` の番号付き wav）を、再生順にシナリオの `LineCue` へ割り当てる。台詞とファイルの数が合わないときは何も変えない |
+| Install Sound Effects | `SeCatalog` を作成・更新し、シナリオに版の効果音の `SoundCue` を足し、DemoSystems に `SePlayer` を組み込む。mp3 を置いたあとに再実行すると、空のクリップを埋める |
+| Reset Effect Materials | 選択範囲・ストローク・ゴースト・版の切り替えのマテリアルを、既定のシェーダーと値に戻す |
+| Install Lobby Credits | ロビーパネルの役割選択画面に、音声と効果音のクレジットを追加・更新する |
+
 ---
 
 ## 3. ステップ定義
@@ -384,9 +411,9 @@ M3 まではプリミティブを組み合わせた仮モデルで進め、M4 �
 | | 学者A/B のアバター | VRoid の VRM 0.x（`Art/Scholars/Source~/`）。取り込み方は CONTRIBUTING.md |
 | 環境 | 古代ギリシア風神殿の360度パノラマ | Skybox 用。2:1 の JPEG（LDR）。陰影はライトで作る。エーゲ海の青空と自然光 |
 | 音声 | ナレーター、学者A、学者B の台詞 | 生声または合成音声で台詞ごとに1ファイル。台本を字幕データにする |
-| SE | 生成、変形、選択確定、スナップ、音声入力の開始と終了、タスク表示、完了 | |
+| SE | 生成、変形、選択確定、スナップ、音声入力の開始と終了、タスク表示、完了、失敗 | 配置と出典は README「効果音（SE）の配置」 |
 | UI | 日本語フォント（TMP SDF。Noto Sans JP など）、HUD アイコン、履歴パネル、背景パネル | |
-| シェーダー | 選択範囲（半透明）、ストローク、ディゾルブ、スキャンライン、ゴースト（操作対象の目標表示） | Shader Graph（URP） |
+| シェーダー | 選択範囲（半透明）、ストローク、ディゾルブ、スキャンライン、ゴースト（操作対象の目標表示） | 手書きの HLSL（URP）。ディゾルブとスキャンラインは共通の `Dissolve.hlsl` / `ScanLine.hlsl`（`Art/Venus/Materials/`）にあり、版の切り替えのシェーダー `ModelTransition.shader` が読み込む |
 
 ---
 
