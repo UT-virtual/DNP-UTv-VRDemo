@@ -45,7 +45,7 @@ Built with [Basis](https://github.com/BasisVR/basis)
 
 `se_voice_start.mp3` と `se_voice_end.mp3` は、同じ maou_se_system35.mp3 を2つの名前でコピーします。
 
-- mp3 を置いてから Unity を開いてください。mp3 がないまま開くと、対応するファイルのない `.meta` が Unity に削除されることがあります（未確認）。削除された `.meta` をコミットすると GUID が変わり、シーンや Prefab からの参照が切れます。削除されてしまったときは、その削除をコミットせず、mp3 を置き直してください。`.meta` をコミット済みであれば、`git restore` で戻せます。
+- mp3 が無いまま Unity を開くと、Unity は対応する `.meta` を削除します。その削除をコミットすると GUID が変わり、シーンや Prefab の参照が切れます。必ず mp3 を置いてから Unity を開いてください。`.meta` が消えた場合は、コミットせずに `git restore` で戻してください。
 - 配置したあとに Unity を開き、9件の `.meta` が生成される（またはリポジトリの `.meta` が使われる）ことを確認してください。`.meta` は手で作りません。
 - mp3 を置いて Unity を開いたら、メニュー `DNP Demo > Setup > Install Sound Effects` を実行してください。
 - 全体の音量は `Basis/Assets/DNPDemo/Data/SeCatalog.asset` のマスター音量で変えます。
