@@ -32,6 +32,92 @@ namespace DNPDemo.Environment
         [SerializeField] Shader _snapshotShader;
         [SerializeField, Min(0f)] float _transitionDuration = 2f;
 
+        struct FogState
+        {
+            public bool Enabled;
+            public FogMode Mode;
+            public Color FogColor;
+            public float Density;
+            public float StartDistance;
+            public float EndDistance;
+
+            public static FogState FromSettings(DistanceFogSettings settings)
+            {
+                float start = Mathf.Max(0f, settings.StartDistance);
+                return new FogState
+                {
+                    Enabled = settings.Enabled,
+                    // FogMode has no zero; settings saved before the mode existed were linear.
+                    Mode = Enum.IsDefined(typeof(FogMode), settings.Mode) ? settings.Mode : FogMode.Linear,
+                    FogColor = Color.black,
+                    Density = Mathf.Max(0f, settings.Density),
+                    StartDistance = start,
+                    EndDistance = Mathf.Max(start + 0.01f, settings.EndDistance),
+                };
+            }
+
+            public static FogState Capture()
+            {
+                return new FogState
+                {
+                    Enabled = RenderSettings.fog,
+                    Mode = RenderSettings.fogMode,
+                    FogColor = RenderSettings.fogColor,
+                    Density = RenderSettings.fogDensity,
+                    StartDistance = RenderSettings.fogStartDistance,
+                    EndDistance = RenderSettings.fogEndDistance,
+                };
+            }
+
+            public static FogState Lerp(FogState from, FogState to, float t)
+            {
+                if (t <= 0f)
+                {
+                    return from;
+                }
+                if (t >= 1f)
+                {
+                    return to;
+                }
+                if (from.Enabled == to.Enabled)
+                {
+                    return new FogState
+                    {
+                        Enabled = to.Enabled,
+                        Mode = t < 0.5f ? from.Mode : to.Mode,
+                        FogColor = Color.Lerp(from.FogColor, to.FogColor, t),
+                        Density = Mathf.Lerp(from.Density, to.Density, t),
+                        StartDistance = Mathf.Lerp(from.StartDistance, to.StartDistance, t),
+                        EndDistance = Mathf.Lerp(from.EndDistance, to.EndDistance, t),
+                    };
+                }
+
+                FogState fog = from.Enabled ? from : to;
+                float strength = from.Enabled ? 1f - t : t;
+                if (fog.Mode == FogMode.Linear)
+                {
+                    // Widening the distance range scales the falloff while keeping the near area clear.
+                    float width = fog.EndDistance - fog.StartDistance;
+                    fog.EndDistance = fog.StartDistance + width / Mathf.Max(strength, 0.0001f);
+                }
+                else
+                {
+                    fog.Density *= strength;
+                }
+                return fog;
+            }
+
+            public void Apply()
+            {
+                RenderSettings.fogMode = Mode;
+                RenderSettings.fogColor = FogColor;
+                RenderSettings.fogDensity = Density;
+                RenderSettings.fogStartDistance = StartDistance;
+                RenderSettings.fogEndDistance = EndDistance;
+                RenderSettings.fog = Enabled;
+            }
+        }
+
         struct RuntimeState
         {
             public Color DirectionalColor;
@@ -67,6 +153,7 @@ namespace DNPDemo.Environment
             public float ReflectionIntensity;
             public ShadowQualitySettings ShadowQuality;
             public float WallAlpha;
+            public FogState Fog;
 
             /// <param name="spotEnabled">Spot light activation already resolved from the preset's <see cref="SpotLightMode"/>.</param>
             /// <param name="ambientProbe">The preset's ambient light, resolved by <see cref="ResolveAmbientProbe"/>.</param>
@@ -111,6 +198,7 @@ namespace DNPDemo.Environment
                     ReflectionIntensity = reflection.Intensity,
                     ShadowQuality = preset.ShadowQuality,
                     WallAlpha = preset.ExhibitionRoomVisible ? 1f : 0f,
+                    Fog = FogState.FromSettings(preset.DistanceFog),
                 };
             }
 
@@ -165,6 +253,7 @@ namespace DNPDemo.Environment
                     ReflectionIntensity = reflectionIntensity,
                     ShadowQuality = t < 0.5f ? from.ShadowQuality : to.ShadowQuality,
                     WallAlpha = Mathf.Lerp(from.WallAlpha, to.WallAlpha, t),
+                    Fog = FogState.Lerp(from.Fog, to.Fog, t),
                 };
             }
 
@@ -190,8 +279,9 @@ namespace DNPDemo.Environment
         RenderTexture _activeSkySnapshot;
         Material _originalSkybox;
         RuntimeState _originalState;
-        Func<UniversalRenderPipelineAsset> _shadowQualityAssetProvider = ShadowQualityOverride.ActiveAsset;
+        Func<UniversalRenderPipelineAsset> _pipelineAssetProvider = PipelineAssets.Active;
         ShadowQualityOverride _shadowQuality;
+        AdditionalLightsOverride _additionalLights;
         RuntimeState _transitionStart;
         RuntimeState _transitionTargetState;
         EnvironmentPreset _transitionTarget;
@@ -208,14 +298,26 @@ namespace DNPDemo.Environment
         /// <summary>The environment at scene load, which a stage reset returns to.</summary>
         public EnvironmentPreset BaselinePreset => _baselinePreset;
 
+        void Start()
+        {
+            if (gameObject.scene == SceneManager.GetActiveScene())
+            {
+                EnsureInitialized();
+            }
+        }
+
         void Update() => AdvanceTransition(Time.unscaledDeltaTime);
 
-        void LateUpdate() => MaintainShadowQuality();
+        void LateUpdate() => MaintainPipelineOverrides();
 
-        void OnEnable() => _shadowQuality?.Resume();
+        void OnEnable()
+        {
+            _shadowQuality?.Resume();
+            _additionalLights?.Resume();
+        }
 
-        /// <summary>The URP asset is a project asset, so the shadow override must not outlive this component.</summary>
-        void OnDisable() => _shadowQuality?.Suspend();
+        /// <summary>The URP asset is a project asset, so the overrides must not outlive this component.</summary>
+        void OnDisable() => SuspendPipelineOverrides();
 
         /// <summary>Begins a fade from the currently displayed state; a new request replaces an in-flight destination.</summary>
         public void TransitionTo(EnvironmentPreset preset, float duration = -1f)
@@ -262,19 +364,29 @@ namespace DNPDemo.Environment
         }
 
         /// <summary>
-        /// Re-applies the preset's shadow quality if Basis rewrote the URP asset. Runs after the frame's other updates so the
-        /// override is in place before rendering. Internal so EditMode tests can drive it.
+        /// Re-applies the preset's shadow quality and the additional lights if Basis rewrote the URP asset. Runs after the
+        /// frame's other updates so the overrides are in place before rendering. Internal so EditMode tests can drive it.
         /// </summary>
-        internal void MaintainShadowQuality() => _shadowQuality?.Maintain();
+        internal void MaintainPipelineOverrides()
+        {
+            _shadowQuality?.Maintain();
+            _additionalLights?.Maintain();
+        }
 
-        /// <summary>Replaces the URP asset the shadow override writes to. Tests call it before the controller initializes.</summary>
-        internal void SetShadowQualityAssetProvider(Func<UniversalRenderPipelineAsset> provider)
+        /// <summary>Replaces the URP asset the overrides write to. Tests call it before the controller initializes.</summary>
+        internal void SetPipelineAssetProvider(Func<UniversalRenderPipelineAsset> provider)
         {
             if (_initialized)
             {
-                throw new InvalidOperationException("The shadow quality asset must be set before the controller initializes.");
+                throw new InvalidOperationException("The URP asset must be set before the controller initializes.");
             }
-            _shadowQualityAssetProvider = provider ?? throw new ArgumentNullException(nameof(provider));
+            _pipelineAssetProvider = provider ?? throw new ArgumentNullException(nameof(provider));
+        }
+
+        void SuspendPipelineOverrides()
+        {
+            _shadowQuality?.Suspend();
+            _additionalLights?.Suspend();
         }
 
         /// <summary>Advances the transition clock. Internal so EditMode tests can drive it deterministically.</summary>
@@ -477,6 +589,7 @@ namespace DNPDemo.Environment
                 ReflectionIntensity = RenderSettings.reflectionIntensity,
                 ShadowQuality = _shadowQuality != null ? _shadowQuality.Requested : default,
                 WallAlpha = _wallAlpha,
+                Fog = FogState.Capture(),
             };
         }
 
@@ -532,6 +645,7 @@ namespace DNPDemo.Environment
             RenderSettings.defaultReflectionMode = state.ReflectionMode;
             RenderSettings.customReflectionTexture = state.CustomReflection;
             RenderSettings.reflectionIntensity = state.ReflectionIntensity;
+            state.Fog.Apply();
 
             _shadowQuality?.Request(state.ShadowQuality);
         }
@@ -595,7 +709,10 @@ namespace DNPDemo.Environment
             }
             _originalSkybox = RenderSettings.skybox;
             _originalState = CaptureCurrentState();
-            _shadowQuality = new ShadowQualityOverride(_shadowQualityAssetProvider);
+            _shadowQuality = new ShadowQualityOverride(_pipelineAssetProvider);
+            // The statue's spot and fill lights are additional lights, which Basis turns off at its lowest quality.
+            _additionalLights = new AdditionalLightsOverride(_pipelineAssetProvider);
+            _additionalLights.Keep();
             _skyboxMaterial = new Material(_crossfadeShader)
             {
                 name = "Environment Crossfade Runtime",
@@ -683,7 +800,7 @@ namespace DNPDemo.Environment
 
         void OnDestroy()
         {
-            _shadowQuality?.Suspend();
+            SuspendPipelineOverrides();
             if (_initialized)
             {
                 if (_exhibitionRoom != null)

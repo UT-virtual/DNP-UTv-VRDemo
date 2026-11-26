@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using DNPDemo.Editor;
 using DNPDemo.Environment;
 using DNPDemo.Scenario;
@@ -430,10 +431,10 @@ namespace DNPDemo.Tests
 
             var basisTier = new Values { Resolution = 4096, Distance = 150f, Cascades = 4 };
             basisTier.Write(fixture.Urp);
-            fixture.Controller.MaintainShadowQuality();
+            fixture.Controller.MaintainPipelineOverrides();
             Assert.AreEqual(Values.From(_temple.ShadowQuality), Values.Read(fixture.Urp));
 
-            fixture.Controller.MaintainShadowQuality();
+            fixture.Controller.MaintainPipelineOverrides();
             Assert.AreEqual(Values.From(_temple.ShadowQuality), Values.Read(fixture.Urp));
 
             fixture.Stage.ResetToBaseline();
@@ -478,6 +479,59 @@ namespace DNPDemo.Tests
             }
         }
 
+        /// <summary>Basis' Very Low quality, the default on Quest, turns additional lights off, which hides the statue's spot light.</summary>
+        [Test]
+        public void AdditionalLightsStayOnWhileTheControllerRuns()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            BasisUrpQualityFields.EnsureResolved();
+            BasisUrpQualityFields.AdditionalLightsRenderingMode.Set(fixture.Urp, LightRenderingMode.Disabled);
+
+            fixture.Stage.ResetToBaseline();
+            Assert.AreEqual(LightRenderingMode.PerPixel, fixture.Urp.additionalLightsRenderingMode);
+
+            BasisUrpQualityFields.AdditionalLightsRenderingMode.Set(fixture.Urp, LightRenderingMode.PerVertex);
+            fixture.Controller.MaintainPipelineOverrides();
+            Assert.AreEqual(LightRenderingMode.PerPixel, fixture.Urp.additionalLightsRenderingMode, "Basis rewriting the tier does not turn them off.");
+
+            // Unity delivers this lifecycle callback when the controller is destroyed in Play mode.
+            typeof(EnvironmentController).GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(fixture.Controller, null);
+            Assert.AreEqual(LightRenderingMode.PerVertex, fixture.Urp.additionalLightsRenderingMode, "The tier Basis chose last is the one to return to.");
+        }
+
+        [Test]
+        public void SuspendedAdditionalLightsOverrideRestoresTheAssetAndResumes()
+        {
+            UniversalRenderPipelineAsset asset = CreateUrpAsset();
+            try
+            {
+                BasisUrpQualityFields.EnsureResolved();
+                BasisUrpQualityFields.AdditionalLightsRenderingMode.Set(asset, LightRenderingMode.Disabled);
+                var additionalLights = new AdditionalLightsOverride(() => asset);
+
+                additionalLights.Keep();
+                Assert.AreEqual(LightRenderingMode.PerPixel, asset.additionalLightsRenderingMode);
+
+                additionalLights.Suspend();
+                Assert.AreEqual(LightRenderingMode.Disabled, asset.additionalLightsRenderingMode, "Disabling the controller must leave the project asset as it was.");
+                additionalLights.Maintain();
+                Assert.AreEqual(LightRenderingMode.Disabled, asset.additionalLightsRenderingMode, "A suspended override stays off.");
+
+                additionalLights.Resume();
+                Assert.AreEqual(LightRenderingMode.PerPixel, asset.additionalLightsRenderingMode);
+
+                // Basis puts the authored value back when Play Mode exits, before the controller is destroyed.
+                BasisUrpQualityFields.AdditionalLightsRenderingMode.Set(asset, LightRenderingMode.PerVertex);
+                additionalLights.Suspend();
+                Assert.AreEqual(LightRenderingMode.PerVertex, asset.additionalLightsRenderingMode, "A value written after the override is newer and stays.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(asset);
+            }
+        }
+
         [Test]
         public void EnvironmentCueAppliesInstantlyAndResetRestoresExhibition()
         {
@@ -507,7 +561,6 @@ namespace DNPDemo.Tests
         {
             EnvironmentFixture fixture = CreateFixture();
 
-            // Entering a step after connecting resets the stage, which is what first initializes the controller.
             fixture.Stage.ResetToBaseline();
 
             AssertWallOpaque(fixture);
@@ -595,6 +648,103 @@ namespace DNPDemo.Tests
             Assert.IsFalse(fixture.Controller.IsTransitioning);
             Assert.AreEqual(_temple.DirectionalLight.Intensity, fixture.Directional.intensity);
             Assert.AreSame(_temple.Panorama, RenderSettings.skybox.GetTexture("_PanoramaA"));
+        }
+
+        [Test]
+        public void DistanceFogFollowsExhibitionAndTemple()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            fixture.Stage.ResetToBaseline();
+            AssertExhibitionFog();
+
+            fixture.Controller.TransitionTo(_temple, 2f);
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.IsTrue(RenderSettings.fog);
+            Assert.AreEqual(FogMode.Exponential, RenderSettings.fogMode);
+            Assert.AreEqual(_exhibition.DistanceFog.Density * 0.5f, RenderSettings.fogDensity, 1e-4f, "Fog that turns off thins out.");
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.IsFalse(RenderSettings.fog);
+            Assert.IsTrue(fixture.Room.activeSelf, "Fog follows the preset even when the room object stays active.");
+
+            fixture.Controller.TransitionTo(_exhibition, 2f);
+            fixture.Controller.AdvanceTransition(1f);
+            Assert.IsTrue(RenderSettings.fog);
+            Assert.AreEqual(_exhibition.DistanceFog.Density * 0.5f, RenderSettings.fogDensity, 1e-4f, "Fog that turns on thickens.");
+            fixture.Controller.AdvanceTransition(1f);
+            AssertExhibitionFog();
+        }
+
+        [Test]
+        public void DestroyingEnvironmentControllerRestoresTheSceneFog()
+        {
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.ExponentialSquared;
+            RenderSettings.fogColor = Color.gray;
+            RenderSettings.fogDensity = 0.04f;
+            RenderSettings.fogStartDistance = 8f;
+            RenderSettings.fogEndDistance = 24f;
+
+            EnvironmentFixture fixture = CreateFixture();
+            fixture.Controller.ApplyInstant(_exhibition);
+            AssertExhibitionFog();
+
+            // Unity delivers this lifecycle callback when the controller is destroyed in Play mode.
+            typeof(EnvironmentController).GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(fixture.Controller, null);
+            Assert.IsTrue(RenderSettings.fog);
+            Assert.AreEqual(FogMode.ExponentialSquared, RenderSettings.fogMode);
+            Assert.AreEqual(Color.gray, RenderSettings.fogColor);
+            Assert.AreEqual(0.04f, RenderSettings.fogDensity);
+            Assert.AreEqual(8f, RenderSettings.fogStartDistance);
+            Assert.AreEqual(24f, RenderSettings.fogEndDistance);
+        }
+
+        [Test]
+        public void FogWithoutAModeIsLinear()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            EnvironmentPreset legacy = CreateVariant(fixture, _exhibition, _exhibition.Rotation, _exhibition.SpotLight,
+                new DistanceFogSettings { Enabled = true, StartDistance = 5f, EndDistance = 7f });
+
+            fixture.Controller.ApplyInstant(legacy);
+
+            Assert.IsTrue(RenderSettings.fog);
+            Assert.AreEqual(FogMode.Linear, RenderSettings.fogMode, "Presets saved before the fog mode existed were linear.");
+            Assert.AreEqual(5f, RenderSettings.fogStartDistance);
+            Assert.AreEqual(7f, RenderSettings.fogEndDistance);
+        }
+
+        /// <summary>Unity strips the shader variants of fog modes that Graphics settings do not keep, so builds would show no fog.</summary>
+        [Test]
+        public void BuildsKeepTheFogModesThePresetsUse()
+        {
+            var graphics = new SerializedObject(GraphicsSettings.GetGraphicsSettings());
+            foreach (EnvironmentPreset preset in new[] { _exhibition, _temple })
+            {
+                DistanceFogSettings fog = preset.DistanceFog;
+                if (!fog.Enabled)
+                {
+                    continue;
+                }
+                string keepProperty = fog.Mode switch
+                {
+                    FogMode.Linear => "m_FogKeepLinear",
+                    FogMode.Exponential => "m_FogKeepExp",
+                    FogMode.ExponentialSquared => "m_FogKeepExp2",
+                    _ => null,
+                };
+                Assert.IsNotNull(keepProperty, $"{preset.name} has no fog mode.");
+                Assert.AreEqual(1, graphics.FindProperty("m_FogStripping").intValue, "Fog Modes must be Custom so the kept modes are fixed.");
+                Assert.IsTrue(graphics.FindProperty(keepProperty).boolValue, $"{preset.name} uses {fog.Mode} fog, which Graphics settings strip.");
+            }
+        }
+
+        static void AssertExhibitionFog()
+        {
+            Assert.IsTrue(RenderSettings.fog);
+            Assert.AreEqual(FogMode.Exponential, RenderSettings.fogMode);
+            Assert.AreEqual(Color.black, RenderSettings.fogColor);
+            Assert.AreEqual(0.135f, RenderSettings.fogDensity, 1e-6f);
         }
 
         [Test]
@@ -715,9 +865,9 @@ namespace DNPDemo.Tests
             serialized.FindProperty("_crossfadeShader").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.CrossfadeShaderPath);
             serialized.FindProperty("_snapshotShader").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.SnapshotShaderPath);
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            // The shadow override writes to the URP asset; keep the project's asset out of the tests.
+            // The overrides write to the URP asset; keep the project's asset out of the tests.
             fixture.Urp = fixture.Track(CreateUrpAsset());
-            fixture.Controller.SetShadowQualityAssetProvider(() => fixture.Urp);
+            fixture.Controller.SetPipelineAssetProvider(() => fixture.Urp);
             return fixture;
         }
 
@@ -780,7 +930,11 @@ namespace DNPDemo.Tests
             Assert.GreaterOrEqual(preset.Reflection.Intensity, 0f, preset.name);
         }
 
-        static EnvironmentPreset CreateVariant(EnvironmentFixture fixture, EnvironmentPreset source, float rotation, SpotLightSettings spot)
+        static EnvironmentPreset CreateVariant(EnvironmentFixture fixture, EnvironmentPreset source, float rotation, SpotLightSettings spot) =>
+            CreateVariant(fixture, source, rotation, spot, source.DistanceFog);
+
+        static EnvironmentPreset CreateVariant(
+            EnvironmentFixture fixture, EnvironmentPreset source, float rotation, SpotLightSettings spot, DistanceFogSettings fog)
         {
             EnvironmentPreset preset = fixture.Track(ScriptableObject.CreateInstance<EnvironmentPreset>());
             preset.Configure(
@@ -793,7 +947,8 @@ namespace DNPDemo.Tests
                 spot,
                 source.Ambient,
                 source.Reflection,
-                source.ShadowQuality);
+                source.ShadowQuality,
+                fog);
             preset.SetSkyboxAmbientProbe(source.SkyboxAmbientProbe);
             return preset;
         }

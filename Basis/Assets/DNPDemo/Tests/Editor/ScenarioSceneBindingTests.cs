@@ -101,6 +101,38 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void OpeningCueTurnsOnTheSpotlightAndItsBeam()
+        {
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.SpotlightKey, out UnityEngine.GameObject spotlight));
+            UnityEngine.Transform beam = spotlight.transform.Find("Volumetric Beam");
+            Assert.IsNotNull(beam, "The volume must be a child of the spotlight it follows.");
+            Assert.IsNotNull(beam.GetComponent<UnityEngine.MeshFilter>()?.sharedMesh);
+            var renderer = beam.GetComponent<UnityEngine.MeshRenderer>();
+            Assert.IsNotNull(renderer?.sharedMaterial);
+            Assert.IsTrue(renderer.enabled);
+            Assert.IsFalse(spotlight.activeSelf, "The spotlight starts off in the lobby.");
+            Assert.IsFalse(beam.gameObject.activeInHierarchy, "The beam starts off in the lobby.");
+
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            SetObjectActiveCue opening = data.Steps.Single(step => step.Id == "opening").Cues
+                .OfType<SetObjectActiveCue>().Single(cue => cue.Key == ScenarioDataBuilder.SpotlightKey);
+            ScenarioStage stage = _scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<ScenarioStage>(true)).Single();
+            try
+            {
+                opening.ApplyInstant(new ScenarioCueContext(stage, data));
+                Assert.IsTrue(spotlight.GetComponent<UnityEngine.Light>().isActiveAndEnabled);
+                Assert.IsTrue(beam.gameObject.activeInHierarchy, "The scene must let the beam turn on with its parent.");
+                Assert.Greater(UnityEngine.Vector3.Dot(beam.forward, UnityEngine.Vector3.down), 0.999f);
+            }
+            finally
+            {
+                spotlight.SetActive(false);
+            }
+        }
+
+        [Test]
         public void ExhibitionRoomKeyResolvesToRenderedRoom()
         {
             ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);

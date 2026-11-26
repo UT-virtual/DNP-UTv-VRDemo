@@ -19,7 +19,7 @@ MonoBehaviour:
   _exhibitionRoomVisible: 1
   _directionalLight:
     Color: {r: 1, g: 0.94, b: 0.84, a: 1}
-    Intensity: 0.15
+    Intensity: 0.035
     Rotation: {x: 50, y: -30, z: 0}
     Shadows: 0
     ShadowStrength: 0
@@ -28,12 +28,12 @@ MonoBehaviour:
     ShadowNearPlane: 0.2
   _spotLight:
     Enabled: 0
-    Color: {r: 1, g: 1, b: 1, a: 1}
-    Intensity: 30
-    Rotation: {x: 80, y: 0, z: 0}
-    Range: 8
+    Color: {r: 1, g: 0.96, b: 0.89, a: 1}
+    Intensity: 35
+    Rotation: {x: 90, y: 0, z: 0}
+    Range: 3.7
     SpotAngle: 40
-    InnerSpotAngle: 22
+    InnerSpotAngle: 21.80208
     Shadows: 0
     ShadowStrength: 0
     ShadowBias: 0.05
@@ -54,6 +54,12 @@ MonoBehaviour:
     MainLightShadowmapResolution: 0
     ShadowDistance: 0
     CascadeCount: 0
+  _distanceFog:
+    Enabled: 1
+    Mode: 2
+    Density: 0.135
+    StartDistance: 0
+    EndDistance: 0
   _skyboxAmbientProbe:
   - 0.06366704
   - 0.024965484

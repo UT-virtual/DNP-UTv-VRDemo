@@ -85,6 +85,21 @@ namespace DNPDemo.Environment
         [Range(1, 4)] public int CascadeCount;
     }
 
+    /// <summary>
+    /// Fog that fades distant objects to black. Linear uses the start and end distances; Exponential and
+    /// ExponentialSquared use the density. Each mode a preset uses must be kept by the Fog Modes stripping in Graphics
+    /// settings, or the fog is missing from builds.
+    /// </summary>
+    [Serializable]
+    public struct DistanceFogSettings
+    {
+        public bool Enabled;
+        public FogMode Mode;
+        [Min(0f)] public float Density;
+        [Min(0f)] public float StartDistance;
+        [Min(0f)] public float EndDistance;
+    }
+
     [CreateAssetMenu(menuName = "DNP Demo/Environment Preset", fileName = "EnvironmentPreset")]
     public sealed class EnvironmentPreset : ScriptableObject
     {
@@ -99,6 +114,8 @@ namespace DNPDemo.Environment
         [SerializeField] AmbientSettings _ambient;
         [SerializeField] ReflectionSettings _reflection;
         [SerializeField] ShadowQualitySettings _shadowQuality;
+        [Tooltip("Fades distant objects to black. Linear uses the distances in metres; the exponential modes use the density.")]
+        [SerializeField] DistanceFogSettings _distanceFog;
         /// <summary>Spherical harmonics baked from the panorama for the Skybox ambient source: 9 coefficients per RGB channel.</summary>
         [SerializeField, HideInInspector] float[] _skyboxAmbientProbe = Array.Empty<float>();
 
@@ -115,6 +132,7 @@ namespace DNPDemo.Environment
         public AmbientSettings Ambient => _ambient;
         public ReflectionSettings Reflection => _reflection;
         public ShadowQualitySettings ShadowQuality => _shadowQuality;
+        public DistanceFogSettings DistanceFog => _distanceFog;
 
         public bool HasSkyboxAmbientProbe => _skyboxAmbientProbe != null && _skyboxAmbientProbe.Length == 3 * ProbeCoefficients;
 
@@ -151,7 +169,8 @@ namespace DNPDemo.Environment
             SpotLightSettings spotLight,
             AmbientSettings ambient,
             ReflectionSettings reflection,
-            ShadowQualitySettings shadowQuality)
+            ShadowQualitySettings shadowQuality,
+            DistanceFogSettings distanceFog = default)
         {
             _displayName = displayName;
             _panorama = panorama;
@@ -163,6 +182,7 @@ namespace DNPDemo.Environment
             _ambient = ambient;
             _reflection = reflection;
             _shadowQuality = shadowQuality;
+            _distanceFog = distanceFog;
         }
 
         /// <summary>Assigns the cubemap baked from the panorama, keeping the rest of the preset as authored.</summary>
