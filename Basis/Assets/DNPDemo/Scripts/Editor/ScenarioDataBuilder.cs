@@ -123,8 +123,8 @@ namespace DNPDemo.Editor
         /// </summary>
         public const float MirrorMaxDistance = 2.5f;
 
-        /// <summary>Step 17: the angle measured between the production mirror poses of Ver 3.0 and Ver 3.1.</summary>
-        public const float WristTwistTargetAngle = 9.25f;
+        /// <summary>Step 17: the wrist turn authored into the Ver 3.1 mirror pose.</summary>
+        public const float WristTwistTargetAngle = 10f;
 
         /// <summary>Step 17: the hand may twist this much past 0° and past the target, so the target is easy to pass and come back to.</summary>
         public const float WristTwistMargin = 30f;

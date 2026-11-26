@@ -234,7 +234,7 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
   - ステップ13：線画（`StrokePart.Sketch`）を描き、音声指示する。線画の部品が終わった時点の線が `StrokeTool.LastResult` に残る。
   - ステップ14：先頭の `PlaceAtSketchCue` が、Ver 3.0 と同じメッシュの単体の手鏡（`HandMirror`）を、ステップ13 の線画の外接ボックスの中心に出す（§2.5）。その手鏡を `Goal_MirrorRightHand`（Ver 3.0 が右手に持つ手鏡の位置と向き）へ平行移動する。手鏡は置き場所 `Spawn_HandMirror` から 0.8m 以内に出るので、平行移動の最大距離（2.5m）でどこからでも目標に届く（`ScenarioSceneBindingTests` が確かめる）。
   - ステップ15：右肩〜手鏡（`Zone_RightArmToMirror`。右肩から右手の位置の手鏡までのカプセル）を範囲選択し、音声指示する。ステップが進むと舞台が手鏡を元に戻すので、ステップ15 の先頭の `MatchPoseCue` が右手の位置に置き直す。手鏡はステップ16 の先頭で非表示にし、以後は Ver 3.0 のモデルが持つ。
-  - ステップ17：右手首と手鏡（`Zone_RightHandMirror`）を範囲選択し、Ver 3.0 の右手と手鏡を写した半透明の `RightHandProxy` を、`Pivot_RightWrist` の上向きの軸まわりにひねる。支点と回転軸は、Ver 3.0 から Ver 3.1 へ手鏡が移るときの位置と向きに合わせている。回転範囲は -30〜+39.25°、+9.25° ± 4° で離すと確定する。水色のガイドが示すスナップ後の手鏡は、ステップ18で表示する Ver 3.1 の手鏡と一致する（`ScenarioSceneBindingTests`）。プロキシはステップ17の間だけ表示し、`RightHandProxy_Grab` が手鏡のまわりの掴む範囲を定義する。
+  - ステップ17は、右手首と手鏡（`Zone_RightHandMirror`）を範囲選択し、Ver 3.0 の右手と手鏡を写した半透明の `RightHandProxy` を、`Pivot_RightWrist` の上向きの軸まわりにひねる。Ver 3.1 では、この軸まわりに +10° 回した手鏡が目元を向く。回転範囲は -30〜+40°、+10° ± 4° で離すと確定する。水色のガイドが示すスナップ後の手鏡は、ステップ18で表示する Ver 3.1 の手鏡と一致する（`ScenarioSceneBindingTests`）。プロキシはステップ17の間だけ表示し、`RightHandProxy_Grab` が手鏡のまわりの掴む範囲を定義する。
   - ステップ21：「ヴィーナス像に似合う神殿の背景を生成」と音声指示すると、認識した時点で背景パネルが目の前に開き、生成された神殿が一覧に加わる。神殿を選んで「背景を適用」を押すと完了する。背景（スカイボックスと照明）は空間全体に適用するものなので、像は選ばない。神殿への切り替えは、ステップ22 の先頭の `EnvironmentCue` が行う（§2.6）。
 
 ### 2.5 像と版の管理

@@ -698,9 +698,9 @@ MonoBehaviour:
         PivotKey: Pivot_RightWrist
         Axis: {x: 0, y: 1, z: 0}
         MinAngle: -30
-        MaxAngle: 39.25
+        MaxAngle: 40
         Completion: 0
-        TargetAngle: 9.25
+        TargetAngle: 10
         SnapAngle: 4
         ThresholdAngle: 30
     - rid: 1662061916731736532
