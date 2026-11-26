@@ -1,4 +1,4 @@
-// Dissolve effect shared by Dissolve.shader and ModelTransition.shader. The including shader declares the properties
+// Dissolve effect included by ModelTransition.shader. The including shader declares the properties
 // (inside its UnityPerMaterial buffer) and passes them in, so this file holds functions only.
 #ifndef DNPDEMO_DISSOLVE_INCLUDED
 #define DNPDEMO_DISSOLVE_INCLUDED

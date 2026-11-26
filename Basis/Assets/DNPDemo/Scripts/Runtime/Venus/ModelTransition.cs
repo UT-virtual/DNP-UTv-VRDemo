@@ -19,8 +19,9 @@ namespace DNPDemo.Venus
         Bounds _bounds;
         float _elapsed;
         bool _animating;
-        float _previousDissolve;
-        float _currentDissolve;
+        // How much of each model is shown (0 hidden, 1 shown). The shader gets 1 minus this as its dissolve cutoff.
+        float _previousVisibility;
+        float _currentVisibility;
 
         // Resolved from the profile when a transition starts, so that Tick does not hash the names every frame.
         int _dissolveId;
@@ -31,8 +32,8 @@ namespace DNPDemo.Venus
         public bool IsAnimating => _animating;
         internal Bounds ActiveBounds => _bounds;
         internal GameObject ParticleInstance => _particleInstance;
-        internal float PreviousDissolveValue => _previousDissolve;
-        internal float CurrentDissolveValue => _currentDissolve;
+        internal float PreviousDissolveValue => _previousVisibility;
+        internal float CurrentDissolveValue => _currentVisibility;
 
         void Awake()
         {
@@ -221,8 +222,8 @@ namespace DNPDemo.Venus
         /// </summary>
         void SetShaderProgress(float progress)
         {
-            _previousDissolve = _previousModel != null ? 1f - progress : 0f;
-            _currentDissolve = progress;
+            _previousVisibility = _previousModel != null ? 1f - progress : 0f;
+            _currentVisibility = progress;
             float scanFade = Mathf.Sin(progress * Mathf.PI);
             SetShaderProgress(_previousMaterials, 1f - progress, scanFade);
             SetShaderProgress(_currentMaterials, progress, scanFade);

@@ -15,9 +15,9 @@ namespace DNPDemo.Editor
     public static class EffectMaterials
     {
         const string InteractionArt = DNPDemoProjectSetup.Root + "/Art/Interaction";
-        const string VenusMaterials = DNPDemoProjectSetup.Root + "/Art/Venus/Materials";
+        const string VenusTextures = DNPDemoProjectSetup.Root + "/Art/Venus/Textures";
 
-        public const string NoiseTexturePath = VenusMaterials + "/T_DissolveNoise.png";
+        public const string NoiseTexturePath = VenusTextures + "/T_DissolveNoise.png";
         const int NoiseSize = 128;
 
         public sealed class Definition

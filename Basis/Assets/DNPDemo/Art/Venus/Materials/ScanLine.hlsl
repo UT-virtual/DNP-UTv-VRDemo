@@ -1,4 +1,4 @@
-// Scan line effect shared by ScanLine.shader and ModelTransition.shader. Functions only; the including shader declares
+// Scan line effect included by ModelTransition.shader. Functions only; the including shader declares
 // the properties.
 #ifndef DNPDEMO_SCANLINE_INCLUDED
 #define DNPDEMO_SCANLINE_INCLUDED
