@@ -164,39 +164,13 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3290398703395531894, guid: b27d058d435f57d4d892043f64872f35, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 7164943678624662312}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b27d058d435f57d4d892043f64872f35, type: 3}
 --- !u!4 &2961563492335788054 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3781847647407869499, guid: b27d058d435f57d4d892043f64872f35, type: 3}
   m_PrefabInstance: {fileID: 2117329729883483693}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &3516075475814302299 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3290398703395531894, guid: b27d058d435f57d4d892043f64872f35, type: 3}
-  m_PrefabInstance: {fileID: 2117329729883483693}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &7164943678624662312
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3516075475814302299}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87560e04aa74c7a41acb9c87051c3b02, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: uLipSync.Runtime::uLipSync.uLipSync
-  profile: {fileID: 0}
-  onLipSyncUpdate:
-    m_PersistentCalls:
-      m_Calls: []
-  outputSoundGain: 1
-  audioSourceProxy: {fileID: 0}
 --- !u!1001 &7967378151960001919
 PrefabInstance:
   m_ObjectHideFlags: 0
