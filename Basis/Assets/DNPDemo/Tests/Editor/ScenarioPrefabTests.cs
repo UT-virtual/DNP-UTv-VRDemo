@@ -1,8 +1,10 @@
 using Basis.Scripts.UI;
 using DNPDemo.Editor;
 using DNPDemo.Operator;
+using DNPDemo.Players;
 using DNPDemo.TaskHud;
 using NUnit.Framework;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -45,6 +47,41 @@ namespace DNPDemo.Tests
             Assert.Greater(layout.minWidth, 0f);
             Assert.AreEqual(layout.preferredWidth, layout.minWidth, "The switch button has a fixed width.");
             Assert.LessOrEqual(layout.flexibleWidth, 0f);
+        }
+
+        [Test]
+        public void OperatorPanelHasTheRecoveryControls()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioPrefabBuilder.OperatorPanelPath);
+            Assert.IsNotNull(prefab);
+            var panel = prefab.GetComponent<OperatorPanel>();
+            Assert.IsNotNull(panel);
+            var so = new SerializedObject(panel);
+            foreach (string field in new[]
+                     {
+                         "_statusText", "_backButton", "_nextButton", "_resumeButton", "_resumeText", "_jumpTargetText",
+                         "_jumpPreviousButton", "_jumpNextButton", "_jumpButton", "_restartButton", "_closeButton",
+                     })
+            {
+                Assert.IsNotNull(so.FindProperty(field).objectReferenceValue,
+                    $"OperatorPanel.{field} is not set (run DNP Demo/Setup/Install Scenario Into DemoSystems Prefab).");
+            }
+            var restart = (Button)so.FindProperty("_restartButton").objectReferenceValue;
+            Assert.AreEqual(ScenarioPrefabBuilder.OperatorRestartLabel, restart.GetComponentInChildren<TMP_Text>(true).text);
+        }
+
+        [Test]
+        public void DemoSystemsResetsForTheNextVisitor()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioInstaller.DemoSystemsPrefabPath);
+            Assert.IsNotNull(prefab);
+            var reset = prefab.GetComponentInChildren<VisitorReset>(true);
+            Assert.IsNotNull(reset, "Install it from DNP Demo/Setup/Install Scenario Into DemoSystems Prefab.");
+            var so = new SerializedObject(reset);
+            foreach (string field in new[] { "_director", "_spawn", "_pen" })
+            {
+                Assert.IsNotNull(so.FindProperty(field).objectReferenceValue, $"VisitorReset.{field} is not set.");
+            }
         }
 
         [Test]

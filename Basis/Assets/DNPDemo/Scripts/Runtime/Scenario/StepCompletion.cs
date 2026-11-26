@@ -2,16 +2,20 @@ namespace DNPDemo.Scenario
 {
     /// <summary>
     /// What moves a step on to the next one. Whatever the condition, the operator can always move it on
-    /// (see <see cref="ScenarioDirector.RequestCommand"/>).
+    /// (see <see cref="ScenarioDirector.RequestCommand(OperatorCommand)"/>).
     /// </summary>
     public enum StepCompletion : byte
     {
-        /// <summary>Advances when the authoritative device finishes playing the step's cues.</summary>
+        /// <summary>
+        /// Advances when the authoritative device finishes playing the step's cues, provided both players are present
+        /// (see <see cref="ScenarioDirector.IsWaitingForPartner"/>).
+        /// </summary>
         CuesFinished = 0,
 
         /// <summary>
         /// Advances when the second player arrives and both roles are present. It reacts to the arrival,
         /// not to the state: after a restart with both players still connected, the operator starts the run.
+        /// While an interrupted run is on offer (<see cref="ScenarioDirector.ResumeStepIndex"/>), the operator starts it too.
         /// </summary>
         PlayersReady = 1,
 

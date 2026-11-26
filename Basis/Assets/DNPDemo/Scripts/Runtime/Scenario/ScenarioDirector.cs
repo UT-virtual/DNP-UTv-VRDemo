@@ -16,16 +16,30 @@ namespace DNPDemo.Scenario
     /// its network id is ready, rather than relying on a push at join time that could arrive before it listens.
     /// </para>
     /// <para>
+    /// The run is meant for both players. While one of them is missing, a step whose cues have finished does not move
+    /// on; when the missing player comes back, the current step plays again from the start for both.
+    /// </para>
+    /// <para>
+    /// The authority stores the step it is at (<see cref="ScenarioCheckpoint"/>). When it starts a run and the stored
+    /// step shows that the previous run was cut short, it stays in the lobby and offers that step as
+    /// <see cref="ResumeStepIndex"/> until the operator resumes there or starts anew.
+    /// </para>
+    /// <para>
     /// Everything visible derives from the step index (see <see cref="ScenarioPlayer"/>), so this class never
     /// sends presentation state.
     /// </para>
     /// </summary>
     public sealed class ScenarioDirector : BasisNetworkBehaviour
     {
+        /// <summary>The first step is the lobby: the run starts there and <see cref="OperatorCommand.Restart"/> returns there.</summary>
+        public const int LobbyStepIndex = 0;
+
         [SerializeField] ScenarioData _scenario;
         [SerializeField] DemoRoleService _roles;
 
         ScenarioProgress _progress;
+        int _resumeStepIndex = -1;
+        bool _allRolesPresent;
         readonly ushort[] _singleRecipient = new ushort[1];
 
         public ScenarioData Scenario => _scenario;
@@ -35,11 +49,32 @@ namespace DNPDemo.Scenario
         public ushort Sequence => _progress?.Sequence ?? 0;
         public ScenarioStep CurrentStep => IsRunning ? _scenario.Steps[_progress.StepIndex] : null;
 
+        /// <summary>True while the run is at the lobby step.</summary>
+        public bool IsAtLobby => IsRunning && _progress.StepIndex == LobbyStepIndex;
+
         /// <summary>True on the device that decides progress.</summary>
         public bool HasAuthority => _roles != null && _roles.HasScenarioAuthority;
 
+        /// <summary>
+        /// The step where the previous run was interrupted, offered while this run is still in the lobby; -1 when there is
+        /// nothing to resume. Known on every device (the authority sends it with the state).
+        /// </summary>
+        public int ResumeStepIndex => _resumeStepIndex;
+
+        /// <summary>
+        /// True on the authority while a player is missing: the current step does not move on when its cues finish, and it
+        /// plays again from the start when the player comes back.
+        /// </summary>
+        public bool IsWaitingForPartner => HasAuthority && IsRunning && !IsAtLobby && !_allRolesPresent;
+
         /// <summary>Raised after the current step changes, and when the run stops (<see cref="IsRunning"/> false).</summary>
         public event Action StepChanged;
+
+        /// <summary>
+        /// Raised when something the operator panel shows changes without a step change: <see cref="ResumeStepIndex"/>
+        /// or <see cref="IsWaitingForPartner"/>.
+        /// </summary>
+        public event Action StatusChanged;
 
         void Awake()
         {
@@ -99,16 +134,20 @@ namespace DNPDemo.Scenario
             switch (message.Type)
             {
                 case ScenarioMessageType.State:
-                    if (!HasAuthority && _progress.Apply(message.Sequence, message.StepIndex))
+                    if (!HasAuthority)
                     {
-                        RaiseStepChanged();
+                        SetResumeStep(ValidResumeIndex(message.ResumeStepIndex));
+                        if (_progress.Apply(message.Sequence, message.StepIndex))
+                        {
+                            RaiseStepChanged();
+                        }
                     }
                     break;
                 case ScenarioMessageType.RequestState:
                     if (HasAuthority && IsRunning)
                     {
                         _singleRecipient[0] = playerId;
-                        Send(ScenarioMessage.State(_progress.Sequence, _progress.StepIndex), _singleRecipient);
+                        Send(CreateStateMessage(), _singleRecipient);
                     }
                     break;
                 case ScenarioMessageType.ReportComplete:
@@ -120,7 +159,7 @@ namespace DNPDemo.Scenario
                 case ScenarioMessageType.Command:
                     if (HasAuthority)
                     {
-                        Execute(message.Command, message.Sequence, message.StepIndex);
+                        Execute(message.Command, message.Sequence, message.StepIndex, message.TargetStepIndex);
                     }
                     break;
             }
@@ -129,18 +168,22 @@ namespace DNPDemo.Scenario
         /// <summary>Operator command (next / back / restart) from any device, applied to the step currently shown here.</summary>
         public void RequestCommand(OperatorCommand command)
         {
-            if (!IsRunning)
+            if (command == OperatorCommand.JumpTo)
+            {
+                Debug.LogError("[DNPDemo] Use RequestJumpTo to jump to a step.", this);
+                return;
+            }
+            RequestCommand(command, -1);
+        }
+
+        /// <summary>Operator command from any device: go to <paramref name="stepIndex"/>, or play it again if it is the current step.</summary>
+        public void RequestJumpTo(int stepIndex)
+        {
+            if (stepIndex < 0 || stepIndex >= StepCount)
             {
                 return;
             }
-            if (HasAuthority)
-            {
-                Execute(command, _progress.Sequence, _progress.StepIndex);
-            }
-            else
-            {
-                Send(ScenarioMessage.CommandFor(command, _progress.Sequence, _progress.StepIndex), null);
-            }
+            RequestCommand(OperatorCommand.JumpTo, stepIndex);
         }
 
         /// <summary>Called by the interaction tools when the local player finished the current step's operation.</summary>
@@ -163,14 +206,36 @@ namespace DNPDemo.Scenario
         /// <summary>Called by <see cref="ScenarioPlayer"/> when the cues of (<paramref name="sequence"/>, <paramref name="stepIndex"/>) have finished locally.</summary>
         public void NotifyCuesFinished(ushort sequence, int stepIndex)
         {
-            if (HasAuthority && _progress.IsCurrent(sequence, stepIndex)
-                && CurrentStep.Completion == StepCompletion.CuesFinished)
+            if (!HasAuthority || !_progress.IsCurrent(sequence, stepIndex)
+                || CurrentStep.Completion != StepCompletion.CuesFinished)
             {
-                Advance(_progress.Next());
+                return;
+            }
+            if (!_allRolesPresent)
+            {
+                Debug.Log($"[DNPDemo] Scenario step {stepIndex} ({CurrentStep.Id}) holds until both players are present.");
+                return;
+            }
+            Advance(_progress.Next());
+        }
+
+        void RequestCommand(OperatorCommand command, int targetStepIndex)
+        {
+            if (!IsRunning)
+            {
+                return;
+            }
+            if (HasAuthority)
+            {
+                Execute(command, _progress.Sequence, _progress.StepIndex, targetStepIndex);
+            }
+            else
+            {
+                Send(ScenarioMessage.CommandFor(command, _progress.Sequence, _progress.StepIndex, targetStepIndex), null);
             }
         }
 
-        void Execute(OperatorCommand command, ushort sequence, int stepIndex)
+        void Execute(OperatorCommand command, ushort sequence, int stepIndex, int targetStepIndex)
         {
             if (!_progress.IsCurrent(sequence, stepIndex))
             {
@@ -186,6 +251,9 @@ namespace DNPDemo.Scenario
                     break;
                 case OperatorCommand.Restart:
                     Advance(_progress.Restart());
+                    break;
+                case OperatorCommand.JumpTo:
+                    Advance(_progress.JumpTo(targetStepIndex));
                     break;
             }
         }
@@ -204,7 +272,18 @@ namespace DNPDemo.Scenario
             {
                 return;
             }
+            // Read before the start overwrites the checkpoint with the lobby.
+            SetResumeStep(ScenarioCheckpoint.ResolveResumeIndex(_scenario.Steps, ScenarioCheckpoint.Load()));
+            if (_resumeStepIndex >= 0)
+            {
+                Debug.Log($"[DNPDemo] The previous run stopped at step {_resumeStepIndex} ({_scenario.Steps[_resumeStepIndex].Id}); it can be resumed from the operator panel.");
+            }
             Advance(_progress.Start());
+            if (_allRolesPresent && _resumeStepIndex < 0 && CurrentStep.Completion == StepCompletion.PlayersReady)
+            {
+                // Both players were already here before the run started, so the arrival has happened.
+                Advance(_progress.Next());
+            }
         }
 
         void Advance(bool changed)
@@ -213,15 +292,38 @@ namespace DNPDemo.Scenario
             {
                 return;
             }
+            if (!IsAtLobby)
+            {
+                // Leaving the lobby by any route starts a run, so the interrupted one is no longer on offer.
+                SetResumeStep(-1);
+            }
             Debug.Log($"[DNPDemo] Scenario step {_progress.StepIndex} ({CurrentStep.Id}), seq {_progress.Sequence}");
-            Send(ScenarioMessage.State(_progress.Sequence, _progress.StepIndex), null);
+            ScenarioCheckpoint.Save(CurrentStep.Id);
+            Send(CreateStateMessage(), null);
             RaiseStepChanged();
+        }
+
+        ScenarioMessage CreateStateMessage() =>
+            ScenarioMessage.State(_progress.Sequence, _progress.StepIndex, _resumeStepIndex);
+
+        int ValidResumeIndex(int stepIndex) =>
+            stepIndex > LobbyStepIndex && stepIndex < StepCount ? stepIndex : -1;
+
+        void SetResumeStep(int stepIndex)
+        {
+            if (_resumeStepIndex == stepIndex)
+            {
+                return;
+            }
+            _resumeStepIndex = stepIndex;
+            StatusChanged?.Invoke();
         }
 
         void HandleLocalRoleChanged(DemoRole role)
         {
             if (role == DemoRole.None)
             {
+                SetResumeStep(-1);
                 if (IsRunning)
                 {
                     _progress.Stop();
@@ -237,10 +339,29 @@ namespace DNPDemo.Scenario
 
         void HandleRolesChanged()
         {
-            if (HasAuthority && IsRunning && CurrentStep.Completion == StepCompletion.PlayersReady
-                && _roles.AreAllRolesPresent)
+            bool wasPresent = _allRolesPresent;
+            _allRolesPresent = _roles.AreAllRolesPresent;
+            if (wasPresent == _allRolesPresent)
             {
-                Advance(_progress.Next());
+                return;
+            }
+            StatusChanged?.Invoke();
+            if (!_allRolesPresent || !HasAuthority || !IsRunning)
+            {
+                return;
+            }
+            if (CurrentStep.Completion == StepCompletion.PlayersReady)
+            {
+                // With an interrupted run on offer, the operator decides whether to resume it or start anew.
+                if (_resumeStepIndex < 0)
+                {
+                    Advance(_progress.Next());
+                }
+            }
+            else
+            {
+                // The returning player missed part of this step; play it again from the start for both.
+                Advance(_progress.JumpTo(_progress.StepIndex));
             }
         }
 

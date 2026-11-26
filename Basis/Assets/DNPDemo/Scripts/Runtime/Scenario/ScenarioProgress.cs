@@ -2,7 +2,8 @@ namespace DNPDemo.Scenario
 {
     /// <summary>
     /// The replicated scenario state: the current step and a sequence number that changes on every transition.
-    /// The authoritative device moves it with <see cref="Start"/> / <see cref="Next"/> / <see cref="Back"/> / <see cref="Restart"/>;
+    /// The authoritative device moves it with <see cref="Start"/> / <see cref="Next"/> / <see cref="Back"/> / <see cref="Restart"/> /
+    /// <see cref="JumpTo"/>;
     /// other devices copy it with <see cref="Apply"/>. Reports and commands carry the sequence they were made
     /// against, so ones that refer to a step that has already moved on are dropped (<see cref="IsCurrent"/>).
     /// </summary>
@@ -30,6 +31,12 @@ namespace DNPDemo.Scenario
         public bool Back() => IsRunning && StepIndex > 0 && GoTo(StepIndex - 1);
 
         public bool Restart() => IsRunning && GoTo(0);
+
+        /// <summary>
+        /// Moves to any step. Jumping to the current step plays it again from the start (a new sequence), which is how
+        /// a step is replayed for a player who came back.
+        /// </summary>
+        public bool JumpTo(int stepIndex) => IsRunning && stepIndex >= 0 && stepIndex < StepCount && GoTo(stepIndex);
 
         /// <summary>Ends the run (the local player left the session). The sequence keeps counting.</summary>
         public void Stop() => StepIndex = -1;

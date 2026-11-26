@@ -5,6 +5,7 @@ using DNPDemo.Interaction.Stroke;
 using DNPDemo.Interaction.Voice;
 using DNPDemo.Operator;
 using DNPDemo.Pen;
+using DNPDemo.Players;
 using DNPDemo.Presentation;
 using DNPDemo.Roles;
 using DNPDemo.Scenario;
@@ -17,7 +18,8 @@ namespace DNPDemo.Editor
     /// <summary>
     /// Builds the scenario engine into the DemoSystems prefab and wires every reference inside it: director, stage,
     /// player, operator input and panel, narrator voice and subtitle, effects and banner, the interaction runner
-    /// with its tools, and the task HUD. Only what is missing is added, so running it again after an update installs the new parts and
+    /// with its tools, the task HUD, and the reset for the next visitors. Parts missing from the operator panel prefab are
+    /// added too (<see cref="ScenarioPrefabBuilder.InstallMissingOperatorPanelParts()"/>). Only what is missing is added, so running it again after an update installs the new parts and
     /// leaves hand edits alone. Afterwards the prefab is the source of truth and is edited by hand.
     /// Scholars and keyed objects are not wired here; they declare themselves with
     /// <see cref="ScenarioSpeakerBinding"/> / <see cref="ScenarioObjectBinding"/> in their own prefabs.
@@ -36,6 +38,7 @@ namespace DNPDemo.Editor
                 Fail($"{DemoSystemsPrefabPath} がありません。");
                 return;
             }
+            ScenarioPrefabBuilder.InstallMissingOperatorPanelParts();
             GameObject root = PrefabUtility.LoadPrefabContents(DemoSystemsPrefabPath);
             try
             {
@@ -60,6 +63,7 @@ namespace DNPDemo.Editor
                 }
                 changed |= InstallMissingTools(root.transform, scenario, interaction);
                 changed |= InstallMissingTaskHud(root.transform, scenario, interaction);
+                changed |= InstallMissingVisitorReset(root.transform, scenario);
                 if (changed)
                 {
                     PrefabUtility.SaveAsPrefabAsset(root, DemoSystemsPrefabPath);
@@ -182,6 +186,29 @@ namespace DNPDemo.Editor
                 Debug.LogWarning($"[DNPDemo] {DemoSystemsPrefabPath} に SpatialPenController がないため、TaskHud は左手に固定されます。ペンを手動で設定してください。");
             }
             WorldUiBuilder.Assign(hud, "_pen", pen);
+            return true;
+        }
+
+        /// <summary>
+        /// Adds <see cref="VisitorReset"/> to <paramref name="scenario"/> unless it is there, and wires the director, the
+        /// spawn service and the pen controller. Returns true when it was added.
+        /// </summary>
+        static bool InstallMissingVisitorReset(Transform root, Transform scenario)
+        {
+            if (scenario.GetComponent<VisitorReset>() != null)
+            {
+                return false;
+            }
+            var reset = scenario.gameObject.AddComponent<VisitorReset>();
+            WorldUiBuilder.Assign(reset, "_director", scenario.GetComponent<ScenarioDirector>());
+            var spawn = root.GetComponentInChildren<DemoSpawnService>(true);
+            var pen = root.GetComponentInChildren<SpatialPenController>(true);
+            if (spawn == null || pen == null)
+            {
+                Debug.LogWarning($"[DNPDemo] {DemoSystemsPrefabPath} に DemoSpawnService か SpatialPenController がないため、VisitorReset の参照を手動で設定してください。");
+            }
+            WorldUiBuilder.Assign(reset, "_spawn", spawn);
+            WorldUiBuilder.Assign(reset, "_pen", pen);
             return true;
         }
 
