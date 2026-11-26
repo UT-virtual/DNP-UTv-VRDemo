@@ -431,10 +431,10 @@ namespace DNPDemo.Tests
 
             var basisTier = new Values { Resolution = 4096, Distance = 150f, Cascades = 4 };
             basisTier.Write(fixture.Urp);
-            fixture.Controller.MaintainShadowQuality();
+            fixture.Controller.MaintainPipelineOverrides();
             Assert.AreEqual(Values.From(_temple.ShadowQuality), Values.Read(fixture.Urp));
 
-            fixture.Controller.MaintainShadowQuality();
+            fixture.Controller.MaintainPipelineOverrides();
             Assert.AreEqual(Values.From(_temple.ShadowQuality), Values.Read(fixture.Urp));
 
             fixture.Stage.ResetToBaseline();
@@ -476,6 +476,59 @@ namespace DNPDemo.Tests
             {
                 Object.DestroyImmediate(first);
                 Object.DestroyImmediate(second);
+            }
+        }
+
+        /// <summary>Basis' Very Low quality, the default on Quest, turns additional lights off, which hides the statue's spot light.</summary>
+        [Test]
+        public void AdditionalLightsStayOnWhileTheControllerRuns()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            BasisUrpQualityFields.EnsureResolved();
+            BasisUrpQualityFields.AdditionalLightsRenderingMode.Set(fixture.Urp, LightRenderingMode.Disabled);
+
+            fixture.Stage.ResetToBaseline();
+            Assert.AreEqual(LightRenderingMode.PerPixel, fixture.Urp.additionalLightsRenderingMode);
+
+            BasisUrpQualityFields.AdditionalLightsRenderingMode.Set(fixture.Urp, LightRenderingMode.PerVertex);
+            fixture.Controller.MaintainPipelineOverrides();
+            Assert.AreEqual(LightRenderingMode.PerPixel, fixture.Urp.additionalLightsRenderingMode, "Basis rewriting the tier does not turn them off.");
+
+            // Unity delivers this lifecycle callback when the controller is destroyed in Play mode.
+            typeof(EnvironmentController).GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(fixture.Controller, null);
+            Assert.AreEqual(LightRenderingMode.PerVertex, fixture.Urp.additionalLightsRenderingMode, "The tier Basis chose last is the one to return to.");
+        }
+
+        [Test]
+        public void SuspendedAdditionalLightsOverrideRestoresTheAssetAndResumes()
+        {
+            UniversalRenderPipelineAsset asset = CreateUrpAsset();
+            try
+            {
+                BasisUrpQualityFields.EnsureResolved();
+                BasisUrpQualityFields.AdditionalLightsRenderingMode.Set(asset, LightRenderingMode.Disabled);
+                var additionalLights = new AdditionalLightsOverride(() => asset);
+
+                additionalLights.Keep();
+                Assert.AreEqual(LightRenderingMode.PerPixel, asset.additionalLightsRenderingMode);
+
+                additionalLights.Suspend();
+                Assert.AreEqual(LightRenderingMode.Disabled, asset.additionalLightsRenderingMode, "Disabling the controller must leave the project asset as it was.");
+                additionalLights.Maintain();
+                Assert.AreEqual(LightRenderingMode.Disabled, asset.additionalLightsRenderingMode, "A suspended override stays off.");
+
+                additionalLights.Resume();
+                Assert.AreEqual(LightRenderingMode.PerPixel, asset.additionalLightsRenderingMode);
+
+                // Basis puts the authored value back when Play Mode exits, before the controller is destroyed.
+                BasisUrpQualityFields.AdditionalLightsRenderingMode.Set(asset, LightRenderingMode.PerVertex);
+                additionalLights.Suspend();
+                Assert.AreEqual(LightRenderingMode.PerVertex, asset.additionalLightsRenderingMode, "A value written after the override is newer and stays.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(asset);
             }
         }
 
@@ -812,9 +865,9 @@ namespace DNPDemo.Tests
             serialized.FindProperty("_crossfadeShader").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.CrossfadeShaderPath);
             serialized.FindProperty("_snapshotShader").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Shader>(EnvironmentPresetBuilder.SnapshotShaderPath);
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            // The shadow override writes to the URP asset; keep the project's asset out of the tests.
+            // The overrides write to the URP asset; keep the project's asset out of the tests.
             fixture.Urp = fixture.Track(CreateUrpAsset());
-            fixture.Controller.SetShadowQualityAssetProvider(() => fixture.Urp);
+            fixture.Controller.SetPipelineAssetProvider(() => fixture.Urp);
             return fixture;
         }
 

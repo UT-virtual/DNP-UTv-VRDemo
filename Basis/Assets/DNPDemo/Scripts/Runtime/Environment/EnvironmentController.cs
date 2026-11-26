@@ -279,8 +279,9 @@ namespace DNPDemo.Environment
         RenderTexture _activeSkySnapshot;
         Material _originalSkybox;
         RuntimeState _originalState;
-        Func<UniversalRenderPipelineAsset> _shadowQualityAssetProvider = ShadowQualityOverride.ActiveAsset;
+        Func<UniversalRenderPipelineAsset> _pipelineAssetProvider = PipelineAssets.Active;
         ShadowQualityOverride _shadowQuality;
+        AdditionalLightsOverride _additionalLights;
         RuntimeState _transitionStart;
         RuntimeState _transitionTargetState;
         EnvironmentPreset _transitionTarget;
@@ -307,12 +308,16 @@ namespace DNPDemo.Environment
 
         void Update() => AdvanceTransition(Time.unscaledDeltaTime);
 
-        void LateUpdate() => MaintainShadowQuality();
+        void LateUpdate() => MaintainPipelineOverrides();
 
-        void OnEnable() => _shadowQuality?.Resume();
+        void OnEnable()
+        {
+            _shadowQuality?.Resume();
+            _additionalLights?.Resume();
+        }
 
-        /// <summary>The URP asset is a project asset, so the shadow override must not outlive this component.</summary>
-        void OnDisable() => _shadowQuality?.Suspend();
+        /// <summary>The URP asset is a project asset, so the overrides must not outlive this component.</summary>
+        void OnDisable() => SuspendPipelineOverrides();
 
         /// <summary>Begins a fade from the currently displayed state; a new request replaces an in-flight destination.</summary>
         public void TransitionTo(EnvironmentPreset preset, float duration = -1f)
@@ -359,19 +364,29 @@ namespace DNPDemo.Environment
         }
 
         /// <summary>
-        /// Re-applies the preset's shadow quality if Basis rewrote the URP asset. Runs after the frame's other updates so the
-        /// override is in place before rendering. Internal so EditMode tests can drive it.
+        /// Re-applies the preset's shadow quality and the additional lights if Basis rewrote the URP asset. Runs after the
+        /// frame's other updates so the overrides are in place before rendering. Internal so EditMode tests can drive it.
         /// </summary>
-        internal void MaintainShadowQuality() => _shadowQuality?.Maintain();
+        internal void MaintainPipelineOverrides()
+        {
+            _shadowQuality?.Maintain();
+            _additionalLights?.Maintain();
+        }
 
-        /// <summary>Replaces the URP asset the shadow override writes to. Tests call it before the controller initializes.</summary>
-        internal void SetShadowQualityAssetProvider(Func<UniversalRenderPipelineAsset> provider)
+        /// <summary>Replaces the URP asset the overrides write to. Tests call it before the controller initializes.</summary>
+        internal void SetPipelineAssetProvider(Func<UniversalRenderPipelineAsset> provider)
         {
             if (_initialized)
             {
-                throw new InvalidOperationException("The shadow quality asset must be set before the controller initializes.");
+                throw new InvalidOperationException("The URP asset must be set before the controller initializes.");
             }
-            _shadowQualityAssetProvider = provider ?? throw new ArgumentNullException(nameof(provider));
+            _pipelineAssetProvider = provider ?? throw new ArgumentNullException(nameof(provider));
+        }
+
+        void SuspendPipelineOverrides()
+        {
+            _shadowQuality?.Suspend();
+            _additionalLights?.Suspend();
         }
 
         /// <summary>Advances the transition clock. Internal so EditMode tests can drive it deterministically.</summary>
@@ -694,7 +709,10 @@ namespace DNPDemo.Environment
             }
             _originalSkybox = RenderSettings.skybox;
             _originalState = CaptureCurrentState();
-            _shadowQuality = new ShadowQualityOverride(_shadowQualityAssetProvider);
+            _shadowQuality = new ShadowQualityOverride(_pipelineAssetProvider);
+            // The statue's spot and fill lights are additional lights, which Basis turns off at its lowest quality.
+            _additionalLights = new AdditionalLightsOverride(_pipelineAssetProvider);
+            _additionalLights.Keep();
             _skyboxMaterial = new Material(_crossfadeShader)
             {
                 name = "Environment Crossfade Runtime",
@@ -782,7 +800,7 @@ namespace DNPDemo.Environment
 
         void OnDestroy()
         {
-            _shadowQuality?.Suspend();
+            SuspendPipelineOverrides();
             if (_initialized)
             {
                 if (_exhibitionRoom != null)
