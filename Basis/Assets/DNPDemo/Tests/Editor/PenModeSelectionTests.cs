@@ -13,9 +13,9 @@ namespace DNPDemo.Tests
         public void TearDown() => PenModeSelection.ResetToDefault();
 
         [Test]
-        public void MenuOffersSelectVoiceDrawAndManipulate()
+        public void MenuOffersSelectManipulateVoiceAndDraw()
         {
-            CollectionAssert.AreEqual(new[] { PenMode.Select, PenMode.Voice, PenMode.Draw, PenMode.Manipulate }, PenModeSelection.Selectable);
+            CollectionAssert.AreEqual(new[] { PenMode.Select, PenMode.Manipulate, PenMode.Voice, PenMode.Draw }, PenModeSelection.Selectable);
             Assert.IsTrue(PenModeSelection.IsSelectable(PenModeSelection.Default));
         }
 
@@ -36,6 +36,26 @@ namespace DNPDemo.Tests
             PenModeSelection.Select(PenMode.Panel);
             PenModeSelection.Select(PenMode.None);
             Assert.AreEqual(PenModeSelection.Default, PenModeSelection.Current);
+        }
+
+        [Test]
+        public void SelectNextStepsThroughTheMenuOrderAndWraps()
+        {
+            var visited = new System.Collections.Generic.List<PenMode>();
+            PenModeSelection.Changed += visited.Add;
+            for (int i = 0; i < PenModeSelection.Selectable.Length; i++)
+            {
+                PenModeSelection.SelectNext();
+            }
+            CollectionAssert.AreEqual(new[] { PenMode.Manipulate, PenMode.Voice, PenMode.Draw, PenMode.Select }, visited);
+            Assert.AreEqual(PenMode.Select, PenModeSelection.Current);
+        }
+
+        [Test]
+        public void ModesNotOnTheMenuAreFollowedByTheFirst()
+        {
+            Assert.AreEqual(PenModeSelection.Selectable[0], PenModeSelection.Next(PenMode.Panel));
+            Assert.AreEqual(PenModeSelection.Selectable[0], PenModeSelection.Next(PenMode.None));
         }
     }
 }

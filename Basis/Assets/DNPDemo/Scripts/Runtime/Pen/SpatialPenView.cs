@@ -12,6 +12,7 @@ namespace DNPDemo.Pen
     /// One pen in the world. Grabbing, holding and the pose across devices are Basis's pickup
     /// (<see cref="BasisPickupInteractable"/> with <c>BasisPickupSyncNetworking</c> on the same object); this
     /// component draws the pen from a <see cref="PenState"/> and decides who may grab it.
+    /// The body extends in every mode (<see cref="PenState.BodyExtension"/>); the tip parts move with the tip.
     /// <list type="bullet">
     /// <item>Select: the tip sphere (<c>PenSelectArea</c>) at the selection radius. Above
     /// <see cref="PenGeometry.ExtensionStartRadius"/> the body extends so the sphere stays clear of the hand.</item>
@@ -51,6 +52,8 @@ namespace DNPDemo.Pen
         int _extensionIndex = -1;
         float _extensionFullWeight = 100f;
         int _micIndicatorIndex = -1;
+        // Where the arrow gizmo sits in the pen's own space with the body unextended. It moves along +X with the tip.
+        Vector3 _manipulatorRestLocal;
         bool _initialized;
 
         BasisPickupSyncNetworking _poseSync;
@@ -153,17 +156,21 @@ namespace DNPDemo.Pen
             {
                 Debug.LogError("[DNPDemo] SpatialPenView: PenEraser が設定されていません。", this);
             }
+
+            if (_manipulator != null)
+            {
+                // Measured in the pen's space so it does not matter which node of the model the gizmo hangs under.
+                _manipulatorRestLocal = transform.InverseTransformPoint(_manipulator.transform.position);
+            }
         }
 
-        /// <summary>Shows the mode, radius and trigger state.</summary>
-        public void ShowState(PenMode mode, float radius, bool isHeld, bool isTriggerHeld)
+        /// <summary>Shows the mode, length, radius and trigger state.</summary>
+        public void ShowState(in PenState state)
         {
             Initialize();
-            _mode = mode;
-            bool selecting = mode == PenMode.Select;
-            bool voice = mode == PenMode.Voice;
+            _mode = state.Mode;
 
-            _extension = selecting ? PenGeometry.ExtensionForRadius(radius) : 0f;
+            _extension = state.BodyExtension;
             if (_body != null && _extensionIndex >= 0)
             {
                 _body.SetBlendShapeWeight(_extensionIndex, _extension * _extensionFullWeight);
@@ -173,17 +180,21 @@ namespace DNPDemo.Pen
             {
                 Transform area = _selectArea.transform;
                 area.localPosition = PenGeometry.TipLocalPosition(_extension);
-                area.localScale = Vector3.one * PenGeometry.SelectAreaScale(radius);
+                area.localScale = Vector3.one * PenGeometry.SelectAreaScale(state.Radius);
+            }
+
+            if (_manipulator != null)
+            {
+                float reach = PenGeometry.Length(_extension) - PenGeometry.BodyLength;
+                _manipulator.transform.position = transform.TransformPoint(_manipulatorRestLocal + Vector3.right * reach);
             }
 
             if (_microphone != null)
             {
-                SetMicActive(voice && isHeld && isTriggerHeld);
+                SetMicActive(state.Mode == PenMode.Voice && state.IsHeld && state.IsTriggerHeld);
             }
             ApplyRendererVisibility();
         }
-
-        public void ShowState(in PenState state) => ShowState(state.Mode, state.Radius, state.IsHeld, state.IsTriggerHeld);
 
         /// <summary>
         /// Shows or hides the pen. The object stays active so its pickup and pose sync keep running; only what can be

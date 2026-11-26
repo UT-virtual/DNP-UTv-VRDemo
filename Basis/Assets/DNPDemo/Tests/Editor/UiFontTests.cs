@@ -2,7 +2,10 @@ using System.Collections.Generic;
 using System.IO;
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Background;
+using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Voice;
+using DNPDemo.Menu;
 using DNPDemo.Operator;
 using DNPDemo.Scenario;
 using DNPDemo.TaskHud;
@@ -46,6 +49,36 @@ namespace DNPDemo.Tests
         }
 
         [Test]
+        public void HistoryPanelTextsAreInTheCharacterSet()
+        {
+            AssertInCharacterSet(new[]
+            {
+                HistoryMenuProvider.MenuTitle,
+                HistoryPanel.RestoreLabel,
+                HistoryPanel.EmptyMessage,
+                HistoryTool.FormatRestored(null),
+                ScenarioDataBuilder.HistoryInstruction("Ver 1.0"),
+                "0123456789 / Ver.",
+            });
+        }
+
+        [Test]
+        public void BackgroundPanelTextsAreInTheCharacterSet()
+        {
+            AssertInCharacterSet(new[]
+            {
+                BackgroundMenuProvider.MenuTitle,
+                BackgroundPanel.ApplyLabel,
+                BackgroundPanel.CurrentSuffix,
+                BackgroundTool.FormatChooseTarget(null),
+                $"{EnvironmentPresetBuilder.TempleDisplayName}を選んでください",
+                EnvironmentPresetBuilder.ExhibitionDisplayName,
+                EnvironmentPresetBuilder.TempleDisplayName,
+                ScenarioDataBuilder.BackgroundInstruction(EnvironmentPresetBuilder.TempleDisplayName),
+            });
+        }
+
+        [Test]
         public void VoiceCommandTextsAreInTheCharacterSet()
         {
             var texts = new List<string>
@@ -69,6 +102,37 @@ namespace DNPDemo.Tests
                 }
             }
 
+            AssertInCharacterSet(texts);
+        }
+
+        [Test]
+        public void HintTextsAreInTheCharacterSet()
+        {
+            var texts = new List<string> { TaskHudContent.HintPrefix, ScenarioDataBuilder.HistoryHint("Ver 1.0") };
+            AddHintTexts(texts, ScenarioDataBuilder.CreateDefaultSteps());
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data, ScenarioDataBuilder.AssetPath);
+            AddHintTexts(texts, data.Steps);
+
+            AssertInCharacterSet(texts);
+        }
+
+        static void AddHintTexts(List<string> texts, IReadOnlyList<ScenarioStep> steps)
+        {
+            foreach (ScenarioStep step in steps)
+            {
+                foreach (InteractionPart part in step?.Interaction ?? new List<InteractionPart>())
+                {
+                    if (!string.IsNullOrEmpty(part?.Hint?.Text))
+                    {
+                        texts.Add(part.Hint.Text);
+                    }
+                }
+            }
+        }
+
+        static void AssertInCharacterSet(IEnumerable<string> texts)
+        {
             string characters = File.ReadAllText(CharacterSetPath);
             var missing = new HashSet<char>();
             foreach (string text in texts)

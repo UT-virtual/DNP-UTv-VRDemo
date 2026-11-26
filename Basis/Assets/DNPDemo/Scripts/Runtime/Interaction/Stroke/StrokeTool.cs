@@ -25,6 +25,12 @@ namespace DNPDemo.Interaction.Stroke
     /// </summary>
     public sealed class StrokeTool : InteractionTool
     {
+        /// <summary>
+        /// Key of the <see cref="ScenarioObjectBinding"/> on the tool, through which cues read <see cref="LastResult"/>
+        /// (cues live in the scenario asset and reach scene objects only by key).
+        /// </summary>
+        public const string BindingKey = "Strokes";
+
         [SerializeField] SpatialPenController _pen;
 
         [Tooltip("Resolves the guide's zone keys to scene objects.")]
@@ -90,11 +96,25 @@ namespace DNPDemo.Interaction.Stroke
             }
         }
 
+        /// <summary>
+        /// The finished lines of the most recent stroke part, captured at the end of that part so that later cues can
+        /// refer to them (step 14 puts the hand mirror where step 13's sketch was drawn, see
+        /// <see cref="Scenario.Cues.PlaceAtSketchCue"/>). Set by <see cref="End()"/>, which runs on every device when
+        /// the part stops being current (the next part of the step begins, or the step ends), and cleared by
+        /// <see cref="Begin()"/> when the next stroke part begins. Null until a stroke part has ended on this device, so a
+        /// device that joined after the part ended has none.
+        /// <para>
+        /// The guide's rejected lines are removed during the part, so they are not included.
+        /// </para>
+        /// </summary>
+        public StrokeResult LastResult { get; private set; }
+
         public override bool CanRun(InteractionPart part) => part is StrokePart;
 
         public override void Begin(InteractionSession session)
         {
             StopInput();
+            LastResult = null;
             _session = session;
             _part = (StrokePart)session.Part;
             ClearAll();
@@ -105,7 +125,16 @@ namespace DNPDemo.Interaction.Stroke
             }
         }
 
-        public override void End() => StopInput();
+        public override void End()
+        {
+            // End runs before Discard on every device, and guide lines that missed have been erased by then, so the
+            // set holds the lines that count on the actor's device and on the others alike.
+            if (_session != null && _part != null)
+            {
+                LastResult = StrokeResult.Capture(_session.Step, _part, _set);
+            }
+            StopInput();
+        }
 
         public override void Discard()
         {

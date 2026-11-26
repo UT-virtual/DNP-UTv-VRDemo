@@ -1,0 +1,204 @@
+using System;
+using UnityEngine;
+using UnityEngine.Rendering;
+
+namespace DNPDemo.Environment
+{
+    /// <summary>
+    /// How a preset sets the spot light's activation. Keep leaves it as it is, so lights switched by other cues survive the
+    /// change; the remaining spot light settings are applied either way.
+    /// </summary>
+    public enum SpotLightMode
+    {
+        Keep,
+        On,
+        Off,
+    }
+
+    [Serializable]
+    public struct DirectionalLightSettings
+    {
+        public Color Color;
+        public float Intensity;
+        public Vector3 Rotation;
+        public LightShadows Shadows;
+        public float ShadowStrength;
+        public float ShadowBias;
+        public float ShadowNormalBias;
+        public float ShadowNearPlane;
+    }
+
+    [Serializable]
+    public struct SpotLightSettings
+    {
+        public SpotLightMode Enabled;
+        public Color Color;
+        public float Intensity;
+        public Vector3 Rotation;
+        public float Range;
+        public float SpotAngle;
+        public float InnerSpotAngle;
+        public LightShadows Shadows;
+        public float ShadowStrength;
+        public float ShadowBias;
+        public float ShadowNormalBias;
+        public float ShadowNearPlane;
+    }
+
+    /// <summary>
+    /// Ambient light. Trilight and Flat use the colours, as Unity does. Skybox uses the spherical harmonics baked from the
+    /// preset's panorama (DNP Demo/Setup/Bake Environment Lighting) scaled by the intensity, so it needs no capture at
+    /// runtime. As in Unity, the intensity only scales Skybox.
+    /// </summary>
+    [Serializable]
+    public struct AmbientSettings
+    {
+        public AmbientMode Mode;
+        public Color SkyColor;
+        public Color EquatorColor;
+        public Color GroundColor;
+        public Color FlatColor;
+        public float Intensity;
+    }
+
+    /// <summary>
+    /// Environment reflection, applied as the scene's custom reflection. The cubemap is baked from the preset's panorama in
+    /// the Editor (DNP Demo/Setup/Bake Environment Lighting), so switching presets needs no capture at runtime.
+    /// </summary>
+    [Serializable]
+    public struct ReflectionSettings
+    {
+        public Cubemap Cubemap;
+        public float Intensity;
+    }
+
+    /// <summary>
+    /// Main light shadow quality written to the active URP asset while the preset is shown. Override off leaves the values
+    /// that Basis' shadow quality setting chose; Override on replaces them until a preset without it is applied.
+    /// </summary>
+    [Serializable]
+    public struct ShadowQualitySettings
+    {
+        public bool Override;
+        public int MainLightShadowmapResolution;
+        public float ShadowDistance;
+        [Range(1, 4)] public int CascadeCount;
+    }
+
+    /// <summary>
+    /// Fog that fades distant objects to black. Linear uses the start and end distances; Exponential and
+    /// ExponentialSquared use the density. Each mode a preset uses must be kept by the Fog Modes stripping in Graphics
+    /// settings, or the fog is missing from builds.
+    /// </summary>
+    [Serializable]
+    public struct DistanceFogSettings
+    {
+        public bool Enabled;
+        public FogMode Mode;
+        [Min(0f)] public float Density;
+        [Min(0f)] public float StartDistance;
+        [Min(0f)] public float EndDistance;
+    }
+
+    [CreateAssetMenu(menuName = "DNP Demo/Environment Preset", fileName = "EnvironmentPreset")]
+    public sealed class EnvironmentPreset : ScriptableObject
+    {
+        [Tooltip("Name shown to players, such as on the background panel.")]
+        [SerializeField] string _displayName;
+        [SerializeField] Texture2D _panorama;
+        [SerializeField] float _exposure;
+        [SerializeField] float _rotation;
+        [SerializeField] bool _exhibitionRoomVisible;
+        [SerializeField] DirectionalLightSettings _directionalLight;
+        [SerializeField] SpotLightSettings _spotLight;
+        [SerializeField] AmbientSettings _ambient;
+        [SerializeField] ReflectionSettings _reflection;
+        [SerializeField] ShadowQualitySettings _shadowQuality;
+        [Tooltip("Fades distant objects to black. Linear uses the distances in metres; the exponential modes use the density.")]
+        [SerializeField] DistanceFogSettings _distanceFog;
+        /// <summary>Spherical harmonics baked from the panorama for the Skybox ambient source: 9 coefficients per RGB channel.</summary>
+        [SerializeField, HideInInspector] float[] _skyboxAmbientProbe = Array.Empty<float>();
+
+        const int ProbeCoefficients = 9;
+
+        /// <summary>Name shown to players. Falls back to the asset name when it is not set.</summary>
+        public string DisplayName => string.IsNullOrWhiteSpace(_displayName) ? name : _displayName;
+        public Texture2D Panorama => _panorama;
+        public float Exposure => _exposure;
+        public float Rotation => _rotation;
+        public bool ExhibitionRoomVisible => _exhibitionRoomVisible;
+        public DirectionalLightSettings DirectionalLight => _directionalLight;
+        public SpotLightSettings SpotLight => _spotLight;
+        public AmbientSettings Ambient => _ambient;
+        public ReflectionSettings Reflection => _reflection;
+        public ShadowQualitySettings ShadowQuality => _shadowQuality;
+        public DistanceFogSettings DistanceFog => _distanceFog;
+
+        public bool HasSkyboxAmbientProbe => _skyboxAmbientProbe != null && _skyboxAmbientProbe.Length == 3 * ProbeCoefficients;
+
+        /// <summary>The ambient light of the panorama at intensity 1, for the Skybox ambient source.</summary>
+        public SphericalHarmonicsL2 SkyboxAmbientProbe
+        {
+            get
+            {
+                var probe = new SphericalHarmonicsL2();
+                if (!HasSkyboxAmbientProbe)
+                {
+                    return probe;
+                }
+                for (int channel = 0; channel < 3; channel++)
+                {
+                    for (int coefficient = 0; coefficient < ProbeCoefficients; coefficient++)
+                    {
+                        probe[channel, coefficient] = _skyboxAmbientProbe[channel * ProbeCoefficients + coefficient];
+                    }
+                }
+                return probe;
+            }
+        }
+
+        public override string ToString() => DisplayName;
+
+        internal void Configure(
+            string displayName,
+            Texture2D panorama,
+            float exposure,
+            float rotation,
+            bool exhibitionRoomVisible,
+            DirectionalLightSettings directionalLight,
+            SpotLightSettings spotLight,
+            AmbientSettings ambient,
+            ReflectionSettings reflection,
+            ShadowQualitySettings shadowQuality,
+            DistanceFogSettings distanceFog = default)
+        {
+            _displayName = displayName;
+            _panorama = panorama;
+            _exposure = exposure;
+            _rotation = rotation;
+            _exhibitionRoomVisible = exhibitionRoomVisible;
+            _directionalLight = directionalLight;
+            _spotLight = spotLight;
+            _ambient = ambient;
+            _reflection = reflection;
+            _shadowQuality = shadowQuality;
+            _distanceFog = distanceFog;
+        }
+
+        /// <summary>Assigns the cubemap baked from the panorama, keeping the rest of the preset as authored.</summary>
+        internal void SetReflectionCubemap(Cubemap cubemap) => _reflection.Cubemap = cubemap;
+
+        /// <summary>Stores the spherical harmonics baked from the panorama, keeping the rest of the preset as authored.</summary>
+        internal void SetSkyboxAmbientProbe(SphericalHarmonicsL2 probe)
+        {
+            _skyboxAmbientProbe = new float[3 * ProbeCoefficients];
+            for (int channel = 0; channel < 3; channel++)
+            {
+                for (int coefficient = 0; coefficient < ProbeCoefficients; coefficient++)
+                {
+                    _skyboxAmbientProbe[channel * ProbeCoefficients + coefficient] = probe[channel, coefficient];
+                }
+            }
+        }
+    }
+}

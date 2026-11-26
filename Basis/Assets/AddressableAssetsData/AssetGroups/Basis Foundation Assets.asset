@@ -111,6 +111,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2c352fa0b14cd9f41b06c04928597cac
+    m_Address: AssistantB
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2c84803c5e0cef44f9e0152b5fba4f35
     m_Address: Packages/com.basis.sdk/Prefabs/Panel Elements/Platform Panel - Android.prefab
     m_ReadOnly: 0
@@ -274,6 +279,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 71743328d0464434ab9d1dc6c5df4e46
     m_Address: Packages/com.basis.sdk/Materials/OpaqueNamePlateMaterial.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 72185de8a10f7df4d8bf6b2f2f020d9c
+    m_Address: AssistantA
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

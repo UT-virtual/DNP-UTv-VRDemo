@@ -49,5 +49,27 @@ namespace DNPDemo.Tests
             }
             Assert.AreEqual(PenGeometry.MaxSelectRadius, radius, 1e-4f);
         }
+
+        [Test]
+        public void AdjustExtensionStaysWithinZeroAndOne()
+        {
+            Assert.AreEqual(1f, PenGeometry.AdjustExtension(0.9f, 1f, 10f, 1.5f), Tolerance);
+            Assert.AreEqual(0f, PenGeometry.AdjustExtension(0.1f, -1f, 10f, 1.5f), Tolerance);
+            Assert.AreEqual(0.4f, PenGeometry.AdjustExtension(0.4f, 0f, 1f, 1.5f), Tolerance);
+        }
+
+        [Test]
+        public void AdjustExtensionMovesLinearlyAndCoversTheRangeInTheGivenTime()
+        {
+            Assert.AreEqual(0.5f, PenGeometry.AdjustExtension(0f, 1f, 0.75f, 1.5f), Tolerance);
+            Assert.AreEqual(0.25f, PenGeometry.AdjustExtension(0.5f, -0.5f, 0.75f, 1.5f), Tolerance);
+
+            float extension = 0f;
+            for (int i = 0; i < 150; i++)
+            {
+                extension = PenGeometry.AdjustExtension(extension, 1f, 0.01f, 1.5f);
+            }
+            Assert.AreEqual(1f, extension, 1e-4f);
+        }
     }
 }

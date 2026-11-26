@@ -10,10 +10,10 @@ namespace DNPDemo.Pen
     /// </summary>
     public readonly struct PenStateMessage
     {
-        public const byte FormatVersion = 2;
+        public const byte FormatVersion = 3;
 
-        // Version, sequence (2), mode, flags, then the radius as a 32-bit float.
-        public const int Size = 5 + sizeof(float);
+        // Version, sequence (2), mode, flags, then the radius and the extension as 32-bit floats.
+        public const int Size = 5 + 2 * sizeof(float);
 
         const byte HeldFlag = 1 << 0;
         const byte TriggerFlag = 1 << 1;
@@ -38,11 +38,8 @@ namespace DNPDemo.Pen
             buffer[2] = (byte)(Sequence >> 8);
             buffer[3] = (byte)State.Mode;
             buffer[4] = (byte)((State.IsHeld ? HeldFlag : 0) | (State.IsTriggerHeld ? TriggerFlag : 0));
-            int bits = BitConverter.SingleToInt32Bits(State.Radius);
-            buffer[5] = (byte)bits;
-            buffer[6] = (byte)(bits >> 8);
-            buffer[7] = (byte)(bits >> 16);
-            buffer[8] = (byte)(bits >> 24);
+            WriteSingle(buffer, 5, State.Radius);
+            WriteSingle(buffer, 9, State.Extension);
             return buffer;
         }
 
@@ -58,8 +55,9 @@ namespace DNPDemo.Pen
             {
                 return false;
             }
-            float radius = BitConverter.Int32BitsToSingle(buffer[5] | (buffer[6] << 8) | (buffer[7] << 16) | (buffer[8] << 24));
-            if (float.IsNaN(radius) || float.IsInfinity(radius))
+            float radius = ReadSingle(buffer, 5);
+            float extension = ReadSingle(buffer, 9);
+            if (!IsFinite(radius) || !IsFinite(extension))
             {
                 return false;
             }
@@ -68,10 +66,25 @@ namespace DNPDemo.Pen
             {
                 Mode = mode,
                 Radius = PenGeometry.ClampRadius(radius),
+                Extension = Math.Clamp(extension, 0f, 1f),
                 IsHeld = (flags & HeldFlag) != 0,
                 IsTriggerHeld = (flags & TriggerFlag) != 0,
             });
             return true;
         }
+
+        static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+
+        static void WriteSingle(byte[] buffer, int offset, float value)
+        {
+            int bits = BitConverter.SingleToInt32Bits(value);
+            buffer[offset] = (byte)bits;
+            buffer[offset + 1] = (byte)(bits >> 8);
+            buffer[offset + 2] = (byte)(bits >> 16);
+            buffer[offset + 3] = (byte)(bits >> 24);
+        }
+
+        static float ReadSingle(byte[] buffer, int offset) => BitConverter.Int32BitsToSingle(
+            buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16) | (buffer[offset + 3] << 24));
     }
 }

@@ -52,10 +52,7 @@ namespace DNPDemo.Tests
         VenusStatue CreateStatue()
         {
             GameObject go = Track(new GameObject(StatueKey));
-            var binding = go.AddComponent<ScenarioObjectBinding>();
-            var so = new SerializedObject(binding);
-            so.FindProperty("_key").stringValue = StatueKey;
-            so.ApplyModifiedPropertiesWithoutUndo();
+            TestBinding.Bind(go, StatueKey);
             return go.AddComponent<VenusStatue>();
         }
 
@@ -77,6 +74,66 @@ namespace DNPDemo.Tests
                 VenusAssetBuilder.ArmlessId, VenusAssetBuilder.Ver10Id, VenusAssetBuilder.Ver11Id, VenusAssetBuilder.Ver12Id,
                 VenusAssetBuilder.Ver20Id, VenusAssetBuilder.Ver30Id, VenusAssetBuilder.Ver31Id,
             }, ids, "docs/PLAN.md §2.5: armless → Ver 1.0 → 1.1 → 1.2 → 2.0 → 3.0 → 3.1.");
+
+            // docs/PLAN.md §2.5: the branches of the history panel. Id → (parent id, starts a branch).
+            var branches = new Dictionary<string, (string Parent, bool StartsBranch)>
+            {
+                [VenusAssetBuilder.ArmlessId] = (null, false),
+                [VenusAssetBuilder.Ver10Id] = (VenusAssetBuilder.ArmlessId, false),
+                [VenusAssetBuilder.Ver11Id] = (VenusAssetBuilder.Ver10Id, true),
+                [VenusAssetBuilder.Ver12Id] = (VenusAssetBuilder.Ver11Id, false),
+                [VenusAssetBuilder.Ver20Id] = (VenusAssetBuilder.Ver11Id, true),
+                [VenusAssetBuilder.Ver30Id] = (VenusAssetBuilder.Ver20Id, false),
+                [VenusAssetBuilder.Ver31Id] = (VenusAssetBuilder.Ver30Id, false),
+            };
+            foreach (VenusVersion version in catalog.Versions)
+            {
+                (string parent, bool startsBranch) = branches[version.Id];
+                Assert.AreEqual(parent, version.Parent != null ? version.Parent.Id : null, $"Parent of {version}.");
+                Assert.AreEqual(startsBranch, version.StartsBranch, $"Whether {version} starts a branch.");
+            }
+        }
+
+        [Test]
+        public void CatalogAssetVersionsHaveThumbnails()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<VenusVersionCatalog>(VenusAssetBuilder.CatalogPath);
+            Assert.IsNotNull(catalog);
+            foreach (VenusVersion version in catalog.Versions)
+            {
+                Assert.IsNotNull(version.Thumbnail, $"{version} has no thumbnail (create it from DNP Demo/Create/Venus Thumbnails).");
+            }
+        }
+
+        [Test]
+        public void CatalogValidateReportsParentsThatDoNotComeFirst()
+        {
+            VenusVersion root = CreateVersion("root");
+            VenusVersion later = CreateVersion("later");
+            VenusVersion outside = CreateVersion("outside");
+            var self = CreateVersion("self");
+            self.Initialize("self", "表示名 self", self.Model, self);
+            var catalog = Track(ScriptableObject.CreateInstance<VenusVersionCatalog>());
+            catalog.SetVersions(new[]
+            {
+                root,
+                CreateWithParent("child", root),
+                CreateWithParent("before-later", later),
+                later,
+                CreateWithParent("from-outside", outside),
+                self,
+            });
+
+            List<string> problems = catalog.Validate();
+            // parent after the version, parent outside the catalog, version as its own parent
+            Assert.AreEqual(3, problems.Count, string.Join("\n", problems));
+        }
+
+        VenusVersion CreateWithParent(string id, VenusVersion parent)
+        {
+            VenusVersion version = CreateVersion(id);
+            version.Initialize(id, "表示名 " + id, version.Model, parent);
+            return version;
         }
 
         [Test]
@@ -124,6 +181,31 @@ namespace DNPDemo.Tests
             Assert.IsNull(statue.Current);
             Assert.IsFalse(statue.GetModel(first).activeSelf);
             Assert.IsFalse(statue.GetModel(second).activeSelf);
+        }
+
+        [Test]
+        public void StageModelIsSpecificToTheMainStatueAndFallsBackToTheCompleteModel()
+        {
+            VenusVersion withProp = CreateVersion("with-prop");
+            VenusVersion regular = CreateVersion("regular");
+            GameObject stagePrefab = Track(new GameObject("DetachedPropModel"));
+            var versionSettings = new SerializedObject(withProp);
+            versionSettings.FindProperty("_stageModel").objectReferenceValue = stagePrefab;
+            versionSettings.ApplyModifiedPropertiesWithoutUndo();
+
+            VenusStatue main = CreateStatue();
+            var mainSettings = new SerializedObject(main);
+            mainSettings.FindProperty("_useStageModels").boolValue = true;
+            mainSettings.ApplyModifiedPropertiesWithoutUndo();
+            VenusStatue comparison = Track(new GameObject("Comparison")).AddComponent<VenusStatue>();
+
+            main.Show(withProp, animate: false);
+            comparison.Show(withProp, animate: false);
+            Assert.AreEqual(stagePrefab.name, main.GetModel(withProp).name);
+            Assert.AreEqual(withProp.Model.name, comparison.GetModel(withProp).name);
+
+            main.Show(regular, animate: false);
+            Assert.AreEqual(regular.Model.name, main.GetModel(regular).name);
         }
 
         [Test]

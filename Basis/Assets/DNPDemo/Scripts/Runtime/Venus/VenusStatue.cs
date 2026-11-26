@@ -26,6 +26,9 @@ namespace DNPDemo.Venus
         [Tooltip("Parent of the version models. Empty uses this transform.")]
         [SerializeField] Transform _modelRoot;
 
+        [Tooltip("Use versions' stage models so the scenario can display and move their props separately.")]
+        [SerializeField] bool _useStageModels;
+
         [Tooltip("Version drawn in the scene view while not playing, to place zones and goals against. Not shown at runtime.")]
         [SerializeField] VenusVersion _editorPreview;
 
@@ -39,7 +42,7 @@ namespace DNPDemo.Venus
         /// <summary>The version shown now; null when the statue shows nothing.</summary>
         public VenusVersion Current { get; private set; }
 
-        /// <summary>Raised after <see cref="Current"/> has changed.</summary>
+        /// <summary>Raised after <see cref="Show"/> has changed <see cref="Current"/>, and after every stage reset even when the baseline was already shown.</summary>
         public event Action<VenusVersionChange> VersionChanged;
 
         Transform ModelRoot => _modelRoot != null ? _modelRoot : transform;
@@ -67,6 +70,20 @@ namespace DNPDemo.Venus
             {
                 return;
             }
+            Switch(version, animate);
+        }
+
+        /// <summary>The instance of <paramref name="version"/>'s model under this statue, or null when it has no model.</summary>
+        public GameObject GetModel(VenusVersion version) =>
+            version != null && _models.TryGetValue(version, out GameObject model) ? model : null;
+
+        // Unlike Show, a reset raises VersionChanged even when the baseline is already Current, so that a
+        // listener still playing a transition into the baseline finishes it.
+        void IStageResettable.ResetToBaseline() => Switch(_baseline, false);
+
+        /// <summary>Activates only <paramref name="version"/>'s model, updates <see cref="Current"/> and raises <see cref="VersionChanged"/>.</summary>
+        void Switch(VenusVersion version, bool animate)
+        {
             VenusVersion previous = Current;
             GameObject next = version != null ? GetOrCreateModel(version) : null;
             foreach (KeyValuePair<VenusVersion, GameObject> pair in _models)
@@ -80,12 +97,6 @@ namespace DNPDemo.Venus
             VersionChanged?.Invoke(new VenusVersionChange(previous, version, animate));
         }
 
-        /// <summary>The instance of <paramref name="version"/>'s model under this statue, or null when it has no model.</summary>
-        public GameObject GetModel(VenusVersion version) =>
-            version != null && _models.TryGetValue(version, out GameObject model) ? model : null;
-
-        void IStageResettable.ResetToBaseline() => Show(_baseline, false);
-
         GameObject GetOrCreateModel(VenusVersion version)
         {
             if (version == null)
@@ -96,14 +107,15 @@ namespace DNPDemo.Venus
             {
                 return existing;
             }
-            if (version.Model == null)
+            GameObject prefab = version.GetModelPrefab(_useStageModels);
+            if (prefab == null)
             {
                 Debug.LogWarning($"[DNPDemo] {version.name} にモデルが設定されていません。", this);
                 _models[version] = null;
                 return null;
             }
-            GameObject model = Instantiate(version.Model, ModelRoot, false);
-            model.name = version.Model.name;
+            GameObject model = Instantiate(prefab, ModelRoot, false);
+            model.name = prefab.name;
             model.SetActive(version == Current);
             _models[version] = model;
             return model;
@@ -111,13 +123,14 @@ namespace DNPDemo.Venus
 
         void OnDrawGizmos()
         {
-            if (Application.isPlaying || _editorPreview == null || _editorPreview.Model == null)
+            GameObject model = _editorPreview != null ? _editorPreview.GetModelPrefab(_useStageModels) : null;
+            if (Application.isPlaying || model == null)
             {
                 return;
             }
             Matrix4x4 root = ModelRoot.localToWorldMatrix;
             Gizmos.color = new Color(0.85f, 0.85f, 0.8f, 0.6f);
-            foreach (MeshFilter filter in _editorPreview.Model.GetComponentsInChildren<MeshFilter>(true))
+            foreach (MeshFilter filter in model.GetComponentsInChildren<MeshFilter>())
             {
                 if (filter.sharedMesh == null)
                 {

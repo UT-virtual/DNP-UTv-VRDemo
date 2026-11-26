@@ -1,7 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
+using DNPDemo.Interaction.Stroke;
 using DNPDemo.Interaction.Voice;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
@@ -11,12 +14,40 @@ namespace DNPDemo.Tests
 {
     public class ScenarioDataTests
     {
-        static List<ScenarioStep> DefaultSteps => ScenarioDataBuilder.CreateDefaultSteps();
+        static List<ScenarioStep> _defaultSteps;
+
+        [OneTimeSetUp]
+        public static void OneTimeSetUp()
+        {
+            _defaultSteps = ScenarioDataBuilder.CreateDefaultSteps();
+        }
+
+        static List<ScenarioStep> DefaultSteps => _defaultSteps;
 
         [Test]
         public void DefaultScenarioIsValid()
         {
             CollectionAssert.IsEmpty(ScenarioData.Validate(DefaultSteps));
+        }
+
+        [Test]
+        public void EnvironmentTransitionStartsAtStep22AndIsPersistent()
+        {
+            List<ScenarioStep> steps = DefaultSteps;
+            Assert.AreEqual(22, steps.FindIndex(step => step.Id == "closing"));
+            Assert.IsFalse(steps.GetRange(0, 22).Exists(step => step.Cues.Exists(cue => cue is EnvironmentCue)));
+            Assert.IsInstanceOf<EnvironmentCue>(steps[22].Cues[0]);
+            Assert.IsNotNull(((EnvironmentCue)steps[22].Cues[0]).Preset);
+            var data = UnityEngine.ScriptableObject.CreateInstance<ScenarioData>();
+            try
+            {
+                data.SetSteps(steps);
+                CollectionAssert.Contains(data.CollectRequirements().ObjectKeys, "Environment");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(data);
+            }
         }
 
         [Test]
@@ -194,7 +225,7 @@ namespace DNPDemo.Tests
                 ["s3-grip-mirror"] = new[] { PenMode.Select, PenMode.Voice },
                 ["s3-adjust-wrist"] = new[] { PenMode.Select, PenMode.Manipulate },
                 ["p2-compare"] = new[] { PenMode.Panel },
-                ["p3-temple"] = new[] { PenMode.Select, PenMode.Voice },
+                ["p3-temple"] = new[] { PenMode.Voice, PenMode.Panel },
             };
             foreach (ScenarioStep step in DefaultSteps)
             {
@@ -210,6 +241,74 @@ namespace DNPDemo.Tests
                     Assert.IsFalse(string.IsNullOrEmpty(step.Interaction[i].Instruction), $"{step.Id} part {i} needs an instruction.");
                 }
             }
+        }
+
+        [Test]
+        public void EveryOperationRunsOnItsTool()
+        {
+            foreach (ScenarioStep step in DefaultSteps)
+            {
+                foreach (InteractionPart part in step.Interaction)
+                {
+                    Assert.IsNotInstanceOf<DummyInteractionPart>(part, $"{step.Id}: every operation is played with its tool, not a stand-in.");
+                }
+            }
+        }
+
+        [Test]
+        public void WristTwistOfStep17RequiresATurnAboutTheWristPivot()
+        {
+            ManipulatePart twist = DefaultSteps.Find(step => step.Id == "s3-adjust-wrist").Interaction.OfType<ManipulatePart>().Single();
+            Assert.AreEqual(ManipulateConstraintKind.Rotate, twist.Constraint);
+            Assert.AreEqual(RotateCompletion.Snap, twist.Completion);
+            Assert.AreEqual(ScenarioDataBuilder.RightWristPivotKey, twist.PivotKey);
+            Assert.AreEqual(UnityEngine.Vector3.up, twist.Axis);
+            Assert.Greater(twist.TargetAngle, twist.SnapAngle, "Step 17 should require a turn before snapping.");
+        }
+
+        [Test]
+        public void SketchPlacedObjectsFollowASketchDrawnBeforeThem()
+        {
+            List<ScenarioStep> steps = DefaultSteps;
+            int checkedCues = 0;
+            for (int i = 0; i < steps.Count; i++)
+            {
+                foreach (ScenarioCue cue in steps[i].Cues)
+                {
+                    if (cue is not PlaceAtSketchCue place)
+                    {
+                        continue;
+                    }
+                    int sketch = steps.FindIndex(step => step.Id == place.SketchStepId);
+                    Assert.IsTrue(sketch >= 0 && sketch < i, $"{steps[i].Id}: the sketch step '{place.SketchStepId}' should come before it.");
+                    Assert.IsTrue(steps[sketch].Interaction.Exists(part => part is StrokePart { Goal: StrokeGoal.Sketch }),
+                        $"'{place.SketchStepId}' should draw a sketch.");
+                    checkedCues++;
+                }
+            }
+            Assert.AreEqual(1, checkedCues, "Step 14 puts the hand mirror where step 13's sketch was drawn.");
+        }
+
+        [Test]
+        public void MovedObjectsStayWhereTheOperationLeftThem()
+        {
+            List<ScenarioStep> steps = DefaultSteps;
+            int checkedParts = 0;
+            for (int i = 0; i < steps.Count - 1; i++)
+            {
+                foreach (InteractionPart part in steps[i].Interaction)
+                {
+                    if (part is not ManipulatePart { Constraint: ManipulateConstraintKind.Translate } move)
+                    {
+                        continue;
+                    }
+                    // The stage puts moved objects back when the step changes, so the next step has to show the result.
+                    Assert.IsTrue(steps[i + 1].Cues.Exists(cue => cue is MatchPoseCue match && match.Key == move.TargetKey && match.MarkerKey == move.GoalKey),
+                        $"{steps[i + 1].Id} should put {move.TargetKey} at {move.GoalKey}, where {steps[i].Id} left it.");
+                    checkedParts++;
+                }
+            }
+            Assert.AreEqual(2, checkedParts, "Step 6 moves the apple and step 14 the hand mirror.");
         }
 
         [Test]

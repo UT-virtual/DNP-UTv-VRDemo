@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DNPDemo.Menu
 {
     /// <summary>A menu entry that opens a tall page beside the hotbar, like the Basis settings pages.</summary>
-    public abstract class DemoPageMenuProvider : DemoMenuProvider
+    public abstract class DemoPageMenuProvider : DemoPanelMenuProvider
     {
         // Same page geometry as the Basis providers, so the page sits beside the hotbar like theirs.
         static readonly Vector2 PageSize = new(587f, 1025f);

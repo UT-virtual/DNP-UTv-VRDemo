@@ -117,13 +117,15 @@ PowerShell で、リポジトリのルートから実行します。
 | シーンのルート | プレハブ（`Basis/Assets/DNPDemo/Prefabs/`） | 内容 |
 |---|---|---|
 | BasisScene | （シーンに直接置く） | Basis のシーン定義、初期スポーン位置、カメラ |
-| Env_ExhibitionRoom | `Env_ExhibitionRoom.prefab` | 展示室。見た目は `Model`、床と壁の当たり判定は `Colliders` に分けてある。モデルを差し替えたら `Colliders` を見た目に合わせる |
+| Env_ExhibitionRoom | `Env_ExhibitionRoom.prefab` | 展示室。見た目は `Model`、床と壁の当たり判定は `Colliders` に分けてある。モデルを差し替えたら `Colliders` を見た目に合わせる。キー `ExhibitionRoom` を持ち、環境が展示室を隠すときは `EnvironmentController` が配下の Renderer をフェードする（当たり判定は残る） |
 | Env_Temple | `Env_Temple.prefab` | 神殿（最初は非表示） |
-| Lighting | `Lighting.prefab` | ライト。像のスポットライトはロビー中は消えている |
+| Lighting | `Lighting.prefab` | ライト。像のスポットライトはロビー中は消えている。ルートにキー `Environment` と `EnvironmentController` を持ち、環境プリセットに合わせてライト、Skybox、Ambient、Reflection を切り替える |
 | Statue_Original | `Statue_Original.prefab` | 台座と像 |
 | ComparisonTable | `ComparisonTable.prefab` | 比較台（最初は非表示） |
 | Scholars | `Scholars.prefab` | 学者 A・B。どちらも `Scholars/Scholar.prefab` のバリアント |
 | DemoSystems | `DemoSystems.prefab` | 接続、ロール、スポーン、ロビーパネル、シナリオ（`Scenario`） |
+
+神殿の背景は、環境プリセット（`Data/Environment/EnvironmentPreset_Temple.asset`）のパノラマとライトで表示していて、`Env_Temple` は使っていません。`Env_Temple.prefab` は今は中身のない置き場で、シーンでは非表示のままです。神殿の柱などの立体物を足すときはこのプレハブに置き、キー（`ScenarioObjectBinding`）を付けて、結びのステップ（`closing`）の `SetObjectActiveCue` で表示してください。`EnvironmentController` は `Env_Temple` を操作しないので、表示の切り替えはシナリオのデータで行います。
 
 - シナリオのデータ（`Data/ScenarioData.asset`）はシーンのオブジェクトを直接参照できません。キューから操作したいオブジェクトには `ScenarioObjectBinding`（キー）を、台詞を話すオブジェクトには `ScenarioSpeakerBinding`（話者、音声、字幕）を、そのオブジェクトのプレハブに付けてください。ScenarioStage が起動時にシーンから集めます。
 - データが使う話者とキーがシーンにそろっているか、重複がないかは、Editor テスト `ScenarioSceneBindingTests` で確認できます。
@@ -163,11 +165,14 @@ git mergetool --tool=unityyamlmerge -- <衝突したファイル>
 - `Art/` は、機能ごとのフォルダに分けてから、種類（Models、Materials、Textures）で分けます。機能のフォルダには `ExhibitionRoom`（展示室）、`Venus`（像と台座）、`Scholars`（学者）などがあります。新しい機能の素材は、同じ形でフォルダを作って置いてください。
 - 複数の機能で使う素材は `Art/Common/` に置きます。
 - Blender のファイル（`.blend`）は、Unity に読み込ませないよう、名前が `~` で終わるフォルダ（例: `Art/Venus/Models/Source~/`）に置きます。Unity は `.blend` を Blender 経由で読み込むため、Blender が入っていない PC ではインポートエラーになります。Unity に読み込ませるモデルは FBX で書き出してください。
-- UI の日本語フォント（`UI/Fonts/NotoSansJP-Regular SDF.asset`）は、文字セット `UI/Fonts/JapaneseCharacterSet-3353.txt` から作った静的な SDF です。セットにない文字は □ で表示されます。UI や台詞に新しい文字や記号を使うときは、文字セットに加えてから SDF を作り直してください（フォントアセットを選び、インスペクターの Update Atlas Texture → Generate Font Atlas → Save）。作り直し忘れは Editor テスト `UiFontTests` が検出します。
+- VRM のファイル（`.vrm`）も、`~` で終わるフォルダ（例: `Art/Assistants/Source~/`）に置きます。UniVRM は `.vrm` がインポートされるたびに同じフォルダの `<名前>.prefab` を作り直すので、`Assets` 以下に置いたままだと、clone した PC で開いたときにプレハブへ加えた Basis の設定が消えます。コミットするのは生成されたプレハブとアセットです。VRM を差し替えるときは、`.vrm` を一時的にプレハブと同じフォルダへコピーしてプレハブを作り直し、ルートに `BasisAvatar` を付けて設定し、VRM のコンポーネント（`VRMSpringBone`、`VRMBlendShapeProxy` など）を外してから、`.vrm` を `Source~/` に戻します。VRM のコンポーネントは Basis が読み込むときに消してしまうためです。設定漏れは Editor テスト `AssistantAvatarPrefabTests` が検出します。
+- UI の日本語フォント（`UI/Fonts/NotoSansJP-Regular SDF.asset`）は、文字セット `UI/Fonts/JapaneseCharacterSet-3353.txt` から作った静的な SDF です。セットにない文字は □ で表示されます。UI や台詞に新しい文字や記号を使うときは、文字セットに加えてから SDF を作り直してください（フォントアセットを選び、インスペクターの Update Atlas Texture → Generate Font Atlas → Save）。作り直し忘れは Editor テスト `UiFontTests` が検出します。作成設定の Get Font Features（`includeFontFeatures`）はオフにしています。この SDF ではカーニングが元のフォントの約 12 倍の値で取り込まれ、「Ver」の V と e が重なるためです。
 - Unity が自動で書き換えただけのファイルはコミットしません。例: Basis のフォントアセット（`Poppins-Regular SDF NamePlate.asset` など）、`ProjectSettings/QualitySettings.asset`、`UniversalRenderPipelineGlobalSettings.asset`、`AddressableAssetSettings.asset`。設定を意図して変えた場合だけコミットします。
 - `.meta` ファイルは Unity に生成させます。手で作らないでください。アセットを移動するときは、Unity のプロジェクトウィンドウで移動するか、`.meta` ごと移動してください（GUID が保たれ、参照が切れません）。
 
 ## Git LFS
+
+> 注意: 仮素材の期間は、`Basis/Assets/DNPDemo/` のバイナリも通常の git で管理しています。以下の LFS の手順は現在使っていません（詳細は #60）。
 
 `Basis/Assets/DNPDemo/` 以下のバイナリ（3D モデル、画像、音声、動画、フォント、ライトマップなど）は Git LFS で管理します。対象の拡張子は [.gitattributes](.gitattributes) にあります。
 

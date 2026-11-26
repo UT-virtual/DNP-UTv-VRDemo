@@ -1,11 +1,16 @@
 using DNPDemo.Editor;
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Background;
+using DNPDemo.Interaction.Hint;
+using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
 using DNPDemo.Interaction.Voice;
 using DNPDemo.Pen;
 using DNPDemo.Scenario;
+using DNPDemo.TaskHud;
+using DNPDemo.Venus;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -30,6 +35,161 @@ namespace DNPDemo.Tests
                 Assert.AreEqual(uiLayer, t.gameObject.layer,
                     $"'{t.name}' must be on the {WorldUiBuilder.UILayerName} layer so the Basis laser can hit it.");
             }
+        }
+
+        [Test]
+        public void HistoryPanelCanvasIsOnUILayerAndPreviewIsOutsideIt()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(InteractionPrefabBuilder.HistoryToolPath);
+            Assert.IsNotNull(prefab, $"{InteractionPrefabBuilder.HistoryToolPath} (create it from DNP Demo/Create/Interaction Prefabs)");
+            var panel = prefab.GetComponentInChildren<HistoryPanel>(true);
+            Assert.IsNotNull(panel);
+            var so = new SerializedObject(panel);
+            foreach (string field in new[]
+            {
+                "_content", "_preview", "_treePage", "_treeView", "_detailPage", "_backButton",
+                "_versionText", "_pageText", "_emptyText", "_statusText",
+                "_closeButton", "_previousButton", "_nextButton", "_restoreButton",
+            })
+            {
+                Assert.IsNotNull(so.FindProperty(field).objectReferenceValue, $"HistoryPanel.{field} is not set.");
+            }
+
+            var content = (GameObject)so.FindProperty("_content").objectReferenceValue;
+            Assert.IsNotNull(content.GetComponent<Canvas>());
+            int uiLayer = LayerMask.NameToLayer(WorldUiBuilder.UILayerName);
+            foreach (Transform t in content.GetComponentsInChildren<Transform>(true))
+            {
+                Assert.AreEqual(uiLayer, t.gameObject.layer,
+                    $"'{t.name}' must be on the {WorldUiBuilder.UILayerName} layer so the Basis laser can hit it.");
+            }
+
+            var preview = (HistoryPreview)so.FindProperty("_preview").objectReferenceValue;
+            Assert.IsFalse(preview.transform.IsChildOf(content.transform),
+                "The canvas is switched off while closed; the preview must stay active so its statue builds the models at scene load.");
+            Assert.IsTrue(preview.gameObject.activeSelf);
+            var statue = (VenusStatue)new SerializedObject(preview).FindProperty("_statue").objectReferenceValue;
+            Assert.IsNotNull(statue, "HistoryPreview needs its statue.");
+            Assert.IsNotNull(statue.Catalog, "The preview statue needs the version catalog.");
+            Assert.IsNull(statue.Baseline, "The preview shows nothing until the panel opens.");
+            Assert.IsNull(statue.GetComponent<ScenarioObjectBinding>(), "The preview is not a stage object; the stage must not reset it.");
+
+            Assert.AreSame(panel, new SerializedObject(prefab.GetComponent<HistoryTool>()).FindProperty("_panel").objectReferenceValue);
+        }
+
+        [Test]
+        public void HistoryPanelDrawsPreviewBetweenBackgroundAndDepth()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(InteractionPrefabBuilder.HistoryToolPath);
+            Assert.IsNotNull(prefab);
+            var so = new SerializedObject(prefab.GetComponentInChildren<HistoryPanel>(true));
+            var content = (GameObject)so.FindProperty("_content").objectReferenceValue;
+            var preview = (HistoryPreview)so.FindProperty("_preview").objectReferenceValue;
+
+            Assert.Greater(content.transform.InverseTransformPoint(preview.transform.position).z, 0f,
+                "The preview stands behind the canvas (the viewer is on its -Z side).");
+
+            Transform background = content.transform.Find("Background");
+            Assert.IsNotNull(background);
+            Material backgroundMaterial = background.GetComponent<UnityEngine.UI.Image>().material;
+            Assert.AreEqual(HistoryRenderQueues.PanelBackground, backgroundMaterial.renderQueue,
+                "The background must be drawn before the preview so its colour never covers the model.");
+
+            Transform depth = content.transform.Find("Depth");
+            Assert.IsNotNull(depth);
+            var depthRenderer = depth.GetComponent<MeshRenderer>();
+            Assert.IsTrue(depthRenderer.enabled);
+            Assert.AreEqual(HistoryRenderQueues.PanelDepth, depthRenderer.sharedMaterial.renderQueue,
+                "The depth-only panel shape must be drawn after the preview so later transparents behind the panel stay hidden.");
+            Assert.Greater(depth.localPosition.z, 0f, "The depth shape sits just behind the labels so it does not hide them.");
+        }
+
+        [Test]
+        public void BackgroundPanelCanvasIsOnUILayerAndWired()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(InteractionPrefabBuilder.BackgroundToolPath);
+            Assert.IsNotNull(prefab, $"{InteractionPrefabBuilder.BackgroundToolPath} (create it from DNP Demo/Create/Interaction Prefabs)");
+            var panel = prefab.GetComponentInChildren<BackgroundPanel>(true);
+            Assert.IsNotNull(panel);
+            var so = new SerializedObject(panel);
+            foreach (string field in new[]
+            {
+                "_content", "_closeButton", "_cardContainer", "_cardTemplate", "_preview", "_nameText", "_statusText", "_applyButton",
+            })
+            {
+                Assert.IsNotNull(so.FindProperty(field).objectReferenceValue, $"BackgroundPanel.{field} is not set.");
+            }
+
+            var content = (GameObject)so.FindProperty("_content").objectReferenceValue;
+            Assert.IsNotNull(content.GetComponent<Canvas>());
+            int uiLayer = LayerMask.NameToLayer(WorldUiBuilder.UILayerName);
+            foreach (Transform t in content.GetComponentsInChildren<Transform>(true))
+            {
+                Assert.AreEqual(uiLayer, t.gameObject.layer,
+                    $"'{t.name}' must be on the {WorldUiBuilder.UILayerName} layer so the Basis laser can hit it.");
+            }
+
+            var template = (BackgroundCard)so.FindProperty("_cardTemplate").objectReferenceValue;
+            var container = (RectTransform)so.FindProperty("_cardContainer").objectReferenceValue;
+            Assert.IsFalse(template.gameObject.activeSelf, "The card template stays hidden; the panel clones it.");
+            Assert.IsFalse(template.transform.IsChildOf(container), "The template must stay out of the layout of the cards.");
+            var card = new SerializedObject(template);
+            foreach (string field in new[] { "_button", "_thumbnail", "_label", "_currentFrame", "_selectedMark" })
+            {
+                Assert.IsNotNull(card.FindProperty(field).objectReferenceValue, $"BackgroundCard.{field} is not set.");
+            }
+
+            Assert.AreSame(panel, new SerializedObject(prefab.GetComponent<BackgroundTool>()).FindProperty("_panel").objectReferenceValue);
+        }
+
+        [Test]
+        public void DemoSystemsBackgroundToolIsWired()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioInstaller.DemoSystemsPrefabPath);
+            Assert.IsNotNull(prefab);
+            var runner = prefab.GetComponentInChildren<InteractionRunner>(true);
+            Assert.IsNotNull(runner);
+            var background = runner.GetComponentInChildren<BackgroundTool>(true);
+            Assert.IsNotNull(background, "Install it from DNP Demo/Setup/Install Scenario Into DemoSystems Prefab.");
+
+            var panel = (BackgroundPanel)new SerializedObject(background).FindProperty("_panel").objectReferenceValue;
+            Assert.IsNotNull(panel, "BackgroundTool needs its panel.");
+            var so = new SerializedObject(panel);
+            Assert.IsNotNull(so.FindProperty("_director").objectReferenceValue, "BackgroundPanel needs the director.");
+            Assert.IsNotNull(so.FindProperty("_stage").objectReferenceValue, "BackgroundPanel needs the stage to find the baseline.");
+
+            SerializedProperty tools = new SerializedObject(runner).FindProperty("_tools");
+            bool registered = false;
+            for (int i = 0; i < tools.arraySize; i++)
+            {
+                registered |= tools.GetArrayElementAtIndex(i).objectReferenceValue == background;
+            }
+            Assert.IsTrue(registered, "BackgroundTool is not registered with the runner.");
+        }
+
+        [Test]
+        public void DemoSystemsHistoryToolIsWired()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioInstaller.DemoSystemsPrefabPath);
+            Assert.IsNotNull(prefab);
+            var runner = prefab.GetComponentInChildren<InteractionRunner>(true);
+            Assert.IsNotNull(runner);
+            var history = runner.GetComponentInChildren<HistoryTool>(true);
+            Assert.IsNotNull(history, "Install it from DNP Demo/Setup/Install Scenario Into DemoSystems Prefab.");
+
+            var tool = new SerializedObject(history);
+            Assert.IsNotNull(tool.FindProperty("_stage").objectReferenceValue, "HistoryTool needs the scenario stage.");
+            var panel = (HistoryPanel)tool.FindProperty("_panel").objectReferenceValue;
+            Assert.IsNotNull(panel, "HistoryTool needs its panel.");
+            Assert.IsNotNull(new SerializedObject(panel).FindProperty("_director").objectReferenceValue, "HistoryPanel needs the director.");
+
+            SerializedProperty tools = new SerializedObject(runner).FindProperty("_tools");
+            bool registered = false;
+            for (int i = 0; i < tools.arraySize; i++)
+            {
+                registered |= tools.GetArrayElementAtIndex(i).objectReferenceValue == history;
+            }
+            Assert.IsTrue(registered, "HistoryTool is not registered with the runner.");
         }
 
         [Test]
@@ -152,6 +312,30 @@ namespace DNPDemo.Tests
                 registered |= tools.GetArrayElementAtIndex(i).objectReferenceValue == voice;
             }
             Assert.IsTrue(registered, "VoiceCommandTool is not registered with the runner.");
+        }
+
+        [Test]
+        public void DemoSystemsHintPresenterIsWired()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScenarioInstaller.DemoSystemsPrefabPath);
+            Assert.IsNotNull(prefab);
+            var runner = prefab.GetComponentInChildren<InteractionRunner>(true);
+            Assert.IsNotNull(runner);
+            var presenter = runner.GetComponentInChildren<InteractionHintPresenter>(true);
+            Assert.IsNotNull(presenter, "Install it from DNP Demo/Setup/Install Scenario Into DemoSystems Prefab.");
+
+            var so = new SerializedObject(presenter);
+            Assert.AreEqual(runner, so.FindProperty("_runner").objectReferenceValue, "InteractionHintPresenter needs the runner.");
+            Assert.IsNotNull(so.FindProperty("_stage").objectReferenceValue, "InteractionHintPresenter needs the scenario stage.");
+            var view = (HintZoneView)so.FindProperty("_zoneView").objectReferenceValue;
+            Assert.IsNotNull(view, "InteractionHintPresenter needs its zone view.");
+            var material = (Material)new SerializedObject(view).FindProperty("_material").objectReferenceValue;
+            Assert.IsNotNull(material, "HintZoneView needs its material.");
+            Assert.GreaterOrEqual(material.renderQueue, (int)UnityEngine.Rendering.RenderQueue.Transparent, "The zones are drawn translucent.");
+
+            var hud = prefab.GetComponentInChildren<TaskHudView>(true);
+            Assert.IsNotNull(hud);
+            Assert.AreEqual(presenter, new SerializedObject(hud).FindProperty("_hints").objectReferenceValue, "The task HUD shows the hint text.");
         }
 
         [Test]

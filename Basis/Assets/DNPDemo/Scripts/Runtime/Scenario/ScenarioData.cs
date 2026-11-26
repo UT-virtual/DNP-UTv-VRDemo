@@ -47,6 +47,7 @@ namespace DNPDemo.Scenario
                     foreach (InteractionPart part in step.Interaction)
                     {
                         part?.CollectRequirements(requirements);
+                        part?.Hint?.CollectRequirements(requirements);
                     }
                 }
             }
@@ -117,6 +118,7 @@ namespace DNPDemo.Scenario
                     }
                     itemProblems.Clear();
                     part.Validate(itemProblems);
+                    part.Hint?.Validate(itemProblems);
                     foreach (string problem in itemProblems)
                     {
                         problems.Add($"{label}（{step.Id}）の操作の部品 {p}：{problem}");

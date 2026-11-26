@@ -31,7 +31,6 @@
     <assembly fullname="BasisNetworkClient" preserve="all" />
     <assembly fullname="BasisNetworkCore" preserve="all" />
     <assembly fullname="BasisNetworkServer" preserve="all" />
-    <assembly fullname="BasisOpenVR" preserve="all" />
     <assembly fullname="BasisOpenXR" preserve="all" />
     <assembly fullname="BasisPoolTable" preserve="all" />
     <assembly fullname="BasisProfiler" preserve="all" />
@@ -48,6 +47,7 @@
     <assembly fullname="BouncyCastle.Cryptography" preserve="all" />
     <assembly fullname="Cilbox" preserve="all" />
     <assembly fullname="Crypto" preserve="all" />
+    <assembly fullname="DNPDemo.Runtime" preserve="all" />
     <assembly fullname="Did" preserve="all" />
     <assembly fullname="GPUUtilities" preserve="all" />
     <assembly fullname="Generator.Equals" preserve="all" />
@@ -60,6 +60,8 @@
     <assembly fullname="Klak.Spout.Runtime" preserve="all" />
     <assembly fullname="Klak.Syphon.Runtime" preserve="all" />
     <assembly fullname="LiteNetLib" preserve="all" />
+    <assembly fullname="MCPForUnity.Runtime" preserve="all" />
+    <assembly fullname="MToon" preserve="all" />
     <assembly fullname="MeaMod.DNS" preserve="all" />
     <assembly fullname="Mediapipe.Runtime" preserve="all" />
     <assembly fullname="Microsoft.ML.OnnxRuntime" preserve="all" />
@@ -68,6 +70,7 @@
     <assembly fullname="RNNoiseIntergration" preserve="all" />
     <assembly fullname="RenderAs2DModule" preserve="all" />
     <assembly fullname="SimpleBase" preserve="all" />
+    <assembly fullname="SpringBoneJobs" preserve="all" />
     <assembly fullname="SteamAudioUnity" preserve="all" />
     <assembly fullname="SteamVR" preserve="all" />
     <assembly fullname="SteamVR_Actions" preserve="all" />
@@ -77,6 +80,10 @@
     <assembly fullname="TrueAudioNext" preserve="all" />
     <assembly fullname="UdonSharp.Lib" preserve="all" />
     <assembly fullname="UdonSharp.Runtime" preserve="all" />
+    <assembly fullname="UniGLTF" preserve="all" />
+    <assembly fullname="UniGLTF.UniUnlit" preserve="all" />
+    <assembly fullname="UniGLTF.Utils" preserve="all" />
+    <assembly fullname="UniHumanoid" preserve="all" />
     <assembly fullname="Unity.Addressables" preserve="all" />
     <assembly fullname="Unity.Animation.Rigging" preserve="all" />
     <assembly fullname="Unity.Animation.Rigging.DocCodeExamples" preserve="all" />
@@ -140,6 +147,7 @@
     <assembly fullname="UnityEngine.UI" preserve="all" />
     <assembly fullname="UnityEngine.XR.LegacyInputHelpers" preserve="all" />
     <assembly fullname="VRC.Udon" preserve="all" />
+    <assembly fullname="VRM" preserve="all" />
     <assembly fullname="Valve.OpenXR.Utils" preserve="all" />
     <assembly fullname="XRSDKOpenVR" preserve="all" />
     <assembly fullname="YtDlp.Runtime" preserve="all" />
@@ -156,6 +164,7 @@
     <assembly fullname="opus" preserve="all" />
     <assembly fullname="phonon" preserve="all" />
     <assembly fullname="phonon_fmod" preserve="all" />
+    <assembly fullname="uLipSync.Runtime" preserve="all" />
     <assembly fullname="ucrtbased" preserve="all" />
 
     <assembly fullname="System">

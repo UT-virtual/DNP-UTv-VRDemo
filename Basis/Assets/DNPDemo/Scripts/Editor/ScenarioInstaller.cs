@@ -1,4 +1,7 @@
 using DNPDemo.Interaction;
+using DNPDemo.Interaction.Background;
+using DNPDemo.Interaction.Hint;
+using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
 using DNPDemo.Interaction.Stroke;
@@ -18,8 +21,8 @@ namespace DNPDemo.Editor
     /// <summary>
     /// Builds the scenario engine into the DemoSystems prefab and wires every reference inside it: director, stage,
     /// player, operator input and panel, narrator voice and subtitle, effects and banner, the interaction runner
-    /// with its tools, the task HUD, and the reset for the next visitors. Parts missing from the operator panel prefab are
-    /// added too (<see cref="ScenarioPrefabBuilder.InstallMissingOperatorPanelParts()"/>). Only what is missing is added, so running it again after an update installs the new parts and
+    /// with its tools and hints, the task HUD, and the reset for the next visitors. Parts missing from the operator panel and task HUD
+    /// prefabs are added too. Only what is missing is added, so running it again after an update installs the new parts and
     /// leaves hand edits alone. Afterwards the prefab is the source of truth and is edited by hand.
     /// Scholars and keyed objects are not wired here; they declare themselves with
     /// <see cref="ScenarioSpeakerBinding"/> / <see cref="ScenarioObjectBinding"/> in their own prefabs.
@@ -38,7 +41,9 @@ namespace DNPDemo.Editor
                 Fail($"{DemoSystemsPrefabPath} がありません。");
                 return;
             }
+            // The operator panel and the task HUD are prefabs of their own, nested in DemoSystems; bring them up to date before DemoSystems is loaded.
             ScenarioPrefabBuilder.InstallMissingOperatorPanelParts();
+            ScenarioPrefabBuilder.AddTaskHudHintTextIfMissing();
             GameObject root = PrefabUtility.LoadPrefabContents(DemoSystemsPrefabPath);
             try
             {
@@ -63,6 +68,7 @@ namespace DNPDemo.Editor
                 }
                 changed |= InstallMissingTools(root.transform, scenario, interaction);
                 changed |= InstallMissingTaskHud(root.transform, scenario, interaction);
+                changed |= InstallMissingHints(scenario, interaction);
                 changed |= InstallMissingVisitorReset(root.transform, scenario);
                 if (changed)
                 {
@@ -158,6 +164,23 @@ namespace DNPDemo.Editor
                 RegisterTool(runner, voice);
                 changed = true;
             }
+            if (interaction.GetComponentInChildren<HistoryTool>(true) == null)
+            {
+                var history = InstantiatePrefab<HistoryTool>(InteractionPrefabBuilder.HistoryToolPath, interaction);
+                WorldUiBuilder.Assign(history, "_stage", scenario.GetComponent<ScenarioStage>());
+                WorldUiBuilder.Assign(history.GetComponentInChildren<HistoryPanel>(true), "_director", scenario.GetComponent<ScenarioDirector>());
+                RegisterTool(runner, history);
+                changed = true;
+            }
+            if (interaction.GetComponentInChildren<BackgroundTool>(true) == null)
+            {
+                var background = InstantiatePrefab<BackgroundTool>(InteractionPrefabBuilder.BackgroundToolPath, interaction);
+                var panel = background.GetComponentInChildren<BackgroundPanel>(true);
+                WorldUiBuilder.Assign(panel, "_director", scenario.GetComponent<ScenarioDirector>());
+                WorldUiBuilder.Assign(panel, "_stage", scenario.GetComponent<ScenarioStage>());
+                RegisterTool(runner, background);
+                changed = true;
+            }
             if (interaction.GetComponentInChildren<DummyInteractionTool>(true) == null)
             {
                 var dummy = InstantiatePrefab<DummyInteractionTool>(InteractionPrefabBuilder.DummyToolPath, interaction);
@@ -187,6 +210,37 @@ namespace DNPDemo.Editor
             }
             WorldUiBuilder.Assign(hud, "_pen", pen);
             return true;
+        }
+
+        /// <summary>
+        /// Places the hint presenter under <paramref name="interaction"/> unless it is there, wires its runner and stage,
+        /// and hands it to the task HUD. Returns true when anything was added or wired.
+        /// </summary>
+        static bool InstallMissingHints(Transform scenario, Transform interaction)
+        {
+            bool changed = false;
+            var presenter = interaction.GetComponentInChildren<InteractionHintPresenter>(true);
+            if (presenter == null)
+            {
+                InteractionPrefabBuilder.CreateHintPresenter();
+                presenter = InstantiatePrefab<InteractionHintPresenter>(InteractionPrefabBuilder.HintPresenterPath, interaction);
+                WorldUiBuilder.Assign(presenter, "_runner", interaction.GetComponent<InteractionRunner>());
+                WorldUiBuilder.Assign(presenter, "_stage", scenario.GetComponent<ScenarioStage>());
+                changed = true;
+            }
+            var hud = scenario.GetComponentInChildren<TaskHudView>(true);
+            if (hud != null)
+            {
+                var so = new SerializedObject(hud);
+                SerializedProperty hints = so.FindProperty("_hints");
+                if (hints.objectReferenceValue == null)
+                {
+                    hints.objectReferenceValue = presenter;
+                    so.ApplyModifiedPropertiesWithoutUndo();
+                    changed = true;
+                }
+            }
+            return changed;
         }
 
         /// <summary>

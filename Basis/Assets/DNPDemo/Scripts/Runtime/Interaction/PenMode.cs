@@ -17,7 +17,7 @@ namespace DNPDemo.Interaction
         Manipulate = 3,
         /// <summary>Voice command while the trigger is held (VoiceCommandTool).</summary>
         Voice = 4,
-        /// <summary>Operating a hand panel with the laser (HistoryPanel).</summary>
+        /// <summary>Operating a panel with the laser (HistoryPanel, BackgroundPanel).</summary>
         Panel = 5,
     }
 
@@ -30,7 +30,7 @@ namespace DNPDemo.Interaction
             {
                 case PenMode.Select: return "範囲選択";
                 case PenMode.Draw: return "線画";
-                case PenMode.Manipulate: return "操作";
+                case PenMode.Manipulate: return "物体移動";
                 case PenMode.Voice: return "音声入力";
                 case PenMode.Panel: return "パネル";
                 default: return string.Empty;

@@ -27,7 +27,9 @@ namespace DNPDemo.Editor
         static readonly Color SpeakerLabelColor = new(1f, 0.85f, 0.55f);
         static readonly Color PanelBackground = new(0.12f, 0.06f, 0.06f, 0.95f);
         static readonly Color TaskHudBackground = new(0.05f, 0.07f, 0.1f, 0.85f);
-        static readonly Color TaskHudHintColor = new(1f, 0.65f, 0.45f);
+        static readonly Color TaskHudModeHintColor = new(1f, 0.65f, 0.45f);
+        // The same warm yellow as the zones the hint lights up (InteractionPrefabBuilder.HintZoneColor).
+        static readonly Color TaskHudHintColor = new(1f, 0.85f, 0.35f);
         static readonly Color TaskHudStatusColor = new(0.55f, 0.85f, 1f);
         static readonly Color MeterBackground = new(0.05f, 0.05f, 0.07f, 1f);
         static readonly Color MeterFillColor = new(0.55f, 0.6f, 0.7f);
@@ -286,7 +288,8 @@ namespace DNPDemo.Editor
                 TMP_Text status = CreateTaskHudStatusText(box.transform);
                 TMP_Text modeHint = CreateText("ModeHint", box.transform, string.Empty, 16, TextAlignmentOptions.Left);
                 modeHint.textWrappingMode = TextWrappingModes.Normal;
-                modeHint.color = TaskHudHintColor;
+                modeHint.color = TaskHudModeHintColor;
+                TMP_Text hint = CreateTaskHudHintText(box.transform);
 
                 var follower = panel.AddComponent<HandFollower>();
 
@@ -298,6 +301,7 @@ namespace DNPDemo.Editor
                 Assign(view, "_linesText", lines);
                 Assign(view, "_statusText", status);
                 Assign(view, "_modeHintText", modeHint);
+                Assign(view, "_hintText", hint);
             });
 
         /// <summary>The task HUD's line for the running tool's status (<see cref="TaskHudView"/>), hidden while empty.</summary>
@@ -308,6 +312,62 @@ namespace DNPDemo.Editor
             status.color = TaskHudStatusColor;
             status.gameObject.SetActive(false);
             return status;
+        }
+
+        /// <summary>The task HUD's line for the running part's hint (<see cref="TaskHudView"/>), hidden while empty.</summary>
+        public static TMP_Text CreateTaskHudHintText(Transform box)
+        {
+            TMP_Text hint = CreateText("Hint", box, string.Empty, 16, TextAlignmentOptions.Left);
+            hint.textWrappingMode = TextWrappingModes.Normal;
+            hint.color = TaskHudHintColor;
+            hint.gameObject.SetActive(false);
+            return hint;
+        }
+
+        /// <summary>
+        /// Adds the hint line to a task HUD prefab made before hints existed, as the last line of the box, in the font of
+        /// the status line. Returns true when the prefab was changed.
+        /// </summary>
+        public static bool AddTaskHudHintTextIfMissing()
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(TaskHudPath) == null)
+            {
+                return false;
+            }
+            GameObject root = PrefabUtility.LoadPrefabContents(TaskHudPath);
+            try
+            {
+                var view = root.GetComponent<TaskHudView>();
+                if (view == null)
+                {
+                    Debug.LogWarning($"[DNPDemo] {TaskHudPath} に TaskHudView がないため、ヒントの行を追加できません。");
+                    return false;
+                }
+                var so = new SerializedObject(view);
+                SerializedProperty hintProperty = so.FindProperty("_hintText");
+                if (hintProperty.objectReferenceValue != null)
+                {
+                    return false;
+                }
+                var status = so.FindProperty("_statusText").objectReferenceValue as TMP_Text;
+                if (status == null)
+                {
+                    Debug.LogWarning($"[DNPDemo] {TaskHudPath} の TaskHudView に状態の行（_statusText）がないため、ヒントの行を追加できません。手動で追加してください。");
+                    return false;
+                }
+                TMP_Text hint = CreateTaskHudHintText(status.transform.parent);
+                hint.font = status.font;
+                hint.fontSharedMaterial = status.fontSharedMaterial;
+                hintProperty.objectReferenceValue = hint;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                PrefabUtility.SaveAsPrefabAsset(root, TaskHudPath);
+                Debug.Log($"[DNPDemo] Added the hint line to {TaskHudPath}.");
+                return true;
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
         }
 
         /// <summary>

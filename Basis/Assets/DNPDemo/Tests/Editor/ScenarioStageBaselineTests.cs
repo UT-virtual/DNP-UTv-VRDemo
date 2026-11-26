@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using DNPDemo.Scenario;
+using DNPDemo.Scenario.Cues;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
 
 namespace DNPDemo.Tests
@@ -44,10 +44,7 @@ namespace DNPDemo.Tests
             root.transform.position = new Vector3(1f, 0f, 2f);
             GameObject target = Create(Key);
             target.transform.SetParent(root.transform, false);
-            var binding = target.AddComponent<ScenarioObjectBinding>();
-            var so = new SerializedObject(binding);
-            so.FindProperty("_key").stringValue = Key;
-            so.ApplyModifiedPropertiesWithoutUndo();
+            TestBinding.Bind(target, Key);
             target.transform.SetLocalPositionAndRotation(new Vector3(0f, 1.5f, -0.5f), Quaternion.Euler(0f, 30f, 0f));
             target.SetActive(false);
 
@@ -64,6 +61,35 @@ namespace DNPDemo.Tests
             Assert.IsFalse(target.activeSelf);
             Assert.Less(Vector3.Distance(new Vector3(0f, 1.5f, -0.5f), target.transform.localPosition), 1e-5f);
             Assert.Less(Quaternion.Angle(Quaternion.Euler(0f, 30f, 0f), target.transform.localRotation), 0.01f);
+        }
+
+        [Test]
+        public void MatchPoseCueKeepsAMovedObjectAtItsMarkerAfterAReset()
+        {
+            const string markerKey = Key + "_Marker";
+            GameObject target = Create(Key);
+            TestBinding.Bind(target, Key);
+            GameObject marker = Create(markerKey);
+            TestBinding.Bind(marker, markerKey);
+            marker.transform.SetPositionAndRotation(new Vector3(0.2f, 1.4f, -0.6f), Quaternion.Euler(0f, 45f, 0f));
+
+            var stage = Create("Stage").AddComponent<ScenarioStage>();
+            Assume.That(stage.gameObject.scene.isLoaded, "The stage collects bindings only from a loaded scene.");
+            Assert.IsTrue(stage.TryGetObject(Key, out _));
+            var scenario = ScriptableObject.CreateInstance<ScenarioData>();
+            try
+            {
+                // What the player rebuilding the next step does: reset, then apply the lasting cues of earlier steps.
+                stage.ResetToBaseline();
+                new MatchPoseCue(Key, markerKey).ApplyInstant(new ScenarioCueContext(stage, scenario));
+            }
+            finally
+            {
+                Object.DestroyImmediate(scenario);
+            }
+
+            Assert.Less(Vector3.Distance(marker.transform.position, target.transform.position), 1e-5f);
+            Assert.Less(Quaternion.Angle(marker.transform.rotation, target.transform.rotation), 0.01f);
         }
     }
 }

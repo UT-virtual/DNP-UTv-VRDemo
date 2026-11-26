@@ -1,14 +1,18 @@
 using System.Collections.Generic;
+using System.Linq;
 using DNPDemo.Editor;
+using DNPDemo.Environment;
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.Manipulate;
 using DNPDemo.Interaction.Selection;
+using DNPDemo.Interaction.Stroke;
 using DNPDemo.Scenario;
 using DNPDemo.Scenario.Cues;
 using DNPDemo.Venus;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace DNPDemo.Tests
@@ -68,6 +72,112 @@ namespace DNPDemo.Tests
                 count += root.GetComponentsInChildren<ScenarioStage>(true).Length;
             }
             Assert.AreEqual(1, count, "DNPDemo_Main must contain exactly one ScenarioStage (in the DemoSystems prefab).");
+        }
+
+        [Test]
+        public void EnvironmentBindingHasAConfiguredController()
+        {
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(EnvironmentController.EnvironmentKey, out UnityEngine.GameObject target),
+                $"No object has the key \"{EnvironmentController.EnvironmentKey}\" (Lighting prefab).");
+            Assert.IsTrue(target.TryGetComponent(out EnvironmentController controller),
+                $"The \"{EnvironmentController.EnvironmentKey}\" object has no EnvironmentController.");
+
+            var serialized = new SerializedObject(controller);
+            Assert.AreEqual(AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.ExhibitionPresetPath),
+                serialized.FindProperty("_baselinePreset").objectReferenceValue, "The baseline must be the exhibition preset.");
+            Assert.AreEqual(AssetDatabase.LoadAssetAtPath<UnityEngine.Shader>(EnvironmentPresetBuilder.CrossfadeShaderPath),
+                serialized.FindProperty("_crossfadeShader").objectReferenceValue);
+
+            var directional = serialized.FindProperty("_directionalLight").objectReferenceValue as UnityEngine.Light;
+            Assert.IsNotNull(directional, "The directional light is not assigned.");
+            Assert.AreEqual(UnityEngine.LightType.Directional, directional.type);
+
+            var spot = serialized.FindProperty("_spotLight").objectReferenceValue as UnityEngine.Light;
+            Assert.IsNotNull(spot, "The spot light is not assigned.");
+            Assert.AreEqual(UnityEngine.LightType.Spot, spot.type);
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.SpotlightKey, out UnityEngine.GameObject statueSpot));
+            Assert.AreSame(statueSpot, spot.gameObject, "The controller must drive the statue spotlight that the scenario turns on.");
+        }
+
+        [Test]
+        public void OpeningCueTurnsOnTheSpotlightAndItsBeam()
+        {
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.SpotlightKey, out UnityEngine.GameObject spotlight));
+            UnityEngine.Transform beam = spotlight.transform.Find("Volumetric Beam");
+            Assert.IsNotNull(beam, "The volume must be a child of the spotlight it follows.");
+            Assert.IsNotNull(beam.GetComponent<UnityEngine.MeshFilter>()?.sharedMesh);
+            var renderer = beam.GetComponent<UnityEngine.MeshRenderer>();
+            Assert.IsNotNull(renderer?.sharedMaterial);
+            Assert.IsTrue(renderer.enabled);
+            Assert.IsFalse(spotlight.activeSelf, "The spotlight starts off in the lobby.");
+            Assert.IsFalse(beam.gameObject.activeInHierarchy, "The beam starts off in the lobby.");
+
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            SetObjectActiveCue opening = data.Steps.Single(step => step.Id == "opening").Cues
+                .OfType<SetObjectActiveCue>().Single(cue => cue.Key == ScenarioDataBuilder.SpotlightKey);
+            ScenarioStage stage = _scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<ScenarioStage>(true)).Single();
+            try
+            {
+                opening.ApplyInstant(new ScenarioCueContext(stage, data));
+                Assert.IsTrue(spotlight.GetComponent<UnityEngine.Light>().isActiveAndEnabled);
+                Assert.IsTrue(beam.gameObject.activeInHierarchy, "The scene must let the beam turn on with its parent.");
+                Assert.Greater(UnityEngine.Vector3.Dot(beam.forward, UnityEngine.Vector3.down), 0.999f);
+            }
+            finally
+            {
+                spotlight.SetActive(false);
+            }
+        }
+
+        [Test]
+        public void ExhibitionRoomKeyResolvesToRenderedRoom()
+        {
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(EnvironmentController.ExhibitionRoomKey, out UnityEngine.GameObject room),
+                $"No object has the key \"{EnvironmentController.ExhibitionRoomKey}\" (Env_ExhibitionRoom prefab). EnvironmentController fades it.");
+            Assert.IsNotEmpty(room.GetComponentsInChildren<UnityEngine.Renderer>(true), "The exhibition room has nothing to fade.");
+            Assert.IsNotNull(room.GetComponent<EnvironmentFadeGroup>(), "EnvironmentController fades the room through its EnvironmentFadeGroup.");
+        }
+
+        [Test]
+        public void SceneCameraClearsToTheSkybox()
+        {
+            UnityEngine.Camera sceneCamera = _scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<UnityEngine.Camera>(true))
+                .SingleOrDefault(camera => camera.name == "SceneCamera");
+            Assert.IsNotNull(sceneCamera, "DNPDemo_Main has no SceneCamera.");
+            Assert.AreEqual(UnityEngine.CameraClearFlags.Skybox, sceneCamera.clearFlags,
+                "EnvironmentController shows each environment through RenderSettings.skybox, so a solid colour background would hide the panorama.");
+        }
+
+        [Test]
+        public void TempleFloorKeyResolvesToTheHiddenTempleWithAShadowReceivingFloor()
+        {
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.TempleFloorKey, out UnityEngine.GameObject temple),
+                $"No object has the key \"{ScenarioDataBuilder.TempleFloorKey}\" (Env_Temple prefab).");
+            Assert.IsFalse(temple.activeSelf, "The temple stays hidden until the closing step shows it.");
+            Assert.IsTrue(temple.transform.parent == null || temple.transform.parent.gameObject.activeInHierarchy,
+                "Showing the bound object must be enough to make the floor visible.");
+
+            UnityEngine.Transform floor = temple.transform.Find(EnvironmentPresetBuilder.TempleFloorName);
+            Assert.IsNotNull(floor, "Env_Temple has no floor.");
+            Assert.IsTrue(floor.gameObject.activeSelf);
+            var renderer = floor.GetComponent<UnityEngine.MeshRenderer>();
+            Assert.IsNotNull(renderer);
+            Assert.IsTrue(renderer.receiveShadows, "The floor must receive the statue's shadow.");
+            Assert.AreEqual(AssetDatabase.LoadAssetAtPath<UnityEngine.Material>(EnvironmentPresetBuilder.TempleFloorMaterialPath),
+                renderer.sharedMaterial);
+
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            ScenarioStep closing = data.Steps.Single(step => step.Id == "closing");
+            int environment = closing.Cues.FindIndex(cue => cue is EnvironmentCue);
+            Assert.GreaterOrEqual(environment, 0, "The closing step switches to the temple.");
+            Assert.IsTrue(closing.Cues[environment + 1] is SetObjectActiveCue { Key: ScenarioDataBuilder.TempleFloorKey, Active: true },
+                "The temple floor is shown right after the environment switches.");
         }
 
         [Test]
@@ -148,6 +258,191 @@ namespace DNPDemo.Tests
             }
             CollectionAssert.AreEquivalent(new[] { VenusStatueKeys.Main, VenusStatueKeys.Comparison }, statueKeys,
                 "Both the main statue and the comparison table show versions.");
+        }
+
+        [Test]
+        public void GuideSnapCurvesJoinTheZonesOfTheGuideBeforeThem()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data);
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            int checkedCurves = 0;
+            for (int i = 1; i < data.Steps.Count; i++)
+            {
+                foreach (ScenarioCue cue in data.Steps[i].Cues)
+                {
+                    if (cue is not GuideSnapCue snap)
+                    {
+                        continue;
+                    }
+                    StrokePart guide = data.Steps[i - 1].Interaction.OfType<StrokePart>().FirstOrDefault(part => part.Goal == StrokeGoal.Guide);
+                    Assert.IsNotNull(guide, $"{data.Steps[i].Id}: the arm snaps along a guide, so the step before it should draw one.");
+                    Assert.IsTrue(bindings.TryGetObject(snap.Key, out UnityEngine.GameObject target), $"'{snap.Key}' is not bound.");
+                    Assert.IsTrue(target.TryGetComponent(out GuideCurve curve), $"'{snap.Key}' has no GuideCurve.");
+                    Assert.IsTrue(target.TryGetComponent(out GuideSnapEffect _), $"'{snap.Key}' has no GuideSnapEffect.");
+                    Assert.IsTrue(bindings.TryGetObject(guide.StartZoneKey, out UnityEngine.GameObject start));
+                    Assert.IsTrue(bindings.TryGetObject(guide.EndZoneKey, out UnityEngine.GameObject end));
+                    Assert.IsTrue(DetectionVolumes.Find(start).ContainsPoint(curve.Evaluate(0f)), $"'{snap.Key}' should start in '{guide.StartZoneKey}'.");
+                    Assert.IsTrue(DetectionVolumes.Find(end).ContainsPoint(curve.Evaluate(1f)), $"'{snap.Key}' should end in '{guide.EndZoneKey}'.");
+                    checkedCurves++;
+                }
+            }
+            Assert.Greater(checkedCurves, 0, "Step 12 should play the arm snapping along the guide of step 11.");
+        }
+
+        [Test]
+        public void SketchPlacedObjectsReadTheSketchAndCanReachTheirGoal()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data);
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            int checkedCues = 0;
+            foreach (ScenarioStep step in data.Steps)
+            {
+                foreach (ScenarioCue cue in step.Cues)
+                {
+                    if (cue is not PlaceAtSketchCue place)
+                    {
+                        continue;
+                    }
+                    Assert.IsTrue(bindings.TryGetObject(place.StrokesKey, out UnityEngine.GameObject tool), $"'{place.StrokesKey}' is not bound.");
+                    Assert.IsTrue(tool.TryGetComponent(out StrokeTool _), $"'{place.StrokesKey}' should be the StrokeTool that keeps the sketch.");
+
+                    // The step that shows the object moves it to a goal; from anywhere it can appear, the goal must be in reach.
+                    ManipulatePart move = step.Interaction.OfType<ManipulatePart>()
+                        .FirstOrDefault(part => part.Constraint == ManipulateConstraintKind.Translate && part.TargetKey == place.Key);
+                    Assert.IsNotNull(move, $"{step.Id} should move '{place.Key}'.");
+                    Assert.IsTrue(bindings.TryGetObject(place.MarkerKey, out UnityEngine.GameObject marker), $"'{place.MarkerKey}' is not bound.");
+                    Assert.IsTrue(bindings.TryGetObject(move.GoalKey, out UnityEngine.GameObject goal), $"'{move.GoalKey}' is not bound.");
+                    float farthest = UnityEngine.Vector3.Distance(marker.transform.position, goal.transform.position) + place.MaxOffset;
+                    Assert.LessOrEqual(farthest, move.MaxDistance - move.SnapDistance,
+                        $"{step.Id}: '{place.Key}' can appear {farthest:0.##} m from '{move.GoalKey}', farther than it may move.");
+                    checkedCues++;
+                }
+            }
+            Assert.Greater(checkedCues, 0, "Step 14 should put the hand mirror where the sketch was drawn.");
+        }
+
+        [Test]
+        public void ArmOperationsFollowTheStatuesOwnShoulders()
+        {
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(VenusStatueKeys.Main, out GameObject statue));
+            Transform anchor = statue.transform.parent;
+
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.LeftShoulderPivotKey, out GameObject leftShoulder));
+            Assert.Greater(anchor.InverseTransformPoint(leftShoulder.transform.position).x, 0f);
+
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.RightArmToMirrorZoneKey, out GameObject rightArm));
+            Assert.IsTrue(rightArm.TryGetComponent(out DetectionZone rightArmZone));
+            Vector3 rightShoulder = rightArm.transform.TransformPoint(
+                Vector3.down * (rightArmZone.Height * 0.5f - rightArmZone.Radius));
+            Assert.Less(anchor.InverseTransformPoint(rightShoulder).x, 0f);
+
+            // The right forearm crosses the torso. The zone runs from the right shoulder to the held mirror.
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.MirrorGoalKey, out GameObject goal));
+            Assert.IsTrue(rightArmZone.ContainsPoint(goal.transform.position));
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.RightWristPivotKey, out GameObject wrist));
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.RightHandMirrorZoneKey, out GameObject rightHand));
+            Assert.IsTrue(rightHand.TryGetComponent(out DetectionZone rightHandZone));
+            Assert.IsTrue(rightHandZone.ContainsPoint(wrist.transform.position));
+            Assert.IsTrue(rightHandZone.ContainsPoint(goal.transform.position));
+        }
+
+        [Test]
+        public void MirrorAtTheGoalMatchesTheMirrorInVersion30()
+        {
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(VenusStatueKeys.Main, out GameObject statue));
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.HandMirrorKey, out GameObject prop));
+            Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.MirrorGoalKey, out GameObject goal));
+
+            GameObject model = VenusAssetBuilder.LoadVersion(VenusAssetBuilder.Ver30Id).Model;
+            MeshFilter held = FindHeldMirror(model);
+            MeshFilter movable = prop.GetComponentInChildren<MeshFilter>(true);
+            Assert.AreSame(held.sharedMesh, movable.sharedMesh);
+            CollectionAssert.AreEqual(held.GetComponent<Renderer>().sharedMaterials, movable.GetComponent<Renderer>().sharedMaterials);
+            Assert.IsTrue(prop.TryGetComponent(out DetectionZone grabZone));
+            foreach (Vector3 vertex in movable.sharedMesh.vertices)
+            {
+                Assert.IsTrue(grabZone.ContainsPoint(movable.transform.TransformPoint(vertex)),
+                    "The pen should be able to grab every part of the mirror, including the handle.");
+            }
+
+            Matrix4x4 heldPose = model.transform.worldToLocalMatrix * held.transform.localToWorldMatrix;
+            Matrix4x4 goalPose = statue.transform.parent.worldToLocalMatrix
+                * goal.transform.localToWorldMatrix * prop.transform.worldToLocalMatrix * movable.transform.localToWorldMatrix;
+            for (int column = 0; column < 4; column++)
+            {
+                Assert.Less(Vector4.Distance(heldPose.GetColumn(column), goalPose.GetColumn(column)), 0.001f);
+            }
+        }
+
+        [Test]
+        public void MirrorAtTheWristSnapMatchesTheMirrorInVersion31()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data);
+            int wristStep = data.Steps.ToList().FindIndex(step => step.Id == "s3-adjust-wrist");
+            Assert.That(wristStep, Is.InRange(1, data.Steps.Count - 2));
+            ManipulatePart part = data.Steps[wristStep].Interaction.OfType<ManipulatePart>().Single();
+            Assert.AreEqual(50f, part.TargetAngle, "Step 17 snaps at a 50-degree turn.");
+            VenusVersion before = data.Steps[wristStep - 1].Cues.OfType<StatueVersionCue>()
+                .Single(cue => cue.StatueKey == VenusStatueKeys.Main).Version;
+            VenusVersion after = data.Steps[wristStep + 1].Cues.OfType<StatueVersionCue>()
+                .Single(cue => cue.StatueKey == VenusStatueKeys.Main).Version;
+            Assert.AreEqual(VenusAssetBuilder.Ver30Id, before.Id);
+            Assert.AreEqual(VenusAssetBuilder.Ver31Id, after.Id);
+
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(VenusStatueKeys.Main, out GameObject statue));
+            Assert.IsTrue(bindings.TryGetObject(part.TargetKey, out GameObject proxy));
+            Assert.IsTrue(bindings.TryGetObject(part.PivotKey, out GameObject pivot));
+
+            var statueSettings = new SerializedObject(statue.GetComponent<VenusStatue>());
+            var modelRoot = statueSettings.FindProperty("_modelRoot").objectReferenceValue as Transform;
+            Matrix4x4 modelToWorld = (modelRoot == null ? statue.transform : modelRoot).localToWorldMatrix;
+            bool useStageModels = statueSettings.FindProperty("_useStageModels").boolValue;
+            MeshFilter beforeMirror = FindHeldMirror(before.GetModelPrefab(useStageModels));
+            MeshFilter afterMirror = FindHeldMirror(after.GetModelPrefab(useStageModels));
+            MeshFilter proxyMirror = proxy.GetComponentsInChildren<MeshFilter>(true)
+                .Single(filter => filter.sharedMesh == beforeMirror.sharedMesh);
+
+            Matrix4x4 proxyMirrorToWorld = proxyMirror.transform.localToWorldMatrix;
+            AssertMirrorVerticesMatch(proxyMirror, proxyMirrorToWorld,
+                beforeMirror, modelToWorld * beforeMirror.transform.localToWorldMatrix, "Before the turn");
+
+            Pose start = new(proxy.transform.position, proxy.transform.rotation);
+            ManipulateConstraint constraint = ManipulateConstraint.FromPart(part, start, null, pivot.transform);
+            Assert.IsNotNull(constraint);
+            Assert.IsTrue(constraint.TryComplete(ManipulateValue.Rotation(part.TargetAngle), out ManipulateValue snapped));
+            Assert.IsTrue(snapped.Snapped);
+            Pose snap = constraint.PoseOf(snapped);
+            Matrix4x4 move = Matrix4x4.TRS(snap.position, snap.rotation, Vector3.one)
+                * Matrix4x4.TRS(start.position, start.rotation, Vector3.one).inverse;
+
+            AssertMirrorVerticesMatch(proxyMirror, move * proxyMirrorToWorld,
+                afterMirror, modelToWorld * afterMirror.transform.localToWorldMatrix, "After the snap");
+            Assert.IsFalse(constraint.TryComplete(ManipulateValue.Rotation(0f), out _),
+                "Step 17 requires a turn from its starting pose.");
+        }
+
+        static MeshFilter FindHeldMirror(GameObject model) => model.GetComponentsInChildren<MeshFilter>()
+            .Single(filter => filter.name == "Venus_HandMirror");
+
+        static void AssertMirrorVerticesMatch(MeshFilter actual, Matrix4x4 actualToWorld,
+            MeshFilter expected, Matrix4x4 expectedToWorld, string stage)
+        {
+            Vector3[] observed = actual.sharedMesh.vertices.Select(actualToWorld.MultiplyPoint3x4).ToArray();
+            Vector3[] reference = expected.sharedMesh.vertices.Select(expectedToWorld.MultiplyPoint3x4).ToArray();
+            Assert.IsNotEmpty(observed);
+            Assert.IsNotEmpty(reference);
+
+            // Each FBX can order or split vertices differently. Compare the entire mirror, including its handle, in both directions.
+            float WorstSquaredError(Vector3[] from, Vector3[] to) => from.Max(vertex =>
+                to.Min(other => (vertex - other).sqrMagnitude));
+            float error = Mathf.Sqrt(Mathf.Max(WorstSquaredError(observed, reference), WorstSquaredError(reference, observed)));
+            Assert.Less(error, 0.001f, $"{stage}: the mirror is {error * 1000f:F2} mm from its corresponding model.");
         }
 
         [Test]
