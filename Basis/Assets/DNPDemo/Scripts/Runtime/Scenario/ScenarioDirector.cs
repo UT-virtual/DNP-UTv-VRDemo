@@ -22,7 +22,8 @@ namespace DNPDemo.Scenario
     /// <para>
     /// The authority stores the step it is at (<see cref="ScenarioCheckpoint"/>). When it starts a run and the stored
     /// step shows that the previous run was cut short, it stays in the lobby and offers that step as
-    /// <see cref="ResumeStepIndex"/> until the operator resumes there or starts anew.
+    /// <see cref="ResumeStepIndex"/> until the operator resumes there or starts anew. While that offer stands, the stored
+    /// step is left as it is, so the offer survives another restart or the host leaving and rejoining the session.
     /// </para>
     /// <para>
     /// Everything visible derives from the step index (see <see cref="ScenarioPlayer"/>), so this class never
@@ -298,7 +299,12 @@ namespace DNPDemo.Scenario
                 SetResumeStep(-1);
             }
             Debug.Log($"[DNPDemo] Scenario step {_progress.StepIndex} ({CurrentStep.Id}), seq {_progress.Sequence}");
-            ScenarioCheckpoint.Save(CurrentStep.Id);
+            if (_resumeStepIndex < 0)
+            {
+                // While an interrupted run is on offer (only ever in the lobby), the stored step is still that run's.
+                // Overwriting it with the lobby would lose it if the app restarts again before the operator resumes.
+                ScenarioCheckpoint.Save(CurrentStep.Id);
+            }
             Send(CreateStateMessage(), null);
             RaiseStepChanged();
         }

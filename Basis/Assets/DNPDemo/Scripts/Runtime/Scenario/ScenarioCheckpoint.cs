@@ -6,7 +6,8 @@ namespace DNPDemo.Scenario
     /// <summary>
     /// Remembers on the device with scenario authority which step the run is at, so that a run cut short by a restart of
     /// the host app can be resumed from the operator panel. The step is stored by its <see cref="ScenarioStep.Id"/>, which
-    /// survives steps being reordered between builds.
+    /// survives steps being reordered between builds. While an interrupted run is on offer, <see cref="ScenarioDirector"/>
+    /// does not save, so the step stays stored until the run leaves the lobby.
     /// </summary>
     public static class ScenarioCheckpoint
     {

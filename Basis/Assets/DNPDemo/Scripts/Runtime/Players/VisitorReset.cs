@@ -19,9 +19,6 @@ namespace DNPDemo.Players
         [SerializeField] DemoSpawnService _spawn;
         [SerializeField] SpatialPenController _pen;
 
-        bool _hasReset;
-        ushort _resetSequence;
-
         void OnEnable()
         {
             if (_director == null || _spawn == null || _pen == null)
@@ -43,12 +40,11 @@ namespace DNPDemo.Players
 
         void HandleStepChanged()
         {
-            if (!_director.IsAtLobby || (_hasReset && _resetSequence == _director.Sequence))
+            // StepChanged is raised only when the state really changes, so each entry into the lobby resets once.
+            if (!_director.IsAtLobby)
             {
                 return;
             }
-            _hasReset = true;
-            _resetSequence = _director.Sequence;
             _spawn.ReturnToRoleSpawn();
             _pen.ResetForNextVisitor();
         }
