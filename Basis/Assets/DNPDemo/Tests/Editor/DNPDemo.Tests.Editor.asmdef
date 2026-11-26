@@ -12,7 +12,8 @@
         "Unity.Addressables.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "Unity.RenderPipelines.Universal.Runtime"
+        "Unity.RenderPipelines.Universal.Runtime",
+        "uLipSync.Runtime"
     ],
     "includePlatforms": [
         "Editor"

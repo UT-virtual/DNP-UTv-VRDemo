@@ -166,9 +166,11 @@ git mergetool --tool=unityyamlmerge -- <衝突したファイル>
 - 複数の機能で使う素材は `Art/Common/` に置きます。
 - Blender のファイル（`.blend`）は、Unity に読み込ませないよう、名前が `~` で終わるフォルダ（例: `Art/Venus/Models/Source~/`）に置きます。Unity は `.blend` を Blender 経由で読み込むため、Blender が入っていない PC ではインポートエラーになります。Unity に読み込ませるモデルは FBX で書き出してください。
 - VRM のファイル（`.vrm`）も、`~` で終わるフォルダ（例: `Art/Assistants/Source~/`）に置きます。UniVRM は `.vrm` がインポートされるたびに同じフォルダの `<名前>.prefab` を作り直すので、`Assets` 以下に置いたままだと、clone した PC で開いたときにプレハブへ加えた Basis の設定が消えます。コミットするのは生成されたプレハブとアセットです。VRM を差し替えるときは、`.vrm` を一時的にプレハブと同じフォルダへコピーしてプレハブを作り直し、ルートに `BasisAvatar` を付けて設定し、VRM のコンポーネント（`VRMSpringBone`、`VRMBlendShapeProxy` など）を外してから、`.vrm` を `Source~/` に戻します。VRM のコンポーネントは Basis が読み込むときに消してしまうためです。設定漏れは Editor テスト `AssistantAvatarPrefabTests` が検出します。
+- 学者A・B の VRM（`Art/Scholars/Source~/ScholarA.vrm`、`ScholarB.vrm`）は、手作業ではなくメニューで取り込みます。差し替えたら「DNP Demo/Create/Scholar Avatars/1. Import VRM Models」を実行し、コンソールに両方の Import complete が出てから「2. Build Scholar Prefabs」を実行します。2 は VRM のコンポーネントを外して待機アニメーションを付け、待機ポーズの足裏を床に合わせ、各メッシュの Bounds を待機ポーズの頂点に合わせ直し（ずれていると、近づいたときに顔や髪が消えます）、音源を口、字幕を頭の上に移し、uLipSync の母音（A/I/U/E/O）を顔の `Fcl_MTH_*` につなぎます。UniVRM はインポートのたびにモデルのプレハブを作り直すので、1 のあとは必ず 2 も実行してください。ずれや設定漏れは Editor テスト `ScholarAvatarPrefabTests` が検出します。
 - UI の日本語フォント（`UI/Fonts/NotoSansJP-Regular SDF.asset`）は、文字セット `UI/Fonts/JapaneseCharacterSet-3353.txt` から作った静的な SDF です。セットにない文字は □ で表示されます。UI や台詞に新しい文字や記号を使うときは、文字セットに加えてから SDF を作り直してください（フォントアセットを選び、インスペクターの Update Atlas Texture → Generate Font Atlas → Save）。作り直し忘れは Editor テスト `UiFontTests` が検出します。作成設定の Get Font Features（`includeFontFeatures`）はオフにしています。この SDF ではカーニングが元のフォントの約 12 倍の値で取り込まれ、「Ver」の V と e が重なるためです。
 - Unity が自動で書き換えただけのファイルはコミットしません。例: Basis のフォントアセット（`Poppins-Regular SDF NamePlate.asset` など）、`ProjectSettings/QualitySettings.asset`、`UniversalRenderPipelineGlobalSettings.asset`、`AddressableAssetSettings.asset`。設定を意図して変えた場合だけコミットします。
 - `.meta` ファイルは Unity に生成させます。手で作らないでください。アセットを移動するときは、Unity のプロジェクトウィンドウで移動するか、`.meta` ごと移動してください（GUID が保たれ、参照が切れません）。
+- SE の mp3（`Audio/SE/`）はリポジトリに含めず、`.meta` だけを管理します。素材の利用規約で再配布が禁止されているためです。配置手順は [README.md](README.md#効果音seの配置) にあります。
 
 ## Git LFS
 

@@ -6,7 +6,10 @@
         "BasisSDK",
         "Basis Framework",
         "UnityEngine.UI",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "uLipSync.Runtime",
+        "UniVRM.Editor",
+        "UniGLTF"
     ],
     "includePlatforms": [
         "Editor"
