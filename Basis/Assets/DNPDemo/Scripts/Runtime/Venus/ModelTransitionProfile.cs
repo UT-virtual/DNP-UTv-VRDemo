@@ -5,6 +5,10 @@ namespace DNPDemo.Venus
     [CreateAssetMenu(menuName = "DNP Demo/Model Transition Profile", fileName = "ModelTransitionProfile")]
     public sealed class ModelTransitionProfile : ScriptableObject
     {
+        /// <summary>Properties of DNPDemo/ModelTransition that <see cref="ModelTransition"/> drives.</summary>
+        public const string DefaultDissolvePropertyName = "_Cutoff";
+        public const string DefaultScanLinePropertyName = "_ScanFade";
+
         [Header("Temporary effects")]
         [Tooltip("Shared transition material used for both dissolving models.")]
         [SerializeField] Material _transitionMaterial;
@@ -17,8 +21,10 @@ namespace DNPDemo.Venus
         [SerializeField] float _duration = 1f;
 
         [Header("Shader properties")]
-        [SerializeField] string _dissolvePropertyName = "_Dissolve";
-        [SerializeField] string _scanLinePropertyName = "_ScanLine";
+        [Tooltip("Dissolve cutoff set every frame: 0 shows the model, 1 hides it.")]
+        [SerializeField] string _dissolvePropertyName = DefaultDissolvePropertyName;
+        [Tooltip("Scan line strength set every frame: rises from 0 to 1 and back over the transition.")]
+        [SerializeField] string _scanLinePropertyName = DefaultScanLinePropertyName;
         [SerializeField] string _boundsMinPropertyName = "_BoundsMin";
         [SerializeField] string _boundsMaxPropertyName = "_BoundsMax";
         [SerializeField] string _baseMapPropertyName = "_BaseMap";
@@ -27,8 +33,8 @@ namespace DNPDemo.Venus
         public Material TransitionMaterial => _transitionMaterial;
         public GameObject ParticlePrefab => _particlePrefab;
         public float Duration => _duration;
-        public string DissolvePropertyName => string.IsNullOrWhiteSpace(_dissolvePropertyName) ? "_Dissolve" : _dissolvePropertyName;
-        public string ScanLinePropertyName => string.IsNullOrWhiteSpace(_scanLinePropertyName) ? "_ScanLine" : _scanLinePropertyName;
+        public string DissolvePropertyName => string.IsNullOrWhiteSpace(_dissolvePropertyName) ? DefaultDissolvePropertyName : _dissolvePropertyName;
+        public string ScanLinePropertyName => string.IsNullOrWhiteSpace(_scanLinePropertyName) ? DefaultScanLinePropertyName : _scanLinePropertyName;
         public string BoundsMinPropertyName => string.IsNullOrWhiteSpace(_boundsMinPropertyName) ? "_BoundsMin" : _boundsMinPropertyName;
         public string BoundsMaxPropertyName => string.IsNullOrWhiteSpace(_boundsMaxPropertyName) ? "_BoundsMax" : _boundsMaxPropertyName;
         public string BaseMapPropertyName => string.IsNullOrWhiteSpace(_baseMapPropertyName) ? "_BaseMap" : _baseMapPropertyName;

@@ -5,6 +5,7 @@ using DNPDemo.Interaction;
 using DNPDemo.Interaction.Background;
 using DNPDemo.Interaction.History;
 using DNPDemo.Interaction.Voice;
+using DNPDemo.Lobby;
 using DNPDemo.Menu;
 using DNPDemo.Operator;
 using DNPDemo.Scenario;
@@ -76,6 +77,12 @@ namespace DNPDemo.Tests
                 EnvironmentPresetBuilder.TempleDisplayName,
                 ScenarioDataBuilder.BackgroundInstruction(EnvironmentPresetBuilder.TempleDisplayName),
             });
+        }
+
+        [Test]
+        public void CreditsAreInTheCharacterSet()
+        {
+            AssertInCharacterSet(new[] { DemoCredits.Text });
         }
 
         [Test]

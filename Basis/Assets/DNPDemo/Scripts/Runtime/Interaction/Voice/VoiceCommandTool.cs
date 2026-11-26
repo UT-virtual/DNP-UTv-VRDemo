@@ -1,3 +1,4 @@
+using DNPDemo.Audio;
 using DNPDemo.Pen;
 using UnityEngine;
 
@@ -84,6 +85,7 @@ namespace DNPDemo.Interaction.Voice
             if (IsActive())
             {
                 _session.SetStatus(ListeningStatus);
+                _session.PlayFeedback(SeEvent.VoiceStart);
             }
         }
 
@@ -105,11 +107,13 @@ namespace DNPDemo.Interaction.Voice
             }
             if (utterance.Recognized)
             {
-                _session.Complete();
+                _session.Complete(SeEvent.VoiceEnd);
                 return;
             }
             Debug.Log($"[DNPDemo] 音声指示の発話が足りません（必要 {_part.RequiredSpeechSeconds:0.##} 秒）。{utterance}", this);
             _session.SetStatus(RetryStatus);
+            // In place of the end-of-listening sound: two sounds at the same moment would blur the rejection.
+            _session.PlayFeedback(SeEvent.Fail);
         }
 
         void HandleAbandoned()

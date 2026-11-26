@@ -10,7 +10,9 @@ namespace DNPDemo.Editor
 {
     /// <summary>
     /// Creates the initial LobbyPanel prefab with every reference wired. It never overwrites an existing
-    /// prefab: after creation the prefab is edited by hand like any other asset.
+    /// prefab: after creation the prefab is edited by hand like any other asset. The credits on the role page are the
+    /// exception: their text comes from <see cref="DemoCredits"/>, and <see cref="InstallCredits"/> adds them to the
+    /// existing prefab or brings their text up to date.
     /// </summary>
     public static class LobbyPanelPrefabBuilder
     {
@@ -18,6 +20,14 @@ namespace DNPDemo.Editor
         static readonly Vector2 PanelSize = new(900, 820);
         static readonly Color BackgroundColor = new(0.08f, 0.08f, 0.1f, 0.92f);
         static readonly Color ErrorColor = new(1f, 0.55f, 0.5f);
+
+        public const string RolePageName = "RolePage";
+        public const string CreditsName = "Credits";
+        /// <summary>Font size of the credits, well below the buttons (40) so they stay in the background.</summary>
+        public const float CreditsFontSize = 20;
+        /// <summary>Height of the credits at the bottom of the role page: two lines of <see cref="CreditsFontSize"/>.</summary>
+        const float CreditsHeight = 64;
+        static readonly Color CreditsColor = new(0.62f, 0.62f, 0.66f);
 
         [MenuItem("DNP Demo/Create/Lobby Panel Prefab")]
         public static void Create()
@@ -29,6 +39,65 @@ namespace DNPDemo.Editor
             }
             GameObject prefab = CreatePrefabIfMissing(PrefabPath, "LobbyPanel", Build);
             EditorGUIUtility.PingObject(prefab);
+        }
+
+        /// <summary>
+        /// Adds the credits to the role page of the existing prefab, or updates their text to
+        /// <see cref="DemoCredits"/>, and saves the prefab when anything changed.
+        /// </summary>
+        [MenuItem("DNP Demo/Setup/Install Lobby Credits")]
+        public static void InstallCredits()
+        {
+            if (!File.Exists(PrefabPath))
+            {
+                Debug.LogWarning($"[DNPDemo] {PrefabPath} がないため、クレジットを追加できません。");
+                return;
+            }
+            GameObject root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            try
+            {
+                Transform rolePage = root.transform.Find(RolePageName);
+                if (rolePage == null)
+                {
+                    Debug.LogWarning($"[DNPDemo] {PrefabPath} に {RolePageName} がないため、クレジットを追加できません。");
+                    return;
+                }
+                if (EnsureCredits(rolePage))
+                {
+                    PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+                    Debug.Log($"[DNPDemo] {PrefabPath} のクレジットを更新しました。");
+                }
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        /// <summary>
+        /// Places the credits at the bottom of <paramref name="rolePage"/>, outside its layout so the buttons keep their
+        /// place, unless they are there, and sets their text. Returns true when anything changed.
+        /// </summary>
+        static bool EnsureCredits(Transform rolePage)
+        {
+            bool changed = false;
+            Transform existing = rolePage.Find(CreditsName);
+            TMP_Text credits = existing != null ? existing.GetComponent<TMP_Text>() : null;
+            if (credits == null)
+            {
+                credits = CreateText(CreditsName, rolePage, string.Empty, CreditsFontSize, TextAlignmentOptions.Bottom);
+                credits.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+                Anchor((RectTransform)credits.transform, new Vector2(0, 0), new Vector2(1, 0), Vector2.zero, new Vector2(0, CreditsHeight));
+                credits.color = CreditsColor;
+                credits.raycastTarget = false;
+                changed = true;
+            }
+            if (credits.text != DemoCredits.Text)
+            {
+                credits.text = DemoCredits.Text;
+                changed = true;
+            }
+            return changed;
         }
 
         static void Build(GameObject root)
@@ -44,10 +113,11 @@ namespace DNPDemo.Editor
             Anchor((RectTransform)error.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(40, 20), new Vector2(-40, 110));
 
             // --- Role page ---
-            Transform rolePage = CreatePage("RolePage", root.transform);
+            Transform rolePage = CreatePage(RolePageName, root.transform);
             CreateText("Prompt", rolePage, "役割を選んでください", 36, TextAlignmentOptions.Center, 80);
             Button hostButton = CreateButton("HostButton", rolePage, "プレイヤーA（ホスト）", 120, 40);
             Button joinButton = CreateButton("JoinButton", rolePage, "プレイヤーB（参加）", 120, 40);
+            EnsureCredits(rolePage);
 
             // --- Search page ---
             Transform searchPage = CreatePage("SearchPage", root.transform);

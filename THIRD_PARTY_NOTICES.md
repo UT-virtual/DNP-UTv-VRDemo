@@ -57,6 +57,33 @@ This project includes third-party software under the following licenses:
 - [Poppins](https://github.com/itfoundry/Poppins) - Copyright 2020 The Poppins Project Authors. See `Basis/Packages/com.basis.sdk/LICENSE-Poppins-OFL.txt`.
 - [Noto Sans JP](https://fonts.google.com/noto/specimen/Noto+Sans+JP) - Copyright 2014-2021 Adobe, with Reserved Font Name 'Source'. See `Basis/Packages/com.basis.sdk/LICENSE-NotoSansJP-OFL.txt`.
 
+### 音声
+
+デモの台詞音声は [VOICEVOX](https://voicevox.hiroshiba.jp/) で作成しています（`Basis/Assets/DNPDemo/Audio/Voice/`）。
+
+- VOICEVOX:青山龍星
+- VOICEVOX:ずんだもん
+- VOICEVOX:春日部つむぎ
+
+### 効果音
+
+本デモのビルド（APK）には、以下の効果音をすべて含めて配布します。
+
+- [効果音ラボ](https://soundeffect-lab.info/)（[利用規約](https://soundeffect-lab.info/agreement/)）
+  - 商用利用無料。クレジット表記は任意ですが、本デモでは表記します。
+  - 規約の要点：アプリの操作音として組み込むことは、再配布にあたりません。効果音を自由に鳴らせる仕組み（効果音集のようなもの）は再配布にあたるため、作らないでください。
+  - 使用素材：ゲージ回復2 / データ表示4 / 決定ボタンを押す35 / ビデオディスクをケースから出す / データ表示2 / 成功音 / ビープ音4
+- [魔王魂](https://maou.audio/)
+  - 使用素材：システム35（音声入力の開始・終了で使用）
+  - 利用規約: https://maou.audio/rule/（商用利用可、ゲームへの組み込み可、素材としての再配布は不可）
+
+アプリでは、起動直後の役割選択画面の下部に、音声（VOICEVOX のキャラクター名）と効果音（配布元）のクレジットを表示しています。文言は `Basis/Assets/DNPDemo/Scripts/Runtime/Lobby/DemoCredits.cs` にまとめていて、ここに載っていない名前を足すとテストが失敗します。
+
+`Audio/SE/` の音声ファイルはリポジトリに含めていません。各自が上記サイトから入手し、同フォルダに配置してください。ファイル名の対応と手順は [README.md の「効果音（SE）の配置」](README.md#効果音seの配置) にあります。
+
+- 配置したあとに Unity を開き、`.meta` が生成されることを確認してください。
+- `.meta` は手で作らず、Unity の自動生成に任せてください。
+
 ### Trademarks
 
 "Valve", "Steam", and the associated figurative images are trademarks and/or registered trademarks of Valve Corporation in the US and in various other jurisdictions. All rights reserved. Use of these trademarks must comply with the guidelines outlined in `Basis/Packages/com.steam.steamaudio/TRADEMARK_RIGHTS.md`.

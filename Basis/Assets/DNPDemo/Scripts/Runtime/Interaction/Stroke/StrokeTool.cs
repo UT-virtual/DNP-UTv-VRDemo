@@ -1,5 +1,6 @@
 using System;
 using Basis.Network.Core;
+using DNPDemo.Audio;
 using DNPDemo.Pen;
 using DNPDemo.Scenario;
 using UnityEngine;
@@ -204,11 +205,13 @@ namespace DNPDemo.Interaction.Stroke
                 return;
             }
             Debug.Log($"[DNPDemo] 線画はまだ完了していません。{verdict}", this);
+            // A sketch that is not big enough yet is still being drawn; only a guide line that misses is rejected.
             if (_part.Goal == StrokeGoal.Guide)
             {
                 _set.Remove(line.Id);
                 _view.Hide(line.Id, _rejectFadeSeconds);
                 Send(StrokeMessage.Erase(line.Id, fade: true));
+                _session.PlayFeedback(SeEvent.Fail);
             }
         }
 

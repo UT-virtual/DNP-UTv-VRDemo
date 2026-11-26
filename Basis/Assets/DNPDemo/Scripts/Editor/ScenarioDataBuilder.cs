@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using DNPDemo.Audio;
 using DNPDemo.Interaction;
 using DNPDemo.Interaction.Background;
 using DNPDemo.Interaction.History;
@@ -190,7 +191,9 @@ namespace DNPDemo.Editor
             VenusAssetBuilder.CreateIfMissing();
             EnvironmentPresetBuilder.CreatePresetsIfMissing();
             var data = ScriptableObject.CreateInstance<ScenarioData>();
-            data.SetSteps(CreateDefaultSteps());
+            List<ScenarioStep> steps = CreateDefaultSteps();
+            EnsureVersionSounds(steps);
+            data.SetSteps(steps);
             Directory.CreateDirectory(Path.GetDirectoryName(AssetPath));
             AssetDatabase.CreateAsset(data, AssetPath);
             AssetDatabase.SaveAssets();
@@ -246,15 +249,116 @@ namespace DNPDemo.Editor
         }
 
         /// <summary>
+        /// Steps whose statue change has a sound, played by a <see cref="SoundCue"/> right after the step's first line
+        /// (<see cref="EnsureVersionSounds"/>). A part added to
+        /// the statue is <see cref="SeEvent.Generate"/>, a reshape is <see cref="SeEvent.Morph"/>. The comparison table
+        /// (p3-temple-proposal) and the temple (closing) have none.
+        /// </summary>
+        public static readonly IReadOnlyList<(string StepId, SeEvent Sound)> VersionSounds = new[]
+        {
+            ("s1-concerns", SeEvent.Generate),
+            ("s2-natural-curve", SeEvent.Morph),
+            ("s2-mismatch", SeEvent.Morph),
+            ("s3-hand-mirror", SeEvent.Morph),
+            ("s3-mirror-angle", SeEvent.Generate),
+            ("p2-review", SeEvent.Morph),
+        };
+
+        /// <summary>
+        /// Adds the sound cues of <see cref="VersionSounds"/> to the existing asset, or moves them or fills their empty
+        /// clips, and saves it. Run from "DNP Demo/Setup/Install Sound Effects".
+        /// </summary>
+        public static void EnsureVersionSoundsInExistingAsset()
+        {
+            ScenarioData data = AssetDatabase.LoadAssetAtPath<ScenarioData>(AssetPath);
+            if (data == null)
+            {
+                Debug.LogWarning($"[DNPDemo] {AssetPath} がないため、効果音のキューを追加できません。");
+                return;
+            }
+            Undo.RecordObject(data, "Add SE Cues");
+            if (EnsureVersionSounds(data.Steps))
+            {
+                EditorUtility.SetDirty(data);
+                AssetDatabase.SaveAssetIfDirty(data);
+                Debug.Log($"[DNPDemo] {AssetPath} に効果音のキューを追加しました。", data);
+            }
+        }
+
+        /// <summary>
+        /// Puts the sound cue of <see cref="VersionSounds"/> right after the first line of each listed step, or right before
+        /// it when the step has no other line: after its only line the step would end at once, and changing the step stops
+        /// the effects. Overlapping a line is fine, the effects are lowered while lines play (<see cref="SeDucking"/>). A
+        /// sound cue already in the step is moved there and keeps its clip and volume unless the clip is empty. Returns true
+        /// when anything changed.
+        /// </summary>
+        public static bool EnsureVersionSounds(IReadOnlyList<ScenarioStep> steps)
+        {
+            bool changed = false;
+            foreach ((string stepId, SeEvent sound) in VersionSounds)
+            {
+                ScenarioStep step = FindStep(steps, stepId);
+                if (step?.Cues == null || step.Cues.FindIndex(cue => cue is LineCue) < 0)
+                {
+                    Debug.LogWarning($"[DNPDemo] ステップ {stepId} に台詞がないため、効果音のキューを置けません。");
+                    continue;
+                }
+                AudioClip clip = SoundEffectsSetup.LoadClip(sound);
+                int previousIndex = step.Cues.FindIndex(c => c is SoundCue);
+                SoundCue cue;
+                if (previousIndex < 0)
+                {
+                    cue = new SoundCue { Clip = clip };
+                }
+                else
+                {
+                    cue = (SoundCue)step.Cues[previousIndex];
+                    step.Cues.RemoveAt(previousIndex);
+                    if (cue.Clip == null && clip != null)
+                    {
+                        cue.Clip = clip;
+                        changed = true;
+                    }
+                }
+                int index = VersionSoundIndex(step.Cues);
+                step.Cues.Insert(index, cue);
+                changed |= index != previousIndex;
+            }
+            return changed;
+        }
+
+        /// <summary>Where the sound cue goes in <paramref name="cues"/> (without it): see <see cref="EnsureVersionSounds"/>.</summary>
+        public static int VersionSoundIndex(List<ScenarioCue> cues)
+        {
+            int firstLine = cues.FindIndex(c => c is LineCue);
+            bool onlyLine = cues.FindLastIndex(c => c is LineCue) == firstLine;
+            return onlyLine ? firstLine : firstLine + 1;
+        }
+
+        static ScenarioStep FindStep(IReadOnlyList<ScenarioStep> steps, string id)
+        {
+            foreach (ScenarioStep step in steps)
+            {
+                if (step != null && step.Id == id)
+                {
+                    return step;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
         /// The steps of docs/PLAN.md §3. A version reached by an operation is shown by a cue at the head of the next step,
         /// so it appears as the step completes and every later step applies it instantly. The version assets are loaded
         /// from <see cref="VenusAssetBuilder.CatalogPath"/> and the temple preset from
         /// <see cref="EnvironmentPresetBuilder.TemplePresetPath"/>; this method only loads them and never creates assets.
+        /// The sound cues are not included: <see cref="EnsureVersionSounds"/> adds them. It loads their clips from the asset
+        /// database, which most callers do not need.
         /// </summary>
         public static List<ScenarioStep> CreateDefaultSteps()
         {
             EnvironmentPreset templePreset = AssetDatabase.LoadAssetAtPath<EnvironmentPreset>(EnvironmentPresetBuilder.TemplePresetPath);
-            return new List<ScenarioStep>
+            var steps = new List<ScenarioStep>
             {
                 new()
                 {
@@ -284,7 +388,7 @@ namespace DNPDemo.Editor
                     A("なるほど。他に懸念点などはございませんか？"),
                     B("そうですね...私的にはヴィーナスの林檎の持ち方も気になっています。残存しているヴィーナスの脇の部分と、現在の林檎の持ち方があまり一致しているように思えないんですよね。Ａ先生のイメージですと林檎を手のひらの上にのせていますが、ボールを投げる時のように、上から林檎を包み込むような持ち方の方が脇のあたりの筋肉の動きと自然につながると考えやすいんですよ。")),
                 Auto("s2-request-b", "Scene 2 学者Bへの依頼",
-                    A("なるほど..構造の面から見ると様々な問題がありそうですね。よろしければ、B先生が考える力学的に安定的で、筋肉の動きにも矛盾がないアイデアを3Dモデルで出していただけないでしょうか？"),
+                    A("あー...構造の面から見ると様々な問題がありそうですね。よろしければ、B先生が考える力学的に安定的で、筋肉の動きにも矛盾がないアイデアを3Dモデルで出していただけないでしょうか？"),
                     B("そうですね、一度私の考えもモデル化してみましょう。")),
                 Operation("s2-move-apple", "Scene 2 [B] 林檎を手の下へ", DemoRole.PlayerB,
                     "空間ペンで林檎の領域を選択し、林檎の位置を調整せよ。（手の下に持ってくる）",
@@ -350,7 +454,7 @@ namespace DNPDemo.Editor
                     new SetObjectActiveCue(HandMirrorKey, false),
                     Version(VenusAssetBuilder.Ver30Id, RightArmFocusKey),
                     B("なるほど...手鏡を持っているのは納得ですが、生成されたモデルを見ると、手鏡の角度がおかしいかもしれませんね。なんというか、もっとヴィーナスの目線の先に手鏡がくる感じの方が良さそうです。"),
-                    A("えーと、どんな感じでしょう？ よければBさんに修正をお任せしたいのですが。"),
+                    A("それはどんな感じでしょうか？ よければBさんに修正をお任せしたいのですが。"),
                     B("承知しました。一旦、手首のひねりを少し調整してみましょう。")),
                 WithCues(Operation("s3-adjust-wrist", "Scene 3 [B] 手首の角度を修正", DemoRole.PlayerB,
                         "空間ペンで右手首と手鏡を領域選択し、空間ペンを用いながらヴィーナスの目線に合わせて鏡の角度を修正せよ。",
@@ -371,7 +475,7 @@ namespace DNPDemo.Editor
                 Auto("p3-temple-proposal", "Phase 3 神殿での確認",
                     new StatueVersionCue(VenusStatueKeys.Comparison, VenusAssetBuilder.LoadVersion(VenusAssetBuilder.Ver10Id)),
                     A("うーん、やはりこうしてみると現在の案が一番美しく見えますね。"),
-                    B("ええ、とてもいいかんじです。"),
+                    B("はい、とてもいいかんじです。"),
                     A("最後に復元案のヴィーナスが神殿を背景にしても自然かどうか確かめてみましょう")),
                 // The background (the skybox and the lighting) applies to the whole space, so no statue is selected: the
                 // voice command generates it, and the background panel, opened on recognition, applies it.
@@ -389,7 +493,7 @@ namespace DNPDemo.Editor
                         new EnvironmentCue(templePreset),
                         new SetObjectActiveCue(TempleFloorKey, true),
                         A("おー。現在の案は神殿ともかなりよく調和していますね。"),
-                        B("ええ、見た目の美しさと構造の自然さが、うまく両立できましたね"),
+                        B("はい、見た目の美しさと構造の自然さが、うまく両立できましたね"),
                         A("Bさんの鋭いご指摘や空間ペンによる修正がヴィーナス像の復元案の構築に有効的でした。ありがとうございます。"),
                         B("こちらこそ本日はどうもありがとうございました。"),
                         N("言葉から生まれた『認識のズレ』について、空間ツールを使って互いのイメージを『すり合わせる』。\nこれが、XRとAIによる新しい共創の形です。文化財復元ワークショップ、これにて終了です"),
@@ -400,6 +504,7 @@ namespace DNPDemo.Editor
                     },
                 },
             };
+            return steps;
         }
 
         static ScenarioStep Auto(string id, string title, params ScenarioCue[] cues) => new()

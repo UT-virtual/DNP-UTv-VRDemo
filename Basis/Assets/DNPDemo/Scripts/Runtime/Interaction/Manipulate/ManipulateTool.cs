@@ -1,5 +1,6 @@
 using System;
 using Basis.Network.Core;
+using DNPDemo.Audio;
 using DNPDemo.Pen;
 using DNPDemo.Scenario;
 using UnityEngine;
@@ -183,6 +184,7 @@ namespace DNPDemo.Interaction.Manipulate
                     break;
                 case ManipulateMessageKind.Snap:
                     _motion.Animate(pose, _snapSeconds);
+                    session.PlayRemoteCompletion(SeEvent.Snap);
                     break;
                 case ManipulateMessageKind.Snapshot:
                     _motion.Place(pose);
@@ -236,12 +238,13 @@ namespace DNPDemo.Interaction.Manipulate
             {
                 _motion.Animate(_constraint.PoseOf(result), _snapSeconds);
                 Send(ManipulateMessageKind.Snap, DeliveryMethod.ReliableOrdered);
+                _session.Complete(SeEvent.Snap);
             }
             else
             {
                 Send(ManipulateMessageKind.Release, DeliveryMethod.ReliableOrdered);
+                _session.Complete();
             }
-            _session.Complete();
         }
 
         /// <summary>
