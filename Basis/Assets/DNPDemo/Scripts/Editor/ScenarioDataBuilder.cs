@@ -124,13 +124,13 @@ namespace DNPDemo.Editor
         public const float MirrorMaxDistance = 2.5f;
 
         /// <summary>Step 17: the wrist turn authored into the Ver 3.1 mirror pose.</summary>
-        public const float WristTwistTargetAngle = 10f;
+        public const float WristTwistTargetAngle = VenusAssetBuilder.MirrorTwistDegrees;
 
         /// <summary>Step 17: the hand may twist this much past 0° and past the target, so the target is easy to pass and come back to.</summary>
         public const float WristTwistMargin = 30f;
 
         /// <summary>Step 17: release within this many degrees of the target to snap after a turn.</summary>
-        public const float WristTwistSnapAngle = 4f;
+        public const float WristTwistSnapAngle = 12f;
 
         /// <summary>Step 9: the arm may turn outwards (a negative angle) this far, so a small slip the wrong way does not stop it.</summary>
         public const float ArmSlideMinAngle = -10f;

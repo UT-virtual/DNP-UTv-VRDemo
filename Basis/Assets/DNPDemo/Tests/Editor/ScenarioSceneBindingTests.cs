@@ -354,7 +354,7 @@ namespace DNPDemo.Tests
             int wristStep = data.Steps.ToList().FindIndex(step => step.Id == "s3-adjust-wrist");
             Assert.That(wristStep, Is.InRange(1, data.Steps.Count - 2));
             ManipulatePart part = data.Steps[wristStep].Interaction.OfType<ManipulatePart>().Single();
-            Assert.AreEqual(10f, part.TargetAngle, "Step 17 snaps at a 10-degree turn.");
+            Assert.AreEqual(50f, part.TargetAngle, "Step 17 snaps at a 50-degree turn.");
             VenusVersion before = data.Steps[wristStep - 1].Cues.OfType<StatueVersionCue>()
                 .Single(cue => cue.StatueKey == VenusStatueKeys.Main).Version;
             VenusVersion after = data.Steps[wristStep + 1].Cues.OfType<StatueVersionCue>()

@@ -59,8 +59,7 @@ namespace DNPDemo.Editor
         public const float MirrorReach = 0.16f;
 
         /// <summary>
-        /// For the Ver 3.0 and 3.1 placeholders, the wrist twists this far about the forearm (degrees, Unity's rotation direction about
-        /// <see cref="ForearmDirection"/>), which turns the mirror from facing up and outwards to facing the head.
+        /// Step 17 and the placeholder poses use this wrist turn in degrees around the right forearm to aim the mirror at the head.
         /// </summary>
         public const float MirrorTwistDegrees = 50f;
 
