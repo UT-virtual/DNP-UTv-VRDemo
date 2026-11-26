@@ -90,7 +90,7 @@ namespace DNPDemo.Tests
             Assert.Greater(_temple.DirectionalLight.ShadowStrength, 0f);
             Assert.AreEqual(AmbientMode.Skybox, _temple.Ambient.Mode, "The temple is lit by its panorama.");
             Assert.IsTrue(_temple.HasSkyboxAmbientProbe, "The temple's ambient light is baked from its panorama.");
-            Assert.AreEqual(AmbientMode.Flat, _exhibition.Ambient.Mode, "The exhibition room is lit by a dim flat colour, leaving the statue to its spot light.");
+            Assert.AreEqual(AmbientMode.Trilight, _exhibition.Ambient.Mode);
             AssertPresetComplete(_exhibition);
             AssertPresetComplete(_temple);
         }
@@ -182,11 +182,11 @@ namespace DNPDemo.Tests
         }
 
         [Test]
-        public void AmbientFadesBetweenTheRoomColoursAndTheSky()
+        public void AmbientFadesBetweenTheGradientAndTheSky()
         {
             EnvironmentFixture fixture = CreateFixture();
             fixture.Controller.ApplyInstant(_exhibition);
-            Assert.AreEqual(_exhibition.Ambient.Mode, RenderSettings.ambientMode);
+            Assert.AreEqual(AmbientMode.Trilight, RenderSettings.ambientMode);
             SphericalHarmonicsL2 exhibition = RenderSettings.ambientProbe;
             SphericalHarmonicsL2 temple = _temple.SkyboxAmbientProbe;
             for (int channel = 0; channel < 3; channel++)
@@ -202,7 +202,7 @@ namespace DNPDemo.Tests
             Assert.AreEqual(AmbientMode.Custom, RenderSettings.ambientMode, "The ambient light blends as spherical harmonics.");
             Color halfway = EvaluateUp(RenderSettings.ambientProbe);
             Color expected = Color.Lerp(EvaluateUp(exhibition), EvaluateUp(temple), 0.5f);
-            Assert.AreEqual(expected.b, halfway.b, 0.005f, "Halfway shows the average of the room's colours and the sky.");
+            Assert.AreEqual(expected.b, halfway.b, 0.005f, "Halfway shows the average of the gradient and the sky.");
 
             fixture.Controller.AdvanceTransition(1f);
             Assert.AreEqual(AmbientMode.Custom, RenderSettings.ambientMode, "The Skybox source is the probe baked from the panorama.");
@@ -217,8 +217,8 @@ namespace DNPDemo.Tests
 
             fixture.Controller.TransitionTo(_exhibition, 2f);
             fixture.Controller.AdvanceTransition(2f);
-            Assert.AreEqual(_exhibition.Ambient.Mode, RenderSettings.ambientMode, "The room's own colour mode takes over at the end.");
-            AssertProbesMatch(exhibition, RenderSettings.ambientProbe, 0.001f, "Handing over to the room's colours does not jump.");
+            Assert.AreEqual(AmbientMode.Trilight, RenderSettings.ambientMode, "The gradient's own mode takes over at the end.");
+            AssertProbesMatch(exhibition, RenderSettings.ambientProbe, 0.001f, "Handing over to the gradient does not jump.");
         }
 
         static readonly Vector3[] ProbeDirections =
@@ -607,8 +607,8 @@ namespace DNPDemo.Tests
             fixture.Controller.TransitionTo(_temple, 2f);
             fixture.Controller.AdvanceTransition(1f);
             Assert.IsTrue(RenderSettings.fog);
-            Assert.AreEqual(5f, RenderSettings.fogStartDistance);
-            Assert.AreEqual(9f, RenderSettings.fogEndDistance, 0.001f);
+            Assert.AreEqual(FogMode.Exponential, RenderSettings.fogMode);
+            Assert.AreEqual(_exhibition.DistanceFog.Density * 0.5f, RenderSettings.fogDensity, 1e-4f, "Fog that turns off thins out.");
             fixture.Controller.AdvanceTransition(1f);
             Assert.IsFalse(RenderSettings.fog);
             Assert.IsTrue(fixture.Room.activeSelf, "Fog follows the preset even when the room object stays active.");
@@ -616,7 +616,7 @@ namespace DNPDemo.Tests
             fixture.Controller.TransitionTo(_exhibition, 2f);
             fixture.Controller.AdvanceTransition(1f);
             Assert.IsTrue(RenderSettings.fog);
-            Assert.AreEqual(9f, RenderSettings.fogEndDistance, 0.001f);
+            Assert.AreEqual(_exhibition.DistanceFog.Density * 0.5f, RenderSettings.fogDensity, 1e-4f, "Fog that turns on thickens.");
             fixture.Controller.AdvanceTransition(1f);
             AssertExhibitionFog();
         }
@@ -646,13 +646,52 @@ namespace DNPDemo.Tests
             Assert.AreEqual(24f, RenderSettings.fogEndDistance);
         }
 
+        [Test]
+        public void FogWithoutAModeIsLinear()
+        {
+            EnvironmentFixture fixture = CreateFixture();
+            EnvironmentPreset legacy = CreateVariant(fixture, _exhibition, _exhibition.Rotation, _exhibition.SpotLight,
+                new DistanceFogSettings { Enabled = true, StartDistance = 5f, EndDistance = 7f });
+
+            fixture.Controller.ApplyInstant(legacy);
+
+            Assert.IsTrue(RenderSettings.fog);
+            Assert.AreEqual(FogMode.Linear, RenderSettings.fogMode, "Presets saved before the fog mode existed were linear.");
+            Assert.AreEqual(5f, RenderSettings.fogStartDistance);
+            Assert.AreEqual(7f, RenderSettings.fogEndDistance);
+        }
+
+        /// <summary>Unity strips the shader variants of fog modes that Graphics settings do not keep, so builds would show no fog.</summary>
+        [Test]
+        public void BuildsKeepTheFogModesThePresetsUse()
+        {
+            var graphics = new SerializedObject(GraphicsSettings.GetGraphicsSettings());
+            foreach (EnvironmentPreset preset in new[] { _exhibition, _temple })
+            {
+                DistanceFogSettings fog = preset.DistanceFog;
+                if (!fog.Enabled)
+                {
+                    continue;
+                }
+                string keepProperty = fog.Mode switch
+                {
+                    FogMode.Linear => "m_FogKeepLinear",
+                    FogMode.Exponential => "m_FogKeepExp",
+                    FogMode.ExponentialSquared => "m_FogKeepExp2",
+                    _ => null,
+                };
+                Assert.IsNotNull(keepProperty, $"{preset.name} has no fog mode.");
+                Assert.AreEqual(1, graphics.FindProperty("m_FogStripping").intValue, "Fog Modes must be Custom so the kept modes are fixed.");
+                Assert.IsTrue(graphics.FindProperty(keepProperty).boolValue, $"{preset.name} uses {fog.Mode} fog, which Graphics settings strip.");
+            }
+        }
+
         static void AssertExhibitionFog()
         {
             Assert.IsTrue(RenderSettings.fog);
-            Assert.AreEqual(FogMode.Linear, RenderSettings.fogMode);
+            Assert.AreEqual(FogMode.Exponential, RenderSettings.fogMode);
             Assert.AreEqual(Color.black, RenderSettings.fogColor);
-            Assert.AreEqual(5f, RenderSettings.fogStartDistance);
-            Assert.AreEqual(7f, RenderSettings.fogEndDistance);
+            Assert.AreEqual(0.135f, RenderSettings.fogDensity, 1e-6f);
         }
 
         [Test]
@@ -838,7 +877,11 @@ namespace DNPDemo.Tests
             Assert.GreaterOrEqual(preset.Reflection.Intensity, 0f, preset.name);
         }
 
-        static EnvironmentPreset CreateVariant(EnvironmentFixture fixture, EnvironmentPreset source, float rotation, SpotLightSettings spot)
+        static EnvironmentPreset CreateVariant(EnvironmentFixture fixture, EnvironmentPreset source, float rotation, SpotLightSettings spot) =>
+            CreateVariant(fixture, source, rotation, spot, source.DistanceFog);
+
+        static EnvironmentPreset CreateVariant(
+            EnvironmentFixture fixture, EnvironmentPreset source, float rotation, SpotLightSettings spot, DistanceFogSettings fog)
         {
             EnvironmentPreset preset = fixture.Track(ScriptableObject.CreateInstance<EnvironmentPreset>());
             preset.Configure(
@@ -852,7 +895,7 @@ namespace DNPDemo.Tests
                 source.Ambient,
                 source.Reflection,
                 source.ShadowQuality,
-                source.DistanceFog);
+                fog);
             preset.SetSkyboxAmbientProbe(source.SkyboxAmbientProbe);
             return preset;
         }

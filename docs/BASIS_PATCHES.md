@@ -25,4 +25,4 @@ upstream をマージするときの衝突確認に使う。
 | 2026-11-24 | `.gitattributes` / `.github/PULL_REQUEST_TEMPLATE.md` | `Basis/Assets/DNPDemo/` 以下のバイナリに対する Git LFS のルールを削除し、仮素材の期間は通常の git で管理するようにした。LFS で管理していた 109 個のアセットは、実ファイルとしてコミットし直した。PR テンプレートに、LFS の項目の読み替えを促すコメントを追加 | Git LFS のストレージ容量の上限に達したため（#60）。過去の履歴は書き換えていない（以前のコミットのアセットは LFS に残る）。upstream の merge で `.gitattributes` が競合しても、DNPDemo の LFS のルールは戻さない |
 | 2026-11-25 | `Basis/Assets/Basis/link.xml` | `BasisLinkGenerator` が Android ビルドで再生成した結果として、`uLipSync.Runtime` が追加され、`BasisOpenVR` が外れた | 自動生成ファイル。`BasisOpenVR.asmdef` は Android を対象外にしているため、Android でビルドすると一覧から外れる。本デモは Android でしかビルドしないので、Android の生成結果を残す |
 | 2026-11-25 | `.gitignore` | `Basis/Assets/AddressableAssetsData/link.xml`（と `.meta`）を追跡対象外に追加 | Addressables がプレイヤービルドの前に一時的にコピーし、次のドメインリロードで消すファイルのため |
-| 2026-11-25 | `Basis/ProjectSettings/GraphicsSettings.asset` | Fog Modes を Custom にし、Linear をビルドに含める | 環境プリセットが実行時に有効にする距離フォグのシェーダーバリアントを保持するため |
+| 2026-11-25 | `Basis/ProjectSettings/GraphicsSettings.asset` | Fog Modes を Custom にし、Exponential だけをビルドに含める | 環境プリセットが実行時に有効にする距離フォグのシェーダーバリアントを保持するため。プリセットのフォグモードを変えたときは、ここも合わせる（EnvironmentPresetTests が検査する） |

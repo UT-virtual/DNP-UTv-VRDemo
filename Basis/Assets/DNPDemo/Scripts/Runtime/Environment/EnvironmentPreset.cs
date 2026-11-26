@@ -85,10 +85,17 @@ namespace DNPDemo.Environment
         [Range(1, 4)] public int CascadeCount;
     }
 
+    /// <summary>
+    /// Fog that fades distant objects to black. Linear uses the start and end distances; Exponential and
+    /// ExponentialSquared use the density. Each mode a preset uses must be kept by the Fog Modes stripping in Graphics
+    /// settings, or the fog is missing from builds.
+    /// </summary>
     [Serializable]
     public struct DistanceFogSettings
     {
         public bool Enabled;
+        public FogMode Mode;
+        [Min(0f)] public float Density;
         [Min(0f)] public float StartDistance;
         [Min(0f)] public float EndDistance;
     }
@@ -107,7 +114,7 @@ namespace DNPDemo.Environment
         [SerializeField] AmbientSettings _ambient;
         [SerializeField] ReflectionSettings _reflection;
         [SerializeField] ShadowQualitySettings _shadowQuality;
-        [Tooltip("Fades distant objects to black over the specified range in metres.")]
+        [Tooltip("Fades distant objects to black. Linear uses the distances in metres; the exponential modes use the density.")]
         [SerializeField] DistanceFogSettings _distanceFog;
         /// <summary>Spherical harmonics baked from the panorama for the Skybox ambient source: 9 coefficients per RGB channel.</summary>
         [SerializeField, HideInInspector] float[] _skyboxAmbientProbe = Array.Empty<float>();

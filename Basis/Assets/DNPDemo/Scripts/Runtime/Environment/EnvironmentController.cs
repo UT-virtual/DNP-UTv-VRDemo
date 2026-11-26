@@ -47,8 +47,10 @@ namespace DNPDemo.Environment
                 return new FogState
                 {
                     Enabled = settings.Enabled,
-                    Mode = FogMode.Linear,
+                    // FogMode has no zero; settings saved before the mode existed were linear.
+                    Mode = Enum.IsDefined(typeof(FogMode), settings.Mode) ? settings.Mode : FogMode.Linear,
                     FogColor = Color.black,
+                    Density = Mathf.Max(0f, settings.Density),
                     StartDistance = start,
                     EndDistance = Mathf.Max(start + 0.01f, settings.EndDistance),
                 };

@@ -40,11 +40,11 @@ MonoBehaviour:
     ShadowNormalBias: 0.4
     ShadowNearPlane: 0.2
   _ambient:
-    Mode: 3
-    SkyColor: {r: 0.12, g: 0.12, b: 0.14, a: 1}
-    EquatorColor: {r: 0.2, g: 0.19, b: 0.17, a: 1}
-    GroundColor: {r: 0.08, g: 0.075, b: 0.07, a: 1}
-    FlatColor: {r: 0.12, g: 0.12, b: 0.14, a: 1}
+    Mode: 1
+    SkyColor: {r: 0.455, g: 0.442, b: 0.416, a: 1}
+    EquatorColor: {r: 0.26, g: 0.247, b: 0.221, a: 1}
+    GroundColor: {r: 0.104, g: 0.0975, b: 0.091, a: 1}
+    FlatColor: {r: 0.26, g: 0.247, b: 0.221, a: 1}
     Intensity: 1
   _reflection:
     Cubemap: {fileID: 8900000, guid: c7462bd6fa78fe94d99b71d33c61f248, type: 3}
@@ -56,8 +56,10 @@ MonoBehaviour:
     CascadeCount: 0
   _distanceFog:
     Enabled: 1
-    StartDistance: 5
-    EndDistance: 7
+    Mode: 2
+    Density: 0.135
+    StartDistance: 0
+    EndDistance: 0
   _skyboxAmbientProbe:
   - 0.06366704
   - 0.024965484

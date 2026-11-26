@@ -115,11 +115,11 @@ namespace DNPDemo.Editor
                 },
                 ambient: new AmbientSettings
                 {
-                    Mode = AmbientMode.Flat,
-                    SkyColor = new Color(0.12f, 0.12f, 0.14f),
-                    EquatorColor = new Color(0.2f, 0.19f, 0.17f),
-                    GroundColor = new Color(0.08f, 0.075f, 0.07f),
-                    FlatColor = new Color(0.12f, 0.12f, 0.14f),
+                    Mode = AmbientMode.Trilight,
+                    SkyColor = new Color(0.455f, 0.442f, 0.416f),
+                    EquatorColor = new Color(0.26f, 0.247f, 0.221f),
+                    GroundColor = new Color(0.104f, 0.0975f, 0.091f),
+                    FlatColor = new Color(0.26f, 0.247f, 0.221f),
                     Intensity = 1f,
                 },
                 // The cubemap is baked from the panorama afterwards (EnvironmentLightingBaker).
@@ -128,8 +128,8 @@ namespace DNPDemo.Editor
                 distanceFog: new DistanceFogSettings
                 {
                     Enabled = true,
-                    StartDistance = 5f,
-                    EndDistance = 7f,
+                    Mode = FogMode.Exponential,
+                    Density = 0.135f,
                 });
 
             EnsurePreset(
