@@ -326,8 +326,7 @@ namespace DNPDemo.Tests
             Assert.IsTrue(bindings.TryGetObject(ScenarioDataBuilder.MirrorGoalKey, out GameObject goal));
 
             GameObject model = VenusAssetBuilder.LoadVersion(VenusAssetBuilder.Ver30Id).Model;
-            MeshFilter held = model.GetComponentsInChildren<MeshFilter>()
-                .Single(filter => filter.name == "Venus_HandMirror");
+            MeshFilter held = FindHeldMirror(model);
             MeshFilter movable = prop.GetComponentInChildren<MeshFilter>(true);
             Assert.AreSame(held.sharedMesh, movable.sharedMesh);
             CollectionAssert.AreEqual(held.GetComponent<Renderer>().sharedMaterials, movable.GetComponent<Renderer>().sharedMaterials);
@@ -345,6 +344,72 @@ namespace DNPDemo.Tests
             {
                 Assert.Less(Vector4.Distance(heldPose.GetColumn(column), goalPose.GetColumn(column)), 0.001f);
             }
+        }
+
+        [Test]
+        public void MirrorAtTheWristSnapMatchesTheMirrorInVersion31()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<ScenarioData>(ScenarioDataBuilder.AssetPath);
+            Assert.IsNotNull(data);
+            int wristStep = data.Steps.ToList().FindIndex(step => step.Id == "s3-adjust-wrist");
+            Assert.That(wristStep, Is.InRange(1, data.Steps.Count - 2));
+            ManipulatePart part = data.Steps[wristStep].Interaction.OfType<ManipulatePart>().Single();
+            VenusVersion before = data.Steps[wristStep - 1].Cues.OfType<StatueVersionCue>()
+                .Single(cue => cue.StatueKey == VenusStatueKeys.Main).Version;
+            VenusVersion after = data.Steps[wristStep + 1].Cues.OfType<StatueVersionCue>()
+                .Single(cue => cue.StatueKey == VenusStatueKeys.Main).Version;
+            Assert.AreEqual(VenusAssetBuilder.Ver30Id, before.Id);
+            Assert.AreEqual(VenusAssetBuilder.Ver31Id, after.Id);
+
+            ScenarioBindingSet bindings = ScenarioBindingSet.Collect(_scene);
+            Assert.IsTrue(bindings.TryGetObject(VenusStatueKeys.Main, out GameObject statue));
+            Assert.IsTrue(bindings.TryGetObject(part.TargetKey, out GameObject proxy));
+            Assert.IsTrue(bindings.TryGetObject(part.PivotKey, out GameObject pivot));
+
+            var statueSettings = new SerializedObject(statue.GetComponent<VenusStatue>());
+            var modelRoot = statueSettings.FindProperty("_modelRoot").objectReferenceValue as Transform;
+            Matrix4x4 modelToWorld = (modelRoot == null ? statue.transform : modelRoot).localToWorldMatrix;
+            bool useStageModels = statueSettings.FindProperty("_useStageModels").boolValue;
+            MeshFilter beforeMirror = FindHeldMirror(before.GetModelPrefab(useStageModels));
+            MeshFilter afterMirror = FindHeldMirror(after.GetModelPrefab(useStageModels));
+            MeshFilter proxyMirror = proxy.GetComponentsInChildren<MeshFilter>(true)
+                .Single(filter => filter.sharedMesh == beforeMirror.sharedMesh);
+
+            Matrix4x4 proxyMirrorToWorld = proxyMirror.transform.localToWorldMatrix;
+            AssertMirrorVerticesMatch(proxyMirror, proxyMirrorToWorld,
+                beforeMirror, modelToWorld * beforeMirror.transform.localToWorldMatrix, "Before the turn");
+
+            Pose start = new(proxy.transform.position, proxy.transform.rotation);
+            ManipulateConstraint constraint = ManipulateConstraint.FromPart(part, start, null, pivot.transform);
+            Assert.IsNotNull(constraint);
+            Assert.IsTrue(constraint.TryComplete(ManipulateValue.Rotation(part.TargetAngle), out ManipulateValue snapped));
+            Assert.IsTrue(snapped.Snapped);
+            Pose snap = constraint.PoseOf(snapped);
+            Matrix4x4 move = Matrix4x4.TRS(snap.position, snap.rotation, Vector3.one)
+                * Matrix4x4.TRS(start.position, start.rotation, Vector3.one).inverse;
+
+            AssertMirrorVerticesMatch(proxyMirror, move * proxyMirrorToWorld,
+                afterMirror, modelToWorld * afterMirror.transform.localToWorldMatrix, "After the snap");
+            Assert.IsFalse(constraint.TryComplete(ManipulateValue.Rotation(0f), out _),
+                "Step 17 requires a turn from its starting pose.");
+        }
+
+        static MeshFilter FindHeldMirror(GameObject model) => model.GetComponentsInChildren<MeshFilter>()
+            .Single(filter => filter.name == "Venus_HandMirror");
+
+        static void AssertMirrorVerticesMatch(MeshFilter actual, Matrix4x4 actualToWorld,
+            MeshFilter expected, Matrix4x4 expectedToWorld, string stage)
+        {
+            Vector3[] observed = actual.sharedMesh.vertices.Select(actualToWorld.MultiplyPoint3x4).ToArray();
+            Vector3[] reference = expected.sharedMesh.vertices.Select(expectedToWorld.MultiplyPoint3x4).ToArray();
+            Assert.IsNotEmpty(observed);
+            Assert.IsNotEmpty(reference);
+
+            // Each FBX can order or split vertices differently. Compare the entire mirror, including its handle, in both directions.
+            float WorstSquaredError(Vector3[] from, Vector3[] to) => from.Max(vertex =>
+                to.Min(other => (vertex - other).sqrMagnitude));
+            float error = Mathf.Sqrt(Mathf.Max(WorstSquaredError(observed, reference), WorstSquaredError(reference, observed)));
+            Assert.Less(error, 0.001f, $"{stage}: the mirror is {error * 1000f:F2} mm from its corresponding model.");
         }
 
         [Test]

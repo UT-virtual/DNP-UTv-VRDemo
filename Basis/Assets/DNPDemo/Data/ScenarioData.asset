@@ -698,10 +698,10 @@ MonoBehaviour:
         PivotKey: Pivot_RightWrist
         Axis: {x: 0, y: 1, z: 0}
         MinAngle: -30
-        MaxAngle: 80
+        MaxAngle: 39.25
         Completion: 0
-        TargetAngle: 50
-        SnapAngle: 12
+        TargetAngle: 9.25
+        SnapAngle: 4
         ThresholdAngle: 30
     - rid: 1662061916731736532
       type: {class: SetObjectActiveCue, ns: DNPDemo.Scenario.Cues, asm: DNPDemo.Runtime}

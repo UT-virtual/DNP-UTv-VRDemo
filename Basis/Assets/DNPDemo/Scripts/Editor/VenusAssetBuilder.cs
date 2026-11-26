@@ -59,7 +59,7 @@ namespace DNPDemo.Editor
         public const float MirrorReach = 0.16f;
 
         /// <summary>
-        /// Ver 3.0 → Ver 3.1: the wrist twists this far about the forearm (degrees, Unity's rotation direction about
+        /// For the Ver 3.0 and 3.1 placeholders, the wrist twists this far about the forearm (degrees, Unity's rotation direction about
         /// <see cref="ForearmDirection"/>), which turns the mirror from facing up and outwards to facing the head.
         /// </summary>
         public const float MirrorTwistDegrees = 50f;
@@ -71,7 +71,7 @@ namespace DNPDemo.Editor
         public static Vector3 MirrorCenter => RightWrist + ForearmDirection * MirrorReach;
 
         /// <summary>
-        /// Rotation of the right hand and the mirror: up along the forearm, forward out of the mirror's face. Ver 3.1 faces
+        /// Placeholder rotation of the right hand and the mirror: up along the forearm, forward out of the mirror's face. Ver 3.1 faces
         /// the head; Ver 3.0 is the same hand twisted back by <see cref="MirrorTwistDegrees"/>.
         /// </summary>
         public static Quaternion MirrorRotation(bool facesHead)
