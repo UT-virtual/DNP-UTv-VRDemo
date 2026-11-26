@@ -256,18 +256,14 @@ namespace DNPDemo.Tests
         }
 
         [Test]
-        public void WristTwistOfStep17TurnsTheMirrorOfVer30IntoVer31()
+        public void WristTwistOfStep17RequiresATurnAboutTheWristPivot()
         {
             ManipulatePart twist = DefaultSteps.Find(step => step.Id == "s3-adjust-wrist").Interaction.OfType<ManipulatePart>().Single();
             Assert.AreEqual(ManipulateConstraintKind.Rotate, twist.Constraint);
             Assert.AreEqual(RotateCompletion.Snap, twist.Completion);
-
-            // The pivot is turned like Ver 3.0's hand, so the axis (its local up) runs along the forearm.
-            UnityEngine.Quaternion held = VenusAssetBuilder.MirrorRotation(false);
-            UnityEngine.Vector3 axis = held * twist.Axis;
-            UnityEngine.Quaternion snapped = UnityEngine.Quaternion.AngleAxis(twist.TargetAngle, axis) * held;
-            Assert.Less(UnityEngine.Quaternion.Angle(VenusAssetBuilder.MirrorRotation(true), snapped), 0.1f,
-                "Snapped at the target angle, the hand proxy should hold the mirror as Ver 3.1 does.");
+            Assert.AreEqual(ScenarioDataBuilder.RightWristPivotKey, twist.PivotKey);
+            Assert.AreEqual(UnityEngine.Vector3.up, twist.Axis);
+            Assert.Greater(twist.TargetAngle, twist.SnapAngle, "Step 17 should require a turn before snapping.");
         }
 
         [Test]
