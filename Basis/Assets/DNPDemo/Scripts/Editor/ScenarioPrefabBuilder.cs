@@ -36,7 +36,7 @@ namespace DNPDemo.Editor
         static readonly Color ThresholdMarkerColor = new(1f, 0.8f, 0.3f);
         const float MicrophoneSwitchButtonWidth = 260;
         const float OperatorPanelWidth = 800;
-        const float OperatorPanelHeight = 1100;
+        const float OperatorPanelHeight = 1200;
         const float StepPickerButtonWidth = 90;
         const float StepJumpButtonWidth = 140;
         public const string OperatorRestartLabel = "ロビーへ戻す（次の体験者へ）";

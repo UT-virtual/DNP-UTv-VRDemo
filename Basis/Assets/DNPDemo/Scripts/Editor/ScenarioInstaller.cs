@@ -23,7 +23,8 @@ namespace DNPDemo.Editor
     /// player, operator input and panel, narrator voice and subtitle, effects and banner, the interaction runner
     /// with its tools and hints, the task HUD, and the reset for the next visitors. Parts missing from the operator panel and task HUD
     /// prefabs are added too. Only what is missing is added, so running it again after an update installs the new parts and
-    /// leaves hand edits alone. Afterwards the prefab is the source of truth and is edited by hand.
+    /// leaves hand edits alone. Afterwards the prefab is the source of truth and is edited by hand. The one exception is the
+    /// size of the operator panel, which always follows its own prefab (<see cref="UseOperatorPanelPrefabSize"/>).
     /// Scholars and keyed objects are not wired here; they declare themselves with
     /// <see cref="ScenarioSpeakerBinding"/> / <see cref="ScenarioObjectBinding"/> in their own prefabs.
     /// </summary>
@@ -70,6 +71,7 @@ namespace DNPDemo.Editor
                 changed |= InstallMissingTaskHud(root.transform, scenario, interaction);
                 changed |= InstallMissingHints(scenario, interaction);
                 changed |= InstallMissingVisitorReset(root.transform, scenario);
+                changed |= UseOperatorPanelPrefabSize(scenario);
                 if (changed)
                 {
                     PrefabUtility.SaveAsPrefabAsset(root, DemoSystemsPrefabPath);
@@ -315,6 +317,30 @@ namespace DNPDemo.Editor
             source.playOnAwake = false;
             source.spatialBlend = 0f;
             return source;
+        }
+
+        /// <summary>
+        /// Gives the operator panel in DemoSystems the size of <see cref="ScenarioPrefabBuilder.OperatorPanelPath"/>.
+        /// A prefab instance keeps its own value for the size of its root RectTransform, so without this the panel keeps
+        /// the height it had when it was placed, and rows added to the prefab later get squeezed.
+        /// Returns true when the size changed.
+        /// </summary>
+        static bool UseOperatorPanelPrefabSize(Transform scenario)
+        {
+            var panel = scenario.GetComponentInChildren<OperatorPanel>(true);
+            if (panel == null || !PrefabUtility.IsPartOfPrefabInstance(panel))
+            {
+                return false;
+            }
+            var rect = (RectTransform)panel.transform;
+            RectTransform source = PrefabUtility.GetCorrespondingObjectFromSource(rect);
+            if (source == null || rect.sizeDelta == source.sizeDelta)
+            {
+                return false;
+            }
+            SerializedProperty size = new SerializedObject(rect).FindProperty("m_SizeDelta");
+            PrefabUtility.RevertPropertyOverride(size, InteractionMode.AutomatedAction);
+            return true;
         }
 
         static T InstantiatePrefab<T>(string prefabPath, Transform parent) where T : Component

@@ -131,27 +131,33 @@ namespace DNPDemo.Operator
             _jumpButton.interactable = running;
         }
 
-        string BuildStatusText(bool running)
+        string BuildStatusText(bool running) =>
+            running
+                ? FormatStatus(_builder, _director.CurrentStep, _director.StepIndex, _director.StepCount,
+                    _director.IsWaitingForPartner, _director.HasAuthority)
+                : "セッションに接続していません。";
+
+        /// <summary>
+        /// Status of a running scenario. Takes the state as arguments, so tests can lay the panel out with the text of
+        /// every step.
+        /// </summary>
+        internal static string FormatStatus(StringBuilder builder, ScenarioStep step, int stepIndex, int stepCount,
+            bool waitingForPartner, bool hasAuthority)
         {
-            _builder.Clear();
-            if (!running)
-            {
-                return "セッションに接続していません。";
-            }
-            ScenarioStep step = _director.CurrentStep;
-            _builder.Append("ステップ ").Append(_director.StepIndex).Append(" / ").Append(_director.StepCount - 1)
+            builder.Clear();
+            builder.Append("ステップ ").Append(stepIndex).Append(" / ").Append(stepCount - 1)
                 .Append("　").Append(step.Title).Append('\n');
-            _builder.Append(step.Completion.ToDisplayName(step.Actor)).Append('\n');
+            builder.Append(step.Completion.ToDisplayName(step.Actor)).Append('\n');
             if (!string.IsNullOrEmpty(step.TaskText))
             {
-                _builder.Append("タスク：").Append(step.TaskText).Append('\n');
+                builder.Append("タスク：").Append(step.TaskText).Append('\n');
             }
-            if (_director.IsWaitingForPartner)
+            if (waitingForPartner)
             {
-                _builder.Append("相手の端末が接続していません。台詞が終わっても次へ進まず、相手が戻るとこのステップを頭から再生します。\n");
+                builder.Append("相手の端末が接続していません。台詞が終わっても次へ進まず、相手が戻るとこのステップを頭から再生します。\n");
             }
-            _builder.Append(_director.HasAuthority ? "この端末が進行を管理しています。" : "操作は進行を管理する端末に送られます。");
-            return _builder.ToString();
+            builder.Append(hasAuthority ? "この端末が進行を管理しています。" : "操作は進行を管理する端末に送られます。");
+            return builder.ToString();
         }
 
         string StepTitle(int stepIndex)
