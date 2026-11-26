@@ -444,6 +444,7 @@ GameObject:
   - component: {fileID: 3240398646132276269}
   - component: {fileID: 5635448625506376212}
   - component: {fileID: 3241206757808814713}
+  - component: {fileID: 1277606353195911757}
   m_Layer: 0
   m_Name: Scenario
   m_TagString: Untagged
@@ -536,6 +537,21 @@ MonoBehaviour:
   _panel: {fileID: 4949422391456844076}
   _director: {fileID: 1978633991536262902}
   _holdSeconds: 2
+--- !u!114 &1277606353195911757
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3626498187145594937}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55daaa8ac594af841af5557033c447d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Players.VisitorReset
+  _director: {fileID: 1978633991536262902}
+  _spawn: {fileID: 4131973661878953836}
+  _pen: {fileID: 3860300835675763750}
 --- !u!1 &4975770570834779063
 GameObject:
   m_ObjectHideFlags: 0
@@ -1931,14 +1947,6 @@ PrefabInstance:
     - target: {fileID: 6230204686900972414, guid: 8637e9b97890a7945aa641d21d9334e8, type: 3}
       propertyPath: m_AnchorMin.y
       value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 6230204686900972414, guid: 8637e9b97890a7945aa641d21d9334e8, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 800
-      objectReference: {fileID: 0}
-    - target: {fileID: 6230204686900972414, guid: 8637e9b97890a7945aa641d21d9334e8, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 640
       objectReference: {fileID: 0}
     - target: {fileID: 6230204686900972414, guid: 8637e9b97890a7945aa641d21d9334e8, type: 3}
       propertyPath: m_LocalPosition.x

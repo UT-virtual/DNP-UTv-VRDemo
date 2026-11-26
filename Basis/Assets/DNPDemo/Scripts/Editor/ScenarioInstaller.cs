@@ -9,6 +9,7 @@ using DNPDemo.Interaction.Stroke;
 using DNPDemo.Interaction.Voice;
 using DNPDemo.Operator;
 using DNPDemo.Pen;
+using DNPDemo.Players;
 using DNPDemo.Presentation;
 using DNPDemo.Roles;
 using DNPDemo.Scenario;
@@ -21,8 +22,11 @@ namespace DNPDemo.Editor
     /// <summary>
     /// Builds the scenario engine into the DemoSystems prefab and wires every reference inside it: director, stage,
     /// player, operator input and panel, narrator voice and subtitle, effects and banner, the interaction runner
-    /// with its tools, hints and sound effects (<see cref="SePlayer"/>), and the task HUD. Only what is missing is added, so running it again after an update installs the new parts and
-    /// leaves hand edits alone. Afterwards the prefab is the source of truth and is edited by hand.
+    /// with its tools, hints and sound effects (<see cref="SePlayer"/>), the task HUD, and the reset for the next visitors
+    /// (<see cref="VisitorReset"/>). Parts missing from the operator panel and task HUD prefabs are added too. Only what is
+    /// missing is added, so running it again after an update installs the new parts and
+    /// leaves hand edits alone. Afterwards the prefab is the source of truth and is edited by hand. The one exception is the
+    /// size of the operator panel, which always follows its own prefab (<see cref="UseOperatorPanelPrefabSize"/>).
     /// Scholars and keyed objects are not wired here; they declare themselves with
     /// <see cref="ScenarioSpeakerBinding"/> / <see cref="ScenarioObjectBinding"/> in their own prefabs.
     /// </summary>
@@ -41,7 +45,8 @@ namespace DNPDemo.Editor
                 Fail($"{DemoSystemsPrefabPath} がありません。");
                 return;
             }
-            // The task HUD is a prefab of its own, nested in DemoSystems; bring it up to date before DemoSystems is loaded.
+            // The operator panel and the task HUD are prefabs of their own, nested in DemoSystems; bring them up to date before DemoSystems is loaded.
+            ScenarioPrefabBuilder.InstallMissingOperatorPanelParts();
             ScenarioPrefabBuilder.AddTaskHudHintTextIfMissing();
             GameObject root = PrefabUtility.LoadPrefabContents(DemoSystemsPrefabPath);
             try
@@ -69,6 +74,8 @@ namespace DNPDemo.Editor
                 changed |= InstallMissingTaskHud(root.transform, scenario, interaction);
                 changed |= InstallMissingHints(scenario, interaction);
                 changed |= InstallMissingSoundEffects(scenario, interaction);
+                changed |= InstallMissingVisitorReset(root.transform, scenario);
+                changed |= UseOperatorPanelPrefabSize(scenario);
                 if (changed)
                 {
                     PrefabUtility.SaveAsPrefabAsset(root, DemoSystemsPrefabPath);
@@ -243,6 +250,29 @@ namespace DNPDemo.Editor
         }
 
         /// <summary>
+        /// Adds <see cref="VisitorReset"/> to <paramref name="scenario"/> unless it is there, and wires the director, the
+        /// spawn service and the pen controller. Returns true when it was added.
+        /// </summary>
+        static bool InstallMissingVisitorReset(Transform root, Transform scenario)
+        {
+            if (scenario.GetComponent<VisitorReset>() != null)
+            {
+                return false;
+            }
+            var reset = scenario.gameObject.AddComponent<VisitorReset>();
+            WorldUiBuilder.Assign(reset, "_director", scenario.GetComponent<ScenarioDirector>());
+            var spawn = root.GetComponentInChildren<DemoSpawnService>(true);
+            var pen = root.GetComponentInChildren<SpatialPenController>(true);
+            if (spawn == null || pen == null)
+            {
+                Debug.LogWarning($"[DNPDemo] {DemoSystemsPrefabPath} に DemoSpawnService か SpatialPenController がないため、VisitorReset の参照を手動で設定してください。");
+            }
+            WorldUiBuilder.Assign(reset, "_spawn", spawn);
+            WorldUiBuilder.Assign(reset, "_pen", pen);
+            return true;
+        }
+
+        /// <summary>
         /// Places the sound effect player (<see cref="SePlayer"/>, with a source of its own) under <paramref name="scenario"/>
         /// unless it is there, and wires its catalog, the stage whose lines it waits for, the runner, and the stage's
         /// catalog (the master volume of the sound cues). Returns true when
@@ -329,6 +359,30 @@ namespace DNPDemo.Editor
             source.playOnAwake = false;
             source.spatialBlend = 0f;
             return source;
+        }
+
+        /// <summary>
+        /// Gives the operator panel in DemoSystems the size of <see cref="ScenarioPrefabBuilder.OperatorPanelPath"/>.
+        /// A prefab instance keeps its own value for the size of its root RectTransform, so without this the panel keeps
+        /// the height it had when it was placed, and rows added to the prefab later get squeezed.
+        /// Returns true when the size changed.
+        /// </summary>
+        static bool UseOperatorPanelPrefabSize(Transform scenario)
+        {
+            var panel = scenario.GetComponentInChildren<OperatorPanel>(true);
+            if (panel == null || !PrefabUtility.IsPartOfPrefabInstance(panel))
+            {
+                return false;
+            }
+            var rect = (RectTransform)panel.transform;
+            RectTransform source = PrefabUtility.GetCorrespondingObjectFromSource(rect);
+            if (source == null || rect.sizeDelta == source.sizeDelta)
+            {
+                return false;
+            }
+            SerializedProperty size = new SerializedObject(rect).FindProperty("m_SizeDelta");
+            PrefabUtility.RevertPropertyOverride(size, InteractionMode.AutomatedAction);
+            return true;
         }
 
         static T InstantiatePrefab<T>(string prefabPath, Transform parent) where T : Component

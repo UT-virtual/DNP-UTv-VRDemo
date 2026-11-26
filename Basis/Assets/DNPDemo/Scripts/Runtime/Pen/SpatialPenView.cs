@@ -56,6 +56,11 @@ namespace DNPDemo.Pen
         Vector3 _manipulatorRestLocal;
         bool _initialized;
 
+        BasisPickupSyncNetworking _poseSync;
+        Transform _startParent;
+        Vector3 _startLocalPosition;
+        Quaternion _startLocalRotation;
+
         bool _visible = true;
         bool _grabbableLocally;
         bool _highlighted;
@@ -81,6 +86,9 @@ namespace DNPDemo.Pen
         void Awake()
         {
             Initialize();
+            _poseSync = GetComponent<BasisPickupSyncNetworking>();
+            _startParent = transform.parent;
+            transform.GetLocalPositionAndRotation(out _startLocalPosition, out _startLocalRotation);
             // Until a state arrives the pen shows the default mode, not every part the model has.
             ApplyRendererVisibility();
             if (_pickup == null)
@@ -227,6 +235,46 @@ namespace DNPDemo.Pen
             if (_pickup != null && _pickup.Inputs.AnyInteracting())
             {
                 _pickup.Drop();
+            }
+        }
+
+        /// <summary>
+        /// Lets go of the pen and puts it back where it was placed in the scene. Called on the device of the pen's role:
+        /// it takes over the pose sync, so the other device sees the pen return too.
+        /// </summary>
+        public void ReturnToStart()
+        {
+            Drop();
+            if (_poseSync != null && !_poseSync.IsOwnedLocallyOnClient)
+            {
+                // Ownership is taken locally at once and confirmed by the server later, so the pose set below is what
+                // gets sent, and pose updates from the previous owner no longer move this copy.
+                TakePoseOwnership();
+            }
+            if (_startParent != null)
+            {
+                transform.SetPositionAndRotation(
+                    _startParent.TransformPoint(_startLocalPosition), _startParent.rotation * _startLocalRotation);
+            }
+            else
+            {
+                transform.SetLocalPositionAndRotation(_startLocalPosition, _startLocalRotation);
+            }
+        }
+
+        async void TakePoseOwnership()
+        {
+            try
+            {
+                BasisOwnershipResult result = await _poseSync.TakeOwnershipAsync();
+                if (!result.Success)
+                {
+                    Debug.LogWarning("[DNPDemo] SpatialPenView: ペンの姿勢の所有権を取得できませんでした。相手の端末ではペンが元の位置に戻らないことがあります。", this);
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
             }
         }
 

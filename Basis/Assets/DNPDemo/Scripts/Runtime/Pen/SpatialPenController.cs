@@ -110,6 +110,22 @@ namespace DNPDemo.Pen
             ShowState();
         }
 
+        /// <summary>
+        /// Prepares the pen for the next visitor: lets go of it, puts it back at its starting position, and returns the
+        /// mode, the selection radius and the pen length to their defaults.
+        /// </summary>
+        public void ResetForNextVisitor()
+        {
+            _radius = PenGeometry.DefaultSelectRadius;
+            _extension = 0f;
+            PenModeSelection.Select(PenModeSelection.Default);
+            if (_view != null)
+            {
+                _view.ReturnToStart();
+            }
+            ShowState();
+        }
+
         void OnEnable()
         {
             PenModeSelection.Changed += HandleModeChanged;

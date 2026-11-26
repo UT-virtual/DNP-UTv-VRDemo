@@ -14,6 +14,7 @@ namespace DNPDemo.Tests
             Assert.IsFalse(progress.Next());
             Assert.IsFalse(progress.Back());
             Assert.IsFalse(progress.Restart());
+            Assert.IsFalse(progress.JumpTo(0));
         }
 
         [Test]
@@ -53,6 +54,30 @@ namespace DNPDemo.Tests
             progress.Restart();
             Assert.AreEqual(0, progress.StepIndex);
             Assert.AreNotEqual(afterStart, progress.Sequence, "A restart onto the same step must still be a new state.");
+        }
+
+        [Test]
+        public void JumpToGoesToAnyStepInRange()
+        {
+            var progress = new ScenarioProgress(5);
+            progress.Start();
+            Assert.IsTrue(progress.JumpTo(3));
+            Assert.AreEqual(3, progress.StepIndex);
+            Assert.IsFalse(progress.JumpTo(5));
+            Assert.IsFalse(progress.JumpTo(-1));
+            Assert.AreEqual(3, progress.StepIndex);
+        }
+
+        [Test]
+        public void JumpToTheCurrentStepReplaysIt()
+        {
+            var progress = new ScenarioProgress(5);
+            progress.Start();
+            progress.JumpTo(2);
+            ushort sequence = progress.Sequence;
+            Assert.IsTrue(progress.JumpTo(2));
+            Assert.AreEqual(2, progress.StepIndex);
+            Assert.AreNotEqual(sequence, progress.Sequence, "Playing a step again must be a new state.");
         }
 
         [Test]

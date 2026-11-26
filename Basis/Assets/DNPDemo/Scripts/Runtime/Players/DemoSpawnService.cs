@@ -6,7 +6,8 @@ namespace DNPDemo.Players
 {
     /// <summary>
     /// Moves the local player to the spawn point of their role once it is assigned,
-    /// and back to the lobby point when they leave the session.
+    /// and back to the lobby point when they leave the session. <see cref="ReturnToRoleSpawn"/> moves them back to it
+    /// when the run returns to the lobby for the next visitors.
     /// </summary>
     public sealed class DemoSpawnService : MonoBehaviour
     {
@@ -30,6 +31,15 @@ namespace DNPDemo.Players
             if (_roleService != null)
             {
                 _roleService.LocalRoleChanged -= HandleLocalRoleChanged;
+            }
+        }
+
+        /// <summary>Moves the local player to the spawn point of their current role (the lobby point without a role).</summary>
+        public void ReturnToRoleSpawn()
+        {
+            if (_roleService != null)
+            {
+                HandleLocalRoleChanged(_roleService.LocalRole);
             }
         }
 
