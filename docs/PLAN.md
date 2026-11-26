@@ -329,6 +329,7 @@ InteractionRunner (BasisNetworkBehaviour、DemoSystems/Scenario/Interaction)
 ### 2.8 学者 NPC・ナレーター
 
 - 学者A（考古学）と学者B（構造力学）は **VR 内の NPC** として実装する。台詞は事前に用意した音声（生声または合成音声。台詞ごとに1ファイル）で再生し、頭上に字幕を出す。音源は位置付き（3D）、口パクは Basis 同梱の uLipSync を流用する。
+- 学者の見た目は VRoid の VRM を Variant（`Scholar_A_Archaeologist` / `Scholar_B_Engineer`）の子 `Avatar` に置く。待機アニメーション（`Art/Scholars/AC_ScholarIdle.controller`）で立ち、音源は口、字幕は頭の上に、モデルごとに合わせる。口パクは uLipSync の母音を顔の `Fcl_MTH_A`〜`O` に `uLipSyncBlendShape` でつなぐ。母音の判定は uLipSync 付属の `uLipSync-Profile-Sample` を使う。
 - ナレーターは位置を持たない 2D 音声で、視界の下に字幕を出す。
 
 ---
@@ -380,7 +381,7 @@ M3 まではプリミティブを組み合わせた仮モデルで進め、M4 �
 | | ゴースト用の簡易プロキシ（実物大のスフィア、板など） | プリミティブで組む。こちらで用意するのでアセット班の作業は不要 |
 | | 移動ギズモ（XYZ 矢印）、回転ギズモ（XYZ 3リング）、始点から終点へのガイド線 | Blender 風。軸ごとに掴める。プリミティブで組む |
 | | 空間ペン（先端スフィアつき）、比較台、展示室 | 展示室は簡素でよい |
-| | 学者A/B のアバター | 仮置きは Basis の標準アバターやカプセル |
+| | 学者A/B のアバター | VRoid の VRM 0.x（`Art/Scholars/Source~/`）。取り込み方は CONTRIBUTING.md |
 | 環境 | 古代ギリシア風神殿の360度パノラマ | Skybox 用。2:1 の JPEG（LDR）。陰影はライトで作る。エーゲ海の青空と自然光 |
 | 音声 | ナレーター、学者A、学者B の台詞 | 生声または合成音声で台詞ごとに1ファイル。台本を字幕データにする |
 | SE | 生成、変形、選択確定、スナップ、音声入力の開始と終了、タスク表示、完了 | |
