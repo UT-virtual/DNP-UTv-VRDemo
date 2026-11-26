@@ -105,7 +105,7 @@ namespace DNPDemo.Editor
         /// <summary>Key of the zone on the hand proxy that the pen's tip grabs, around the mirror.</summary>
         public const string RightHandProxyGrabKey = "RightHandProxy_Grab";
 
-        /// <summary>Key of the right wrist joint the hand proxy twists about; the axis is its local up, along the forearm.</summary>
+        /// <summary>Key of the right wrist pivot. Its local up is the rotation axis calibrated to the two mirror poses.</summary>
         public const string RightWristPivotKey = "Pivot_RightWrist";
 
         /// <summary>Key of the region of the right arm and the mirror, where the version transitions of steps 16 and 18 centre.</summary>
@@ -123,13 +123,13 @@ namespace DNPDemo.Editor
         /// </summary>
         public const float MirrorMaxDistance = 2.5f;
 
-        /// <summary>Step 17: the hand twists to this angle about the forearm, where Ver 3.1's mirror faces the head.</summary>
+        /// <summary>Step 17: the wrist turn authored into the Ver 3.1 mirror pose.</summary>
         public const float WristTwistTargetAngle = VenusAssetBuilder.MirrorTwistDegrees;
 
         /// <summary>Step 17: the hand may twist this much past 0° and past the target, so the target is easy to pass and come back to.</summary>
         public const float WristTwistMargin = 30f;
 
-        /// <summary>Step 17: released within this many degrees of the target, the hand snaps to it.</summary>
+        /// <summary>Step 17: release within this many degrees of the target to snap after a turn.</summary>
         public const float WristTwistSnapAngle = 12f;
 
         /// <summary>Step 9: the arm may turn outwards (a negative angle) this far, so a small slip the wrong way does not stop it.</summary>
@@ -439,7 +439,7 @@ namespace DNPDemo.Editor
         }
 
         /// <summary>
-        /// Step 17: the hand proxy twists about the forearm (the wrist pivot's up) until the mirror faces the head, where
+        /// Step 17: the hand proxy turns about the wrist pivot's up until the mirror faces the head, where
         /// it snaps; that pose is Ver 3.1's.
         /// </summary>
         static ManipulatePart TwistWristToFace()

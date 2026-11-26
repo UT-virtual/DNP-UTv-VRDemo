@@ -25,6 +25,9 @@ namespace DNPDemo.Venus
         [Tooltip("Whole-body model. Instantiated under VenusStatue with its local pose kept.")]
         [SerializeField] GameObject _model;
 
+        [Tooltip("Optional model for the main statue when the scenario displays an interactive prop separately.")]
+        [SerializeField] GameObject _stageModel;
+
         [Tooltip("Version this one was made from, drawn as its parent in the history panel's branch view. Empty for the original. It has to come earlier in the catalog.")]
         [SerializeField] VenusVersion _parent;
 
@@ -37,6 +40,9 @@ namespace DNPDemo.Venus
         public string Id => _id;
         public string DisplayName => _displayName;
         public GameObject Model => _model;
+
+        internal GameObject GetModelPrefab(bool useStageModel) =>
+            useStageModel && _stageModel != null ? _stageModel : _model;
 
         /// <summary>The version this one was made from, or null for the original.</summary>
         public VenusVersion Parent => _parent;

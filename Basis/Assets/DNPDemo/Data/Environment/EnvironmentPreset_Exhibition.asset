@@ -47,10 +47,42 @@ MonoBehaviour:
     FlatColor: {r: 0.12, g: 0.12, b: 0.14, a: 1}
     Intensity: 1
   _reflection:
-    Mode: 0
-    CustomReflectionTexture: {fileID: 0}
+    Cubemap: {fileID: 8900000, guid: c7462bd6fa78fe94d99b71d33c61f248, type: 3}
     Intensity: 0.6
+  _shadowQuality:
+    Override: 0
+    MainLightShadowmapResolution: 0
+    ShadowDistance: 0
+    CascadeCount: 0
   _distanceFog:
     Enabled: 1
     StartDistance: 5
     EndDistance: 7
+  _skyboxAmbientProbe:
+  - 0.06366704
+  - 0.024965484
+  - -0.0000000027670506
+  - -2.5207452e-11
+  - -3.923579e-11
+  - -8.464978e-10
+  - -0.00028066314
+  - 4.6101862e-11
+  - -0.0008419407
+  - 0.052751258
+  - 0.021011641
+  - -0.0000000021228719
+  - 1.6584228e-10
+  - 1.0598152e-10
+  - -5.1458177e-10
+  - -0.00024140842
+  - -2.7192566e-11
+  - -0.00072418276
+  - 0.041085068
+  - 0.015915204
+  - -0.0000000019296469
+  - 7.130042e-11
+  - 1.8408053e-11
+  - -5.3535226e-10
+  - -0.00017634047
+  - -1.634375e-11
+  - -0.0005288397

@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: DNPDemo.Runtime::DNPDemo.Venus.VenusVersion
   _id: v1.0
   _displayName: Ver 1.0
-  _model: {fileID: 8157699873278787299, guid: ca72085bf1c371a4daddecf01960e805, type: 3}
+  _model: {fileID: 6790879117764955113, guid: 176889c90eacdd54e8ebc79da7492ec0, type: 3}
+  _stageModel: {fileID: 2766424579440062288, guid: 9578162f763fcc440ac57f019cc0649e, type: 3}
   _parent: {fileID: 11400000, guid: 087eaacacc066274594bede7571779a4, type: 2}
   _startsBranch: 0
   _thumbnail: {fileID: 2800000, guid: 234d8c7a4a6d55a49880791db40e11ef, type: 3}
