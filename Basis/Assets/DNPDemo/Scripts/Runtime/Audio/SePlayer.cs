@@ -53,7 +53,7 @@ namespace DNPDemo.Audio
             {
                 _source.volume = SeCatalog.MasterVolumeOf(_catalog) * _ducking.Step(linePlaying, Time.unscaledDeltaTime);
             }
-            if (_hold.IsHolding && _hold.TryRelease(Time.unscaledTime, linePlaying, out SeEvent held))
+            if (_hold.TryRelease(Time.unscaledTime, linePlaying, out SeEvent held))
             {
                 PlayNow(held);
             }

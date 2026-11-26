@@ -191,7 +191,9 @@ namespace DNPDemo.Editor
             VenusAssetBuilder.CreateIfMissing();
             EnvironmentPresetBuilder.CreatePresetsIfMissing();
             var data = ScriptableObject.CreateInstance<ScenarioData>();
-            data.SetSteps(CreateDefaultSteps());
+            List<ScenarioStep> steps = CreateDefaultSteps();
+            EnsureVersionSounds(steps);
+            data.SetSteps(steps);
             Directory.CreateDirectory(Path.GetDirectoryName(AssetPath));
             AssetDatabase.CreateAsset(data, AssetPath);
             AssetDatabase.SaveAssets();
@@ -350,6 +352,8 @@ namespace DNPDemo.Editor
         /// so it appears as the step completes and every later step applies it instantly. The version assets are loaded
         /// from <see cref="VenusAssetBuilder.CatalogPath"/> and the temple preset from
         /// <see cref="EnvironmentPresetBuilder.TemplePresetPath"/>; this method only loads them and never creates assets.
+        /// The sound cues are not included: <see cref="EnsureVersionSounds"/> adds them. It loads their clips from the asset
+        /// database, which most callers do not need.
         /// </summary>
         public static List<ScenarioStep> CreateDefaultSteps()
         {
@@ -500,7 +504,6 @@ namespace DNPDemo.Editor
                     },
                 },
             };
-            EnsureVersionSounds(steps);
             return steps;
         }
 

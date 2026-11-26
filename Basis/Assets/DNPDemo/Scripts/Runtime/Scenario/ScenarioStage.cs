@@ -17,6 +17,8 @@ namespace DNPDemo.Scenario
     /// re-applied. An object moved by the pen therefore goes back when the step changes.
     /// </para>
     /// </summary>
+    // Before the default order, so that the players reading IsLinePlaying in their Update (SePlayer) see this frame's value.
+    [DefaultExecutionOrder(-10)]
     public sealed class ScenarioStage : MonoBehaviour
     {
         [Tooltip("Non-positional source for sound effects.")]
@@ -45,6 +47,7 @@ namespace DNPDemo.Scenario
         readonly HashSet<string> _reportedMissing = new();
         readonly SeDucking _effectsDucking = new();
         ScenarioBindingSet _bindings;
+        bool _linePlaying;
 
         /// <summary>
         /// Collects the bindings before any cue runs, so the baseline is the state at scene load. Awake is too early:
@@ -56,13 +59,15 @@ namespace DNPDemo.Scenario
         }
 
         /// <summary>
-        /// Sets the effects (sound cues) to the catalog's master volume, lowered while a line plays (<see cref="SeDucking"/>).
+        /// Updates <see cref="IsLinePlaying"/> once for the frame, and sets the effects (sound cues) to the catalog's master
+        /// volume, lowered while a line plays (<see cref="SeDucking"/>).
         /// </summary>
         void Update()
         {
+            _linePlaying = AnyVoicePlaying();
             if (_effects != null)
             {
-                _effects.volume = SeCatalog.MasterVolumeOf(_catalog) * _effectsDucking.Step(IsLinePlaying, Time.unscaledDeltaTime);
+                _effects.volume = SeCatalog.MasterVolumeOf(_catalog) * _effectsDucking.Step(_linePlaying, Time.unscaledDeltaTime);
             }
         }
 
@@ -86,24 +91,28 @@ namespace DNPDemo.Scenario
                 binding.Voice.Stop();
                 binding.Voice.clip = voice;
                 binding.Voice.Play();
+                _linePlaying = true;
             }
         }
 
-        /// <summary>True while any speaker's voice (narrator or scholar) is playing on this device.</summary>
-        public bool IsLinePlaying
+        /// <summary>
+        /// True while any speaker's voice (narrator or scholar) is playing on this device. Worked out once a frame in
+        /// <see cref="Update"/>, and changed at once when a line starts (<see cref="ShowLine"/>) or every voice is stopped
+        /// (<see cref="StopTransient"/>), so a sound requested in the same frame sees it.
+        /// </summary>
+        public bool IsLinePlaying => _linePlaying;
+
+        bool AnyVoicePlaying()
         {
-            get
+            EnsureBindings();
+            foreach (ScenarioSpeakerBinding binding in Bindings.Speakers.Values)
             {
-                EnsureBindings();
-                foreach (ScenarioSpeakerBinding binding in Bindings.Speakers.Values)
+                if (binding != null && binding.Voice != null && binding.Voice.isPlaying)
                 {
-                    if (binding != null && binding.Voice != null && binding.Voice.isPlaying)
-                    {
-                        return true;
-                    }
+                    return true;
                 }
-                return false;
             }
+            return false;
         }
 
         public void EndLine(ScenarioSpeaker speaker)
@@ -172,6 +181,7 @@ namespace DNPDemo.Scenario
                 if (binding.Voice != null) binding.Voice.Stop();
                 if (binding.Subtitle != null) binding.Subtitle.Hide();
             }
+            _linePlaying = false;
             if (_effects != null)
             {
                 _effects.Stop();

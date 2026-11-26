@@ -193,16 +193,11 @@ namespace DNPDemo.Tests
         }
 
         [Test]
-        public void DefaultStepsPlayTheVersionSoundAfterTheFirstLine()
-        {
-            AssertVersionSounds(ScenarioDataBuilder.CreateDefaultSteps(), "CreateDefaultSteps");
-        }
-
-        [Test]
         public void EnsuringTheVersionSoundsTwiceAddsNothing()
         {
             List<ScenarioStep> steps = ScenarioDataBuilder.CreateDefaultSteps();
-            Assert.IsFalse(ScenarioDataBuilder.EnsureVersionSounds(steps));
+            Assert.IsTrue(ScenarioDataBuilder.EnsureVersionSounds(steps), "The default steps get their sound cues.");
+            Assert.IsFalse(ScenarioDataBuilder.EnsureVersionSounds(steps), "A second pass changes nothing.");
             AssertVersionSounds(steps, "CreateDefaultSteps after EnsureVersionSounds");
         }
 
