@@ -8,8 +8,8 @@ namespace DNPDemo.Audio
     /// own. It is separate from the scenario's effects source on purpose: that one is stopped whenever the step changes
     /// (<see cref="DNPDemo.Scenario.ScenarioStage.StopTransient"/>), which would cut the sound of the operation that completed the step.
     /// While a voice line plays on this device (<see cref="ScenarioStage.IsLinePlaying"/>) a sound is held and played when
-    /// the line ends (<see cref="SeHold"/>: the latest one only, dropped after <see cref="SeHold.MaxWaitSeconds"/>), and
-    /// what is already playing is lowered for as long as the line lasts (<see cref="SeDucking"/>).
+    /// the line ends (<see cref="SeHold"/>: the latest one only, and at the latest after <see cref="SeHold.MaxWaitSeconds"/>),
+    /// and every effect is lowered for as long as the line lasts (<see cref="SeDucking"/>).
     /// A missing catalog, source or clip is silent, because the clips are not in the repository; without a stage nothing
     /// is held.
     /// </summary>

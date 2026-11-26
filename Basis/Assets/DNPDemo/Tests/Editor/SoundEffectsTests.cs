@@ -76,12 +76,62 @@ namespace DNPDemo.Tests
         }
 
         [Test]
-        public void SoundHeldTooLongIsDropped()
+        public void SoundHeldTooLongPlaysDuringTheLine()
         {
             var hold = new SeHold();
             hold.Request(SeEvent.Complete, now: 0f, linePlaying: true);
-            Assert.IsFalse(hold.TryRelease(SeHold.MaxWaitSeconds + 0.1f, linePlaying: false, out _));
-            Assert.IsFalse(hold.IsHolding, "A dropped sound is not played later.");
+            Assert.IsFalse(hold.TryRelease(SeHold.MaxWaitSeconds - 0.1f, linePlaying: true, out _), "Waits up to the limit.");
+            Assert.IsTrue(hold.TryRelease(SeHold.MaxWaitSeconds, linePlaying: true, out SeEvent released),
+                "Played at the limit although the line goes on, not dropped.");
+            Assert.AreEqual(SeEvent.Complete, released);
+            Assert.IsFalse(hold.IsHolding, "Released only once.");
+        }
+
+        [Test]
+        public void SoundHeldPastTheLimitStillPlaysWhenTheLineEnds()
+        {
+            var hold = new SeHold();
+            hold.Request(SeEvent.Snap, now: 0f, linePlaying: true);
+            Assert.IsTrue(hold.TryRelease(SeHold.MaxWaitSeconds + 1f, linePlaying: false, out SeEvent released));
+            Assert.AreEqual(SeEvent.Snap, released);
+        }
+
+        [Test]
+        public void FirstPartOfAStepShowsItsTask()
+        {
+            var gate = new PartSoundGate();
+            Assert.IsTrue(gate.TryAnnounce(sequence: 1, step: 3, part: 0));
+            Assert.IsFalse(gate.TryAnnounce(sequence: 1, step: 3, part: 0), "A restart of the same part stays quiet.");
+            gate.MarkCompletedWithSound(sequence: 1, step: 3, part: 0);
+            Assert.IsTrue(gate.TryAnnounce(sequence: 1, step: 4, part: 0), "The next step's first part sounds whatever came before.");
+        }
+
+        [Test]
+        public void PartAfterACompletionSoundDoesNotShowItsTask()
+        {
+            var gate = new PartSoundGate();
+            gate.TryAnnounce(sequence: 1, step: 3, part: 0);
+            gate.MarkCompletedWithSound(sequence: 1, step: 3, part: 0);
+            Assert.IsFalse(gate.TryAnnounce(sequence: 1, step: 3, part: 1), "The completion sound already marks the change.");
+        }
+
+        [Test]
+        public void PartAfterASilentCompletionShowsItsTask()
+        {
+            var gate = new PartSoundGate();
+            gate.TryAnnounce(sequence: 1, step: 3, part: 0);
+            Assert.IsTrue(gate.TryAnnounce(sequence: 1, step: 3, part: 1));
+            gate.MarkCompletedWithSound(sequence: 0, step: 3, part: 1);
+            Assert.IsTrue(gate.TryAnnounce(sequence: 1, step: 3, part: 2), "A completion of another sequence does not count.");
+        }
+
+        [Test]
+        public void LastPartCompletesWithTheCompleteSound()
+        {
+            Assert.AreEqual(SeEvent.Complete, PartSoundGate.CompletionSound(partIndex: 2, partCount: 3, feedback: SeEvent.Snap));
+            Assert.AreEqual(SeEvent.Complete, PartSoundGate.CompletionSound(partIndex: 0, partCount: 1, feedback: null));
+            Assert.AreEqual(SeEvent.Snap, PartSoundGate.CompletionSound(partIndex: 1, partCount: 3, feedback: SeEvent.Snap));
+            Assert.IsNull(PartSoundGate.CompletionSound(partIndex: 1, partCount: 3, feedback: null));
         }
 
         [Test]

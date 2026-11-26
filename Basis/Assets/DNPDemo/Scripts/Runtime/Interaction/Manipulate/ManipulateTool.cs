@@ -184,7 +184,7 @@ namespace DNPDemo.Interaction.Manipulate
                     break;
                 case ManipulateMessageKind.Snap:
                     _motion.Animate(pose, _snapSeconds);
-                    session.PlaySound(SeEvent.Snap);
+                    session.PlayRemoteCompletion(SeEvent.Snap);
                     break;
                 case ManipulateMessageKind.Snapshot:
                     _motion.Place(pose);

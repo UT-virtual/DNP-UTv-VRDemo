@@ -42,16 +42,12 @@ namespace DNPDemo.Interaction
         readonly List<InteractionTool> _startedTools = new();
         readonly HashSet<string> _reportedMissingTools = new();
         readonly ushort[] _singleRecipient = new ushort[1];
+        readonly PartSoundGate _soundGate = new();
 
         InteractionSession _session;
         InteractionTool _currentTool;
         string _status = string.Empty;
         bool _ready;
-
-        // The part whose task sound was played last, so restarting the same part (the local role changed) stays quiet.
-        ushort _announcedSequence;
-        int _announcedStep = -1;
-        int _announcedPart = -1;
 
         /// <summary>Raised when the current part, the actor flag, the required pen mode or the status may have changed.</summary>
         public event Action StateChanged;
@@ -166,9 +162,9 @@ namespace DNPDemo.Interaction
         internal bool IsCurrent(InteractionSession session) => session != null && session == _session;
 
         /// <summary>
-        /// Moves on after the actor completed <paramref name="session"/>'s part. The last part plays
-        /// <see cref="SeEvent.Complete"/> and nothing else, so it is not drowned by the operation's own sound
-        /// (<paramref name="feedback"/>), which only plays for the parts before it.
+        /// Moves on after the actor completed <paramref name="session"/>'s part, with the part's completion sound
+        /// (<see cref="PartSoundGate.CompletionSound"/>: <see cref="SeEvent.Complete"/> for the last part, otherwise
+        /// <paramref name="feedback"/>). The next part's task sound is skipped when a completion sound played.
         /// </summary>
         internal void Complete(InteractionSession session, SeEvent? feedback)
         {
@@ -176,14 +172,7 @@ namespace DNPDemo.Interaction
             {
                 return;
             }
-            if (_progress.IsFinished)
-            {
-                PlaySound(SeEvent.Complete);
-            }
-            else if (feedback.HasValue)
-            {
-                PlaySound(feedback.Value);
-            }
+            PlayCompletionSound(session, feedback);
             Send(new InteractionMessage(InteractionMessageType.PartAdvanced, _progress.Sequence, _progress.StepIndex, _progress.PartIndex),
                 null, DeliveryMethod.ReliableOrdered, null);
             StartCurrentPart();
@@ -202,11 +191,34 @@ namespace DNPDemo.Interaction
             }
         }
 
-        internal void PlaySound(InteractionSession session, SeEvent seEvent, bool actorOnly)
+        /// <summary>Actor only: plays <paramref name="seEvent"/> for how the current operation is going.</summary>
+        internal void PlayFeedback(InteractionSession session, SeEvent seEvent)
         {
-            if (IsCurrent(session) && (!actorOnly || session.IsLocalActor))
+            if (IsCurrent(session) && session.IsLocalActor)
             {
                 PlaySound(seEvent);
+            }
+        }
+
+        /// <summary>
+        /// Not the actor: the actor completed <paramref name="session"/>'s part with the operation of
+        /// <paramref name="feedback"/>, as received from it. Plays the same completion sound as the actor's device.
+        /// </summary>
+        internal void PlayRemoteCompletion(InteractionSession session, SeEvent feedback)
+        {
+            if (IsCurrent(session) && !session.IsLocalActor)
+            {
+                PlayCompletionSound(session, feedback);
+            }
+        }
+
+        void PlayCompletionSound(InteractionSession session, SeEvent? feedback)
+        {
+            SeEvent? sound = PartSoundGate.CompletionSound(session.PartIndex, session.PartCount, feedback);
+            if (sound.HasValue)
+            {
+                PlaySound(sound.Value);
+                _soundGate.MarkCompletedWithSound(_progress.Sequence, _progress.StepIndex, session.PartIndex);
             }
         }
 
@@ -218,20 +230,13 @@ namespace DNPDemo.Interaction
             }
         }
 
-        /// <summary>
-        /// Plays <see cref="SeEvent.TaskShow"/> on every device when a part begins that has not been announced yet. A
-        /// restart of the same part (the local role changed) stays quiet.
-        /// </summary>
+        /// <summary>Plays <see cref="SeEvent.TaskShow"/> on every device when the part that begins needs it (<see cref="PartSoundGate.TryAnnounce"/>).</summary>
         void AnnounceCurrentPart()
         {
-            if (_announcedSequence == _progress.Sequence && _announcedStep == _progress.StepIndex && _announcedPart == _progress.PartIndex)
+            if (_soundGate.TryAnnounce(_progress.Sequence, _progress.StepIndex, _progress.PartIndex))
             {
-                return;
+                PlaySound(SeEvent.TaskShow);
             }
-            _announcedSequence = _progress.Sequence;
-            _announcedStep = _progress.StepIndex;
-            _announcedPart = _progress.PartIndex;
-            PlaySound(SeEvent.TaskShow);
         }
 
         internal void SetStatus(InteractionSession session, string status)
